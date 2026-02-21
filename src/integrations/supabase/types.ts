@@ -118,6 +118,47 @@ export type Database = {
           },
         ]
       }
+      expenses: {
+        Row: {
+          amount: number
+          booking_id: string | null
+          category: string
+          created_at: string
+          date: string
+          id: string
+          note: string | null
+          title: string
+        }
+        Insert: {
+          amount: number
+          booking_id?: string | null
+          category: string
+          created_at?: string
+          date?: string
+          id?: string
+          note?: string | null
+          title: string
+        }
+        Update: {
+          amount?: number
+          booking_id?: string | null
+          category?: string
+          created_at?: string
+          date?: string
+          id?: string
+          note?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expenses_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       hotel_bookings: {
         Row: {
           check_in: string
@@ -338,6 +379,8 @@ export type Database = {
           is_active: boolean
           name: string
           price: number
+          services: Json | null
+          start_date: string | null
           type: string
           updated_at: string
         }
@@ -351,6 +394,8 @@ export type Database = {
           is_active?: boolean
           name: string
           price: number
+          services?: Json | null
+          start_date?: string | null
           type: string
           updated_at?: string
         }
@@ -364,6 +409,8 @@ export type Database = {
           is_active?: boolean
           name?: string
           price?: number
+          services?: Json | null
+          start_date?: string | null
           type?: string
           updated_at?: string
         }
@@ -381,6 +428,7 @@ export type Database = {
           paid_at: string | null
           payment_method: string | null
           status: string
+          transaction_id: string | null
           user_id: string
         }
         Insert: {
@@ -394,6 +442,7 @@ export type Database = {
           paid_at?: string | null
           payment_method?: string | null
           status?: string
+          transaction_id?: string | null
           user_id: string
         }
         Update: {
@@ -407,6 +456,7 @@ export type Database = {
           paid_at?: string | null
           payment_method?: string | null
           status?: string
+          transaction_id?: string | null
           user_id?: string
         }
         Relationships: [
@@ -421,25 +471,31 @@ export type Database = {
       }
       profiles: {
         Row: {
+          address: string | null
           created_at: string
           full_name: string | null
           id: string
+          passport_number: string | null
           phone: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          address?: string | null
           created_at?: string
           full_name?: string | null
           id?: string
+          passport_number?: string | null
           phone?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          address?: string | null
           created_at?: string
           full_name?: string | null
           id?: string
+          passport_number?: string | null
           phone?: string | null
           updated_at?: string
           user_id?: string
@@ -469,6 +525,50 @@ export type Database = {
           updated_by?: string | null
         }
         Relationships: []
+      }
+      transactions: {
+        Row: {
+          amount: number
+          booking_id: string | null
+          category: string
+          created_at: string
+          date: string
+          id: string
+          note: string | null
+          type: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          booking_id?: string | null
+          category: string
+          created_at?: string
+          date?: string
+          id?: string
+          note?: string | null
+          type: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          booking_id?: string | null
+          category?: string
+          created_at?: string
+          date?: string
+          id?: string
+          note?: string | null
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transactions_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {

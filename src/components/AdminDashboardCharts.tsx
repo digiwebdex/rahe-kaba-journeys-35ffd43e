@@ -263,21 +263,44 @@ const AdminDashboardCharts = ({ bookings, payments, expenses = [], onMarkPaid }:
     return Object.entries(types).map(([name, value]) => ({ name: name.charAt(0).toUpperCase() + name.slice(1), value }));
   }, [filteredBookings]);
 
-  // Hajji report table
+  // Hajji report table with profit
   const hajjiReport = useMemo(() => {
-    return filteredBookings.map((b) => ({
-      trackingId: b.tracking_id,
-      name: b.profiles?.full_name || "N/A",
-      package: b.packages?.name || "N/A",
-      type: b.packages?.type || "N/A",
-      travelers: b.num_travelers,
-      total: Number(b.total_amount),
-      paid: Number(b.paid_amount),
-      due: Number(b.due_amount || 0),
-      status: b.status,
-      date: b.created_at,
-    }));
-  }, [filteredBookings]);
+    return filteredBookings.map((b) => {
+      const bookingExpenses = expenses.filter((e) => e.booking_id === b.id);
+      const expenseTotal = bookingExpenses.reduce((s, e) => s + Number(e.amount), 0);
+      const revenue = Number(b.paid_amount);
+      const profit = revenue - expenseTotal;
+      return {
+        trackingId: b.tracking_id,
+        name: b.profiles?.full_name || "N/A",
+        package: b.packages?.name || "N/A",
+        type: b.packages?.type || "N/A",
+        travelers: b.num_travelers,
+        total: Number(b.total_amount),
+        paid: revenue,
+        due: Number(b.due_amount || 0),
+        expenses: expenseTotal,
+        profit,
+        status: b.status,
+        date: b.created_at,
+      };
+    });
+  }, [filteredBookings, expenses]);
+
+  // Package-wise profit analytics
+  const packageProfitData = useMemo(() => {
+    const map: Record<string, { name: string; revenue: number; expenses: number; bookings: number; travelers: number }> = {};
+    filteredBookings.forEach((b) => {
+      const pkgName = b.packages?.name || "Unknown";
+      if (!map[pkgName]) map[pkgName] = { name: pkgName, revenue: 0, expenses: 0, bookings: 0, travelers: 0 };
+      map[pkgName].revenue += Number(b.paid_amount);
+      map[pkgName].bookings += 1;
+      map[pkgName].travelers += Number(b.num_travelers);
+      const bookingExpenses = expenses.filter((e) => e.booking_id === b.id);
+      map[pkgName].expenses += bookingExpenses.reduce((s, e) => s + Number(e.amount), 0);
+    });
+    return Object.values(map).map((p) => ({ ...p, profit: p.revenue - p.expenses, margin: p.revenue > 0 ? Math.round(((p.revenue - p.expenses) / p.revenue) * 100) : 0 })).sort((a, b) => b.profit - a.profit);
+  }, [filteredBookings, expenses]);
 
   const customTooltipStyle = {
     backgroundColor: "hsl(220, 18%, 14%)",
@@ -484,10 +507,73 @@ const AdminDashboardCharts = ({ bookings, payments, expenses = [], onMarkPaid }:
         <ReconciliationWidget bookings={filteredBookings} payments={filteredPayments} />
       </div>
 
-      {/* Hajji Report Table */}
+      {/* Package-wise Profit Analytics */}
       <div className="bg-card border border-border rounded-xl p-5">
         <h4 className="font-heading font-semibold mb-4 flex items-center gap-2">
-          <Users className="h-4 w-4 text-primary" /> Hajji / Pilgrim Report
+          <Package className="h-4 w-4 text-primary" /> Package-wise Profit Analytics
+        </h4>
+        {packageProfitData.length > 0 ? (
+          <>
+            <div className="h-72 mb-4">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={packageProfitData} layout="vertical">
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 15%, 20%)" />
+                  <XAxis type="number" tick={{ fontSize: 11, fill: CHART_COLORS.muted }} axisLine={false} tickLine={false} tickFormatter={(v) => `৳${(v / 1000).toFixed(0)}k`} />
+                  <YAxis type="category" dataKey="name" tick={{ fontSize: 11, fill: CHART_COLORS.muted }} axisLine={false} tickLine={false} width={120} />
+                  <Tooltip contentStyle={customTooltipStyle} formatter={(val: number) => `৳${val.toLocaleString()}`} />
+                  <Bar dataKey="revenue" fill={CHART_COLORS.emerald} radius={[0, 4, 4, 0]} name="Revenue" />
+                  <Bar dataKey="expenses" fill={CHART_COLORS.destructive} radius={[0, 4, 4, 0]} name="Expenses" />
+                  <Bar dataKey="profit" fill={CHART_COLORS.gold} radius={[0, 4, 4, 0]} name="Profit" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="flex gap-4 mb-4 text-xs">
+              <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full" style={{ backgroundColor: CHART_COLORS.emerald }} /> Revenue</span>
+              <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full" style={{ backgroundColor: CHART_COLORS.destructive }} /> Expenses</span>
+              <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full" style={{ backgroundColor: CHART_COLORS.gold }} /> Profit</span>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border text-left text-muted-foreground">
+                    <th className="pb-3 pr-3">Package</th>
+                    <th className="pb-3 pr-3">Bookings</th>
+                    <th className="pb-3 pr-3">Travelers</th>
+                    <th className="pb-3 pr-3">Revenue</th>
+                    <th className="pb-3 pr-3">Expenses</th>
+                    <th className="pb-3 pr-3">Profit</th>
+                    <th className="pb-3">Margin</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {packageProfitData.map((p) => (
+                    <tr key={p.name} className="border-b border-border/50">
+                      <td className="py-2.5 pr-3 font-medium">{p.name}</td>
+                      <td className="py-2.5 pr-3 text-center">{p.bookings}</td>
+                      <td className="py-2.5 pr-3 text-center">{p.travelers}</td>
+                      <td className="py-2.5 pr-3" style={{ color: CHART_COLORS.emerald }}>৳{p.revenue.toLocaleString()}</td>
+                      <td className="py-2.5 pr-3 text-destructive">৳{p.expenses.toLocaleString()}</td>
+                      <td className={`py-2.5 pr-3 font-bold ${p.profit >= 0 ? "text-primary" : "text-destructive"}`}>৳{p.profit.toLocaleString()}</td>
+                      <td className="py-2.5">
+                        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${p.margin >= 0 ? "bg-primary/10 text-primary" : "bg-destructive/10 text-destructive"}`}>
+                          {p.margin}%
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
+        ) : (
+          <p className="text-sm text-muted-foreground text-center py-12">No package data available.</p>
+        )}
+      </div>
+
+      {/* Hajji-wise Profit Report */}
+      <div className="bg-card border border-border rounded-xl p-5">
+        <h4 className="font-heading font-semibold mb-4 flex items-center gap-2">
+          <Users className="h-4 w-4 text-primary" /> Hajji-wise Profit Report
         </h4>
         {hajjiReport.length > 0 ? (
           <div className="overflow-x-auto">
@@ -497,11 +583,12 @@ const AdminDashboardCharts = ({ bookings, payments, expenses = [], onMarkPaid }:
                   <th className="pb-3 pr-3">Tracking ID</th>
                   <th className="pb-3 pr-3">Name</th>
                   <th className="pb-3 pr-3">Package</th>
-                  <th className="pb-3 pr-3">Type</th>
                   <th className="pb-3 pr-3">Travelers</th>
                   <th className="pb-3 pr-3">Total</th>
                   <th className="pb-3 pr-3">Paid</th>
                   <th className="pb-3 pr-3">Due</th>
+                  <th className="pb-3 pr-3">Expenses</th>
+                  <th className="pb-3 pr-3">Profit</th>
                   <th className="pb-3 pr-3">Status</th>
                   <th className="pb-3">Date</th>
                 </tr>
@@ -512,11 +599,12 @@ const AdminDashboardCharts = ({ bookings, payments, expenses = [], onMarkPaid }:
                     <td className="py-2.5 pr-3 font-mono text-xs text-primary">{r.trackingId}</td>
                     <td className="py-2.5 pr-3">{r.name}</td>
                     <td className="py-2.5 pr-3">{r.package}</td>
-                    <td className="py-2.5 pr-3 capitalize">{r.type}</td>
                     <td className="py-2.5 pr-3 text-center">{r.travelers}</td>
                     <td className="py-2.5 pr-3 font-medium">৳{r.total.toLocaleString()}</td>
                     <td className="py-2.5 pr-3" style={{ color: CHART_COLORS.emerald }}>৳{r.paid.toLocaleString()}</td>
                     <td className="py-2.5 pr-3 text-destructive font-medium">৳{r.due.toLocaleString()}</td>
+                    <td className="py-2.5 pr-3 text-muted-foreground">৳{r.expenses.toLocaleString()}</td>
+                    <td className={`py-2.5 pr-3 font-bold ${r.profit >= 0 ? "text-primary" : "text-destructive"}`}>৳{r.profit.toLocaleString()}</td>
                     <td className="py-2.5 pr-3">
                       <span className={`text-xs font-semibold px-2 py-0.5 rounded-full capitalize ${
                         r.status === "completed" ? "bg-emerald/10" : r.status === "cancelled" ? "bg-destructive/10 text-destructive" : "bg-primary/10 text-primary"
@@ -528,6 +616,17 @@ const AdminDashboardCharts = ({ bookings, payments, expenses = [], onMarkPaid }:
                   </tr>
                 ))}
               </tbody>
+              <tfoot>
+                <tr className="border-t-2 border-border font-bold">
+                  <td className="py-3 pr-3" colSpan={4}>Total</td>
+                  <td className="py-3 pr-3">৳{hajjiReport.reduce((s, r) => s + r.total, 0).toLocaleString()}</td>
+                  <td className="py-3 pr-3" style={{ color: CHART_COLORS.emerald }}>৳{hajjiReport.reduce((s, r) => s + r.paid, 0).toLocaleString()}</td>
+                  <td className="py-3 pr-3 text-destructive">৳{hajjiReport.reduce((s, r) => s + r.due, 0).toLocaleString()}</td>
+                  <td className="py-3 pr-3 text-muted-foreground">৳{hajjiReport.reduce((s, r) => s + r.expenses, 0).toLocaleString()}</td>
+                  <td className="py-3 pr-3 text-primary">৳{hajjiReport.reduce((s, r) => s + r.profit, 0).toLocaleString()}</td>
+                  <td colSpan={2}></td>
+                </tr>
+              </tfoot>
             </table>
           </div>
         ) : (

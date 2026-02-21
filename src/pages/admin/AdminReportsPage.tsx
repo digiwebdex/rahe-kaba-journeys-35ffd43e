@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, Fragment } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -143,13 +143,23 @@ export default function AdminReportsPage() {
 
   // ── Hajji-wise Revenue ──
   const hajjiRows = useMemo(() => {
-    const map: Record<string, { name: string; phone: string; count: number; revenue: number; due: number; expenses: number }> = {};
+    const map: Record<string, { name: string; phone: string; passport: string; count: number; travelers: number; revenue: number; due: number; expenses: number; bookingDetails: { trackingId: string; packageName: string; total: number; paid: number; due: number; status: string; date: string }[] }> = {};
 
     bookings.forEach((b) => {
       const uid = b.user_id;
       const profile = profileMap[uid];
-      if (!map[uid]) map[uid] = { name: profile?.full_name || "Unknown", phone: profile?.phone || "-", count: 0, revenue: 0, due: 0, expenses: 0 };
+      if (!map[uid]) map[uid] = { name: profile?.full_name || "Unknown", phone: profile?.phone || "-", passport: profile?.passport_number || "-", count: 0, travelers: 0, revenue: 0, due: 0, expenses: 0, bookingDetails: [] };
       map[uid].count++;
+      map[uid].travelers += Number(b.num_travelers || 1);
+      map[uid].bookingDetails.push({
+        trackingId: b.tracking_id,
+        packageName: b.packages?.name || "-",
+        total: Number(b.total_amount),
+        paid: Number(b.paid_amount),
+        due: Number(b.due_amount ?? b.total_amount - b.paid_amount),
+        status: b.status,
+        date: format(parseISO(b.created_at), "dd MMM yyyy"),
+      });
     });
 
     payments.forEach((p) => {
@@ -213,7 +223,7 @@ export default function AdminReportsPage() {
       case "package":
         return { title: "Package-wise Revenue", columns: ["Package","Type","Bookings","Revenue","Expenses","Profit"], rows: packageRows.map((r) => [r.name, r.type, r.count, r.revenue, r.expenses, r.profit]) };
       case "hajji":
-        return { title: "Hajji-wise Revenue", columns: ["Customer","Phone","Bookings","Revenue","Due","Expenses","Profit"], rows: hajjiRows.map((r) => [r.name, r.phone, r.count, r.revenue, r.due, r.expenses, r.profit]) };
+        return { title: "Hajji-wise Revenue", columns: ["Customer","Phone","Passport","Bookings","Travelers","Revenue","Due","Expenses","Profit"], rows: hajjiRows.map((r) => [r.name, r.phone, r.passport, r.count, r.travelers, r.revenue, r.due, r.expenses, r.profit]) };
       case "due":
         return { title: "Due Report", columns: ["Tracking ID","Customer","Installment","Amount","Due Date"], rows: dueRows.map((r) => [r.trackingId, r.customer, r.installment, r.amount, r.dueDate]) };
       case "overdue":
@@ -264,9 +274,10 @@ export default function AdminReportsPage() {
         ];
       }
       case "hajji": {
-        const totals = hajjiRows.reduce((a, r) => ({ rev: a.rev + r.revenue, due: a.due + r.due }), { rev: 0, due: 0 });
+        const totals = hajjiRows.reduce((a, r) => ({ rev: a.rev + r.revenue, due: a.due + r.due, exp: a.exp + r.expenses, travelers: a.travelers + r.travelers }), { rev: 0, due: 0, exp: 0, travelers: 0 });
         return [
           { label: "Customers", value: hajjiRows.length },
+          { label: "Total Travelers", value: totals.travelers },
           { label: "Revenue", value: fmt(totals.rev) },
           { label: "Total Due", value: fmt(totals.due) },
         ];
@@ -406,19 +417,8 @@ export default function AdminReportsPage() {
           </Table>
         </TabsContent>
 
-        {/* Hajji-wise */}
         <TabsContent value="hajji">
-          <Table>
-            <TableHeader><TableRow>
-              <TableHead>Customer</TableHead><TableHead>Phone</TableHead><TableHead className="text-right">Bookings</TableHead><TableHead className="text-right">Revenue</TableHead><TableHead className="text-right">Due</TableHead><TableHead className="text-right">Expenses</TableHead><TableHead className="text-right">Profit</TableHead>
-            </TableRow></TableHeader>
-            <TableBody>
-              {hajjiRows.length === 0 && <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground">No data</TableCell></TableRow>}
-              {hajjiRows.map((r, i) => (
-                <TableRow key={i}><TableCell>{r.name}</TableCell><TableCell>{r.phone}</TableCell><TableCell className="text-right">{r.count}</TableCell><TableCell className="text-right">{fmt(r.revenue)}</TableCell><TableCell className="text-right">{fmt(r.due)}</TableCell><TableCell className="text-right">{fmt(r.expenses)}</TableCell><TableCell className={cn("text-right font-bold", r.profit >= 0 ? "text-emerald" : "text-destructive")}>{fmt(r.profit)}</TableCell></TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          <HajjiReportTable rows={hajjiRows} fmt={fmt} />
         </TabsContent>
 
         {/* Due */}
@@ -452,5 +452,122 @@ export default function AdminReportsPage() {
         </TabsContent>
       </Tabs>
     </div>
+  );
+}
+
+// ── Hajji Report Expandable Table ──
+import { ChevronDown, ChevronUp, Users } from "lucide-react";
+
+function HajjiReportTable({ rows, fmt }: { rows: any[]; fmt: (n: number) => string }) {
+  const [expanded, setExpanded] = useState<number | null>(null);
+
+  const totals = rows.reduce(
+    (a, r) => ({ bookings: a.bookings + r.count, travelers: a.travelers + r.travelers, revenue: a.revenue + r.revenue, due: a.due + r.due, expenses: a.expenses + r.expenses, profit: a.profit + r.profit }),
+    { bookings: 0, travelers: 0, revenue: 0, due: 0, expenses: 0, profit: 0 }
+  );
+
+  return (
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead className="w-8"></TableHead>
+          <TableHead>Customer</TableHead>
+          <TableHead>Phone</TableHead>
+          <TableHead>Passport</TableHead>
+          <TableHead className="text-right">Bookings</TableHead>
+          <TableHead className="text-right">Travelers</TableHead>
+          <TableHead className="text-right">Revenue</TableHead>
+          <TableHead className="text-right">Due</TableHead>
+          <TableHead className="text-right">Expenses</TableHead>
+          <TableHead className="text-right">Profit</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {rows.length === 0 && (
+          <TableRow><TableCell colSpan={10} className="text-center text-muted-foreground">No data</TableCell></TableRow>
+        )}
+        {rows.map((r, i) => (
+          <Fragment key={i}>
+            <TableRow className="cursor-pointer hover:bg-muted/50" onClick={() => setExpanded(expanded === i ? null : i)}>
+              <TableCell className="px-2">
+                {expanded === i ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
+              </TableCell>
+              <TableCell className="font-medium">
+                <div className="flex items-center gap-2">
+                  <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <Users className="h-3.5 w-3.5 text-primary" />
+                  </div>
+                  {r.name}
+                </div>
+              </TableCell>
+              <TableCell>{r.phone}</TableCell>
+              <TableCell className="text-xs">{r.passport}</TableCell>
+              <TableCell className="text-right">{r.count}</TableCell>
+              <TableCell className="text-right">{r.travelers}</TableCell>
+              <TableCell className="text-right">{fmt(r.revenue)}</TableCell>
+              <TableCell className="text-right text-destructive">{fmt(r.due)}</TableCell>
+              <TableCell className="text-right">{fmt(r.expenses)}</TableCell>
+              <TableCell className={cn("text-right font-bold", r.profit >= 0 ? "text-emerald" : "text-destructive")}>{fmt(r.profit)}</TableCell>
+            </TableRow>
+            {expanded === i && (
+              <TableRow>
+                <TableCell colSpan={10} className="bg-muted/20 p-0">
+                  <div className="p-4">
+                    <p className="text-xs font-semibold text-muted-foreground mb-2">Booking Details for {r.name}</p>
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="text-left text-muted-foreground border-b border-border/50">
+                          <th className="pb-2 pr-3">Tracking ID</th>
+                          <th className="pb-2 pr-3">Package</th>
+                          <th className="pb-2 pr-3">Date</th>
+                          <th className="pb-2 pr-3 text-right">Total</th>
+                          <th className="pb-2 pr-3 text-right">Paid</th>
+                          <th className="pb-2 pr-3 text-right">Due</th>
+                          <th className="pb-2">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {r.bookingDetails.map((bd: any, j: number) => (
+                          <tr key={j} className="border-b border-border/30">
+                            <td className="py-2 pr-3 font-mono text-xs text-primary">{bd.trackingId}</td>
+                            <td className="py-2 pr-3">{bd.packageName}</td>
+                            <td className="py-2 pr-3 text-muted-foreground">{bd.date}</td>
+                            <td className="py-2 pr-3 text-right">{fmt(bd.total)}</td>
+                            <td className="py-2 pr-3 text-right text-emerald">{fmt(bd.paid)}</td>
+                            <td className="py-2 pr-3 text-right text-destructive">{fmt(bd.due)}</td>
+                            <td className="py-2 capitalize">
+                              <span className={cn("text-xs font-semibold px-2 py-0.5 rounded-full",
+                                bd.status === "completed" ? "bg-emerald/10 text-emerald" :
+                                bd.status === "cancelled" ? "bg-destructive/10 text-destructive" :
+                                "bg-primary/10 text-primary"
+                              )}>{bd.status}</span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </TableCell>
+              </TableRow>
+            )}
+          </Fragment>
+        ))}
+        {/* Totals row */}
+        {rows.length > 0 && (
+          <TableRow className="bg-muted/40 font-bold border-t-2 border-border">
+            <TableCell></TableCell>
+            <TableCell>Total</TableCell>
+            <TableCell></TableCell>
+            <TableCell></TableCell>
+            <TableCell className="text-right">{totals.bookings}</TableCell>
+            <TableCell className="text-right">{totals.travelers}</TableCell>
+            <TableCell className="text-right">{fmt(totals.revenue)}</TableCell>
+            <TableCell className="text-right text-destructive">{fmt(totals.due)}</TableCell>
+            <TableCell className="text-right">{fmt(totals.expenses)}</TableCell>
+            <TableCell className={cn("text-right", totals.profit >= 0 ? "text-emerald" : "text-destructive")}>{fmt(totals.profit)}</TableCell>
+          </TableRow>
+        )}
+      </TableBody>
+    </Table>
   );
 }

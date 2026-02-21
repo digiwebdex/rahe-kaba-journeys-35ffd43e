@@ -109,11 +109,13 @@ export default function AdminDueAlertsPage() {
     if (!phone) { toast.error("No phone number found"); return; }
     setSendingId(p.id);
     try {
-      const { data, error } = await supabase.functions.invoke("send-reminder", {
+      const { data, error } = await supabase.functions.invoke("send-notification", {
         body: {
-          phone,
-          customer_name: profile?.full_name || "Customer",
-          tracking_id: p.bookings?.tracking_id || "N/A",
+          type: "payment_reminder",
+          channels: ["sms"],
+          user_id: p.bookings?.user_id || p.user_id,
+          booking_id: p.booking_id,
+          payment_id: p.id,
           amount: Number(p.amount),
           due_date: format(new Date(p.due_date), "dd MMM yyyy"),
           installment_number: p.installment_number || 1,
@@ -123,6 +125,30 @@ export default function AdminDueAlertsPage() {
       toast.success("SMS reminder sent");
     } catch (err: any) {
       toast.error(err.message || "Failed to send SMS");
+    } finally {
+      setSendingId(null);
+    }
+  };
+
+  const sendEmailReminder = async (p: PaymentRow) => {
+    setSendingId(p.id);
+    try {
+      const { data, error } = await supabase.functions.invoke("send-notification", {
+        body: {
+          type: "payment_reminder",
+          channels: ["email"],
+          user_id: p.bookings?.user_id || p.user_id,
+          booking_id: p.booking_id,
+          payment_id: p.id,
+          amount: Number(p.amount),
+          due_date: format(new Date(p.due_date), "dd MMM yyyy"),
+          installment_number: p.installment_number || 1,
+        },
+      });
+      if (error) throw error;
+      toast.success("Email reminder sent");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to send email");
     } finally {
       setSendingId(null);
     }
@@ -150,6 +176,9 @@ export default function AdminDueAlertsPage() {
           <div className="flex gap-1.5">
             <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => sendSms(p)} disabled={sendingId === p.id}>
               <Phone className="h-3 w-3" /> SMS
+            </Button>
+            <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => sendEmailReminder(p)} disabled={sendingId === p.id}>
+              <Send className="h-3 w-3" /> Email
             </Button>
             <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => sendWhatsApp(p)}>
               <MessageSquare className="h-3 w-3" /> WhatsApp

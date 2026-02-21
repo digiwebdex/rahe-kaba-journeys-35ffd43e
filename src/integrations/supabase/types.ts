@@ -413,6 +413,69 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_logs: {
+        Row: {
+          booking_id: string | null
+          channel: string
+          created_at: string
+          error_detail: string | null
+          event_type: string
+          id: string
+          message: string
+          payment_id: string | null
+          recipient: string
+          sent_by: string | null
+          status: string
+          subject: string | null
+          user_id: string
+        }
+        Insert: {
+          booking_id?: string | null
+          channel: string
+          created_at?: string
+          error_detail?: string | null
+          event_type: string
+          id?: string
+          message: string
+          payment_id?: string | null
+          recipient: string
+          sent_by?: string | null
+          status?: string
+          subject?: string | null
+          user_id: string
+        }
+        Update: {
+          booking_id?: string | null
+          channel?: string
+          created_at?: string
+          error_detail?: string | null
+          event_type?: string
+          id?: string
+          message?: string
+          payment_id?: string | null
+          recipient?: string
+          sent_by?: string | null
+          status?: string
+          subject?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_logs_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notification_logs_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       otp_codes: {
         Row: {
           code: string

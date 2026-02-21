@@ -29,6 +29,7 @@ import AdminAccountingPage from "./pages/admin/AdminAccountingPage";
 import AdminReportsPage from "./pages/admin/AdminReportsPage";
 import AdminCmsPage from "./pages/admin/AdminCmsPage";
 import AdminSettingsPage from "./pages/admin/AdminSettingsPage";
+import AdminNotificationsPage from "./pages/admin/AdminNotificationsPage";
 
 const queryClient = new QueryClient();
 
@@ -60,6 +61,7 @@ const App = () => (
             <Route path="hotels" element={<AdminHotelsPage />} />
             <Route path="payments" element={<AdminPaymentsPage />} />
             <Route path="due-alerts" element={<AdminDueAlertsPage />} />
+            <Route path="notifications" element={<AdminNotificationsPage />} />
             <Route path="accounting" element={<AdminAccountingPage />} />
             <Route path="reports" element={<AdminReportsPage />} />
             <Route path="cms" element={<AdminCmsPage />} />

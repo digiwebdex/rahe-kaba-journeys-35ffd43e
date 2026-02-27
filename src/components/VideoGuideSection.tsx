@@ -6,38 +6,32 @@ const videos = [
   {
     titleBn: "ওমরাহ কীভাবে করবেন - সম্পূর্ণ গাইড",
     titleEn: "How to Perform Umrah - Complete Guide",
-    embedId: "dQw4w9WgXcQ", // placeholder
-    color: "from-primary/20 to-primary/5",
+    embedId: "s-6cA0NeZbE",
   },
   {
     titleBn: "হজ্জ ধাপে ধাপে - পূর্ণ টিউটোরিয়াল",
     titleEn: "Hajj Step by Step - Full Tutorial",
-    embedId: "dQw4w9WgXcQ",
-    color: "from-emerald-500/20 to-emerald-500/5",
+    embedId: "vy6PYbBKiC0",
   },
   {
     titleBn: "তাওয়াফের সময় দোয়া - আমাদের সাথে শিখুন",
     titleEn: "Duas During Tawaf - Learn With Us",
-    embedId: "dQw4w9WgXcQ",
-    color: "from-blue-500/20 to-blue-500/5",
+    embedId: "ak3Y4pS5ILo",
   },
   {
     titleBn: "ইহরামের নিয়ম ও নির্দেশিকা",
     titleEn: "Ihram Rules & Guidelines",
-    embedId: "dQw4w9WgXcQ",
-    color: "from-purple-500/20 to-purple-500/5",
+    embedId: "jLGdKFyV3TU",
   },
   {
     titleBn: "মদীনা জিয়ারত - সম্পূর্ণ ট্যুর",
     titleEn: "Madinah Ziyarat - Complete Tour",
-    embedId: "dQw4w9WgXcQ",
-    color: "from-rose-500/20 to-rose-500/5",
+    embedId: "LG21hddMPSE",
   },
   {
     titleBn: "মক্কা হোটেল - কী আশা করবেন",
     titleEn: "Makkah Hotels - What to Expect",
-    embedId: "dQw4w9WgXcQ",
-    color: "from-amber-500/20 to-amber-500/5",
+    embedId: "T4auGhmeBlw",
   },
 ];
 
@@ -76,7 +70,8 @@ export default function VideoGuideSection() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: i * 0.1 }}
-              className="group bg-card border border-border rounded-xl overflow-hidden hover:border-primary/40 hover:shadow-gold transition-all"
+              className="group bg-card border border-border rounded-xl overflow-hidden hover:border-primary/40 hover:shadow-gold transition-all cursor-pointer"
+              onClick={() => window.open(`https://www.youtube.com/watch?v=${video.embedId}`, '_blank')}
             >
               <div className="relative h-44 overflow-hidden">
                 <img

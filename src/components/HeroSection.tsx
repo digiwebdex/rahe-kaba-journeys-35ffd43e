@@ -54,7 +54,7 @@ const HeroSection = () => {
             <p className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-foreground leading-snug" dir="rtl" style={{ fontFamily: "'Amiri', 'Noto Naskh Arabic', serif" }}>
               وَأَتِمُّوا الْحَجَّ وَالْعُمْرَةَ لِلَّهِ
             </p>
-            <p className="text-xl sm:text-2xl md:text-3xl text-foreground/80 mt-4 leading-relaxed font-medium">
+            <p className="text-xl sm:text-2xl md:text-3xl mt-4 leading-relaxed font-semibold italic text-gradient-gold">
               "আর তোমরা আল্লাহর সন্তুষ্টির জন্য হজ্জ ও ওমরাহ পূর্ণ কর।"
             </p>
             <p className="text-base sm:text-lg text-muted-foreground mt-2">

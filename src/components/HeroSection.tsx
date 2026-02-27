@@ -50,9 +50,17 @@ const HeroSection = () => {
           </motion.div>
 
 
-          <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.3 }} className="text-base sm:text-lg text-foreground/65 max-w-xl mb-8 leading-relaxed whitespace-pre-line">
-            {subheading}
-          </motion.p>
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.15 }} className="max-w-2xl mb-10">
+            <p className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground leading-snug" dir="rtl" style={{ fontFamily: "'Amiri', 'Noto Naskh Arabic', serif" }}>
+              وَأَتِمُّوا الْحَجَّ وَالْعُمْرَةَ لِلَّهِ
+            </p>
+            <p className="text-lg sm:text-xl md:text-2xl text-foreground/80 mt-3 leading-relaxed font-medium">
+              "আর তোমরা আল্লাহর সন্তুষ্টির জন্য হজ্জ ও ওমরাহ পূর্ণ কর।"
+            </p>
+            <p className="text-sm sm:text-base text-muted-foreground mt-1.5">
+              — (সূরা আল-বাকারা: ১৯৬)
+            </p>
+          </motion.div>
 
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.45 }} className="flex flex-wrap gap-3">
             <a href="#packages" className="group bg-gradient-gold text-primary-foreground font-semibold px-7 py-3.5 rounded-lg text-sm hover:shadow-gold transition-all duration-300 inline-flex items-center gap-2">

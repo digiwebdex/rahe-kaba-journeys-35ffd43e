@@ -15,7 +15,7 @@ const Contact = () => {
   const [loading, setLoading] = useState(false);
 
   const phone = content?.phone || "+880 1601-505050";
-  const email = content?.email || "rahekaba.info@gmail.com";
+  const email = content?.email || "raheka@gmail.com";
   const location = content?.location || (bn ? "দৈলরবাগ পল্লী বিদ্যুৎ সংলগ্ন, সোনারগাঁও থানা রোড, নারায়ণগঞ্জ-ঢাকা" : "Doilorbag Palli Bidyut, Sonargaon Thana Road, Narayanganj-Dhaka");
   const hours = content?.hours || (bn ? "শনি - বৃহঃ: সকাল ৯টা - রাত ৯টা" : "Sat - Thu: 9AM - 9PM");
 

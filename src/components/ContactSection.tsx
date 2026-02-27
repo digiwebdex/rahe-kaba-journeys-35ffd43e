@@ -9,7 +9,7 @@ const ContactSection = () => {
 
   const lc = content?.[language];
   const phone = content?.phone || "+880 1601-505050";
-  const email = lc?.email || (language === "bn" ? "rahekaba.info@gmail.com" : content?.email || "rahekaba.info@gmail.com");
+  const email = lc?.email || (language === "bn" ? "raheka@gmail.com" : content?.email || "raheka@gmail.com");
   const location = lc?.location || (language === "bn" ? "দৈলরবাগ পল্লী বিদ্যুৎ সংলগ্ন\nসোনারগাঁও থানা রোড, নারায়ণগঞ্জ-ঢাকা" : content?.location || "Dailorbagh Palli Bidyut Adjacent\nSonargaon Thana Road, Narayanganj-Dhaka");
   const hours = lc?.hours || (language === "bn" ? "শনি - বৃহঃ: সকাল ৯টা - রাত ৯টা" : content?.hours || "Sat - Thu: 9AM - 9PM");
 

@@ -1,6 +1,6 @@
 import {
   LayoutDashboard, FileText, Users, Package, Building2, CreditCard,
-  Calculator, BarChart3, Pencil, Settings, LogOut, AlertTriangle, Bell, BookOpen,
+  Calculator, BarChart3, Pencil, Settings, LogOut, AlertTriangle, Bell, BookOpen, Receipt,
 } from "lucide-react";
 import logo from "@/assets/logo.jpg";
 import { NavLink } from "@/components/NavLink";
@@ -25,6 +25,7 @@ const menuItems = [
   { title: "Notifications", url: "/admin/notifications", icon: Bell, roles: ["admin", "manager", "viewer"] },
   { title: "Accounting", url: "/admin/accounting", icon: Calculator, roles: ["admin", "viewer"] },
   { title: "Chart of Accounts", url: "/admin/chart-of-accounts", icon: BookOpen, roles: ["admin"] },
+  { title: "Receivables", url: "/admin/receivables", icon: Receipt, roles: ["admin", "manager", "viewer"] },
   { title: "Reports", url: "/admin/reports", icon: BarChart3, roles: ["admin", "manager", "viewer"] },
   { title: "CMS", url: "/admin/cms", icon: Pencil, roles: ["admin"] },
   { title: "Settings", url: "/admin/settings", icon: Settings, roles: ["admin"] },

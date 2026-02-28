@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Plus, X, Edit2, Trash2, Save, Filter } from "lucide-react";
+import { Plus, X, Edit2, Trash2, Save, Filter, TrendingUp, TrendingDown, BarChart3 } from "lucide-react";
 import { useIsViewer } from "@/components/admin/AdminLayout";
 
 const inputClass = "w-full bg-secondary border border-border rounded-md px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40";
@@ -29,8 +29,18 @@ const EMPTY_FORM = {
   note: "", date: "", booking_id: "", customer_id: "", package_id: "",
 };
 
+const TABS = [
+  { key: "expenses", label: "Expenses" },
+  { key: "booking", label: "Booking Profit" },
+  { key: "package", label: "Package Profit" },
+  { key: "customer", label: "Customer Profit" },
+];
+
+const fmt = (n: number) => `৳${Number(n || 0).toLocaleString()}`;
+
 export default function AdminAccountingPage() {
   const isViewer = useIsViewer();
+  const [tab, setTab] = useState("expenses");
   const [expenses, setExpenses] = useState<any[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ ...EMPTY_FORM });
@@ -43,6 +53,11 @@ export default function AdminAccountingPage() {
   const [revenue, setRevenue] = useState(0);
   const [filterType, setFilterType] = useState("all");
   const [filterAssign, setFilterAssign] = useState("all");
+
+  // Profit views
+  const [bookingProfit, setBookingProfit] = useState<any[]>([]);
+  const [packageProfit, setPackageProfit] = useState<any[]>([]);
+  const [customerProfit, setCustomerProfit] = useState<any[]>([]);
 
   const fetchData = async () => {
     const [expRes, payRes, bkRes, custRes, pkgRes] = await Promise.all([
@@ -59,17 +74,24 @@ export default function AdminAccountingPage() {
     setPackages(pkgRes.data || []);
   };
 
-  useEffect(() => { fetchData(); }, []);
+  const fetchProfitViews = async () => {
+    const [bpRes, ppRes, cpRes] = await Promise.all([
+      supabase.from("v_booking_profit" as any).select("*"),
+      supabase.from("v_package_profit" as any).select("*"),
+      supabase.from("v_customer_profit" as any).select("*"),
+    ]);
+    setBookingProfit((bpRes.data as any[]) || []);
+    setPackageProfit((ppRes.data as any[]) || []);
+    setCustomerProfit((cpRes.data as any[]) || []);
+  };
+
+  useEffect(() => { fetchData(); fetchProfitViews(); }, []);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     const payload: any = {
-      title: form.title,
-      amount: parseFloat(form.amount),
-      expense_type: form.expense_type,
-      category: form.category,
-      note: form.note || null,
-      date: form.date || undefined,
+      title: form.title, amount: parseFloat(form.amount), expense_type: form.expense_type,
+      category: form.category, note: form.note || null, date: form.date || undefined,
       booking_id: form.category === "booking" && form.booking_id ? form.booking_id : null,
       customer_id: form.category === "customer" && form.customer_id ? form.customer_id : null,
       package_id: form.category === "package" && form.package_id ? form.package_id : null,
@@ -77,44 +99,36 @@ export default function AdminAccountingPage() {
     const { error } = await supabase.from("expenses").insert(payload);
     if (error) { toast.error(error.message); return; }
     toast.success("Expense recorded");
-    setShowForm(false);
-    setForm({ ...EMPTY_FORM });
-    fetchData();
+    setShowForm(false); setForm({ ...EMPTY_FORM });
+    fetchData(); fetchProfitViews();
   };
 
   const startEdit = (e: any) => {
     setEditingId(e.id);
-    setEditForm({
-      title: e.title, amount: e.amount, expense_type: e.expense_type || "other",
-      category: e.category || "general", note: e.note || "", date: e.date,
-      booking_id: e.booking_id || "", customer_id: e.customer_id || "", package_id: e.package_id || "",
-    });
+    setEditForm({ title: e.title, amount: e.amount, expense_type: e.expense_type || "other", category: e.category || "general", note: e.note || "", date: e.date, booking_id: e.booking_id || "", customer_id: e.customer_id || "", package_id: e.package_id || "" });
   };
 
   const saveEdit = async () => {
     if (!editingId) return;
     const payload: any = {
-      title: editForm.title, amount: parseFloat(editForm.amount),
-      expense_type: editForm.expense_type, category: editForm.category,
-      note: editForm.note || null, date: editForm.date,
+      title: editForm.title, amount: parseFloat(editForm.amount), expense_type: editForm.expense_type,
+      category: editForm.category, note: editForm.note || null, date: editForm.date,
       booking_id: editForm.category === "booking" && editForm.booking_id ? editForm.booking_id : null,
       customer_id: editForm.category === "customer" && editForm.customer_id ? editForm.customer_id : null,
       package_id: editForm.category === "package" && editForm.package_id ? editForm.package_id : null,
     };
     const { error } = await supabase.from("expenses").update(payload).eq("id", editingId);
     if (error) { toast.error(error.message); return; }
-    toast.success("Expense updated");
-    setEditingId(null);
-    fetchData();
+    toast.success("Expense updated"); setEditingId(null);
+    fetchData(); fetchProfitViews();
   };
 
   const confirmDelete = async () => {
     if (!deleteId) return;
     const { error } = await supabase.from("expenses").delete().eq("id", deleteId);
     if (error) { toast.error(error.message); return; }
-    toast.success("Expense deleted");
-    setDeleteId(null);
-    fetchData();
+    toast.success("Expense deleted"); setDeleteId(null);
+    fetchData(); fetchProfitViews();
   };
 
   const totalExpenses = expenses.reduce((s: number, e: any) => s + Number(e.amount), 0);
@@ -130,29 +144,15 @@ export default function AdminAccountingPage() {
 
   const typeTotals = useMemo(() => {
     const map: Record<string, number> = {};
-    expenses.forEach((e: any) => {
-      const t = e.expense_type || "other";
-      map[t] = (map[t] || 0) + Number(e.amount);
-    });
+    expenses.forEach((e: any) => { const t = e.expense_type || "other"; map[t] = (map[t] || 0) + Number(e.amount); });
     return map;
   }, [expenses]);
 
-  const getBookingLabel = (id: string) => {
-    const b = bookings.find((bk: any) => bk.id === id);
-    return b ? `${b.tracking_id} — ${b.profiles?.full_name || b.guest_name || "N/A"}` : id?.slice(0, 8);
-  };
+  const getBookingLabel = (id: string) => { const b = bookings.find((bk: any) => bk.id === id); return b ? `${b.tracking_id} — ${b.profiles?.full_name || b.guest_name || "N/A"}` : id?.slice(0, 8); };
+  const getCustomerLabel = (id: string) => { const c = customers.find((cu: any) => cu.user_id === id); return c ? `${c.full_name || "N/A"} (${c.phone || ""})` : id?.slice(0, 8); };
+  const getPackageLabel = (id: string) => { const p = packages.find((pk: any) => pk.id === id); return p ? p.name : id?.slice(0, 8); };
 
-  const getCustomerLabel = (id: string) => {
-    const c = customers.find((cu: any) => cu.user_id === id);
-    return c ? `${c.full_name || "N/A"} (${c.phone || ""})` : id?.slice(0, 8);
-  };
-
-  const getPackageLabel = (id: string) => {
-    const p = packages.find((pk: any) => pk.id === id);
-    return p ? p.name : id?.slice(0, 8);
-  };
-
-  const AssignmentFields = ({ data, setData, prefix = "" }: { data: any; setData: (d: any) => void; prefix?: string }) => (
+  const AssignmentFields = ({ data, setData }: { data: any; setData: (d: any) => void }) => (
     <>
       {data.category === "booking" && (
         <select className={inputClass} value={data.booking_id} onChange={(e) => setData({ ...data, booking_id: e.target.value })}>
@@ -175,11 +175,18 @@ export default function AdminAccountingPage() {
     </>
   );
 
+  const ProfitBadge = ({ value }: { value: number }) => (
+    <span className={`inline-flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full ${value >= 0 ? "text-emerald bg-emerald/10" : "text-destructive bg-destructive/10"}`}>
+      {value >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+      {fmt(value)}
+    </span>
+  );
+
   return (
     <div>
       <div className="flex flex-wrap justify-between items-center gap-3 mb-4">
-        <h2 className="font-heading text-xl font-bold">Expense Management</h2>
-        {!isViewer && (
+        <h2 className="font-heading text-xl font-bold">Accounting & Profit Engine</h2>
+        {!isViewer && tab === "expenses" && (
           <button onClick={() => setShowForm(!showForm)} className="bg-gradient-gold text-primary-foreground text-sm font-semibold px-4 py-2 rounded-md flex items-center gap-2">
             {showForm ? <X className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
             {showForm ? "Cancel" : "Add Expense"}
@@ -191,106 +198,238 @@ export default function AdminAccountingPage() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
         <div className="bg-card border border-border rounded-lg p-4">
           <p className="text-sm text-muted-foreground">Total Revenue</p>
-          <p className="text-2xl font-heading font-bold text-primary">৳{revenue.toLocaleString()}</p>
+          <p className="text-2xl font-heading font-bold text-primary">{fmt(revenue)}</p>
         </div>
         <div className="bg-card border border-border rounded-lg p-4">
           <p className="text-sm text-muted-foreground">Total Expenses</p>
-          <p className="text-2xl font-heading font-bold text-destructive">৳{totalExpenses.toLocaleString()}</p>
+          <p className="text-2xl font-heading font-bold text-destructive">{fmt(totalExpenses)}</p>
         </div>
         <div className="bg-card border border-border rounded-lg p-4">
           <p className="text-sm text-muted-foreground">Net Profit</p>
-          <p className={`text-2xl font-heading font-bold ${netProfit >= 0 ? "text-emerald" : "text-destructive"}`}>৳{netProfit.toLocaleString()}</p>
+          <p className={`text-2xl font-heading font-bold ${netProfit >= 0 ? "text-emerald" : "text-destructive"}`}>{fmt(netProfit)}</p>
         </div>
       </div>
 
-      {/* Type Breakdown */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-        {EXPENSE_TYPES.map(({ value, label }) => (
-          <div key={value} className="bg-card border border-border rounded-lg p-3 text-center">
-            <p className="text-xs text-muted-foreground">{label}</p>
-            <p className="text-lg font-heading font-bold text-foreground">৳{(typeTotals[value] || 0).toLocaleString()}</p>
-          </div>
+      {/* Tabs */}
+      <div className="flex gap-1 bg-secondary rounded-lg p-1 mb-6 overflow-x-auto">
+        {TABS.map(t => (
+          <button key={t.key} onClick={() => setTab(t.key)}
+            className={`text-sm font-medium px-4 py-2 rounded-md whitespace-nowrap transition-colors ${tab === t.key ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>
+            {t.label}
+          </button>
         ))}
       </div>
 
-      {/* Add Form */}
-      {showForm && (
-        <form onSubmit={handleCreate} className="bg-card border border-border rounded-xl p-5 mb-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <input className={inputClass} placeholder="Expense Title" required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
-          <input className={inputClass} placeholder="Amount (BDT)" type="number" step="0.01" required value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} />
-          <select className={inputClass} value={form.expense_type} onChange={(e) => setForm({ ...form, expense_type: e.target.value })}>
-            {EXPENSE_TYPES.map(({ value, label }) => <option key={value} value={value}>{label}</option>)}
-          </select>
-          <input className={inputClass} type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} />
-          <select className={inputClass} value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value, booking_id: "", customer_id: "", package_id: "" })}>
-            {ASSIGN_TO.map(({ value, label }) => <option key={value} value={value}>{label}</option>)}
-          </select>
-          <AssignmentFields data={form} setData={setForm} />
-          <input className={inputClass + " sm:col-span-2"} placeholder="Note (optional)" value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} />
-          <button type="submit" className="bg-gradient-gold text-primary-foreground font-semibold py-2.5 rounded-md text-sm sm:col-span-2">Record Expense</button>
-        </form>
+      {/* ============ EXPENSES TAB ============ */}
+      {tab === "expenses" && (
+        <>
+          {/* Type Breakdown */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+            {EXPENSE_TYPES.map(({ value, label }) => (
+              <div key={value} className="bg-card border border-border rounded-lg p-3 text-center">
+                <p className="text-xs text-muted-foreground">{label}</p>
+                <p className="text-lg font-heading font-bold text-foreground">{fmt(typeTotals[value] || 0)}</p>
+              </div>
+            ))}
+          </div>
+
+          {showForm && (
+            <form onSubmit={handleCreate} className="bg-card border border-border rounded-xl p-5 mb-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <input className={inputClass} placeholder="Expense Title" required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+              <input className={inputClass} placeholder="Amount (BDT)" type="number" step="0.01" required value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} />
+              <select className={inputClass} value={form.expense_type} onChange={(e) => setForm({ ...form, expense_type: e.target.value })}>
+                {EXPENSE_TYPES.map(({ value, label }) => <option key={value} value={value}>{label}</option>)}
+              </select>
+              <input className={inputClass} type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} />
+              <select className={inputClass} value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value, booking_id: "", customer_id: "", package_id: "" })}>
+                {ASSIGN_TO.map(({ value, label }) => <option key={value} value={value}>{label}</option>)}
+              </select>
+              <AssignmentFields data={form} setData={setForm} />
+              <input className={inputClass + " sm:col-span-2"} placeholder="Note (optional)" value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} />
+              <button type="submit" className="bg-gradient-gold text-primary-foreground font-semibold py-2.5 rounded-md text-sm sm:col-span-2">Record Expense</button>
+            </form>
+          )}
+
+          {/* Filters */}
+          <div className="flex flex-wrap gap-3 mb-4 items-center">
+            <Filter className="h-4 w-4 text-muted-foreground" />
+            <select className={inputClass + " w-auto"} value={filterType} onChange={(e) => setFilterType(e.target.value)}>
+              <option value="all">All Types</option>
+              {EXPENSE_TYPES.map(({ value, label }) => <option key={value} value={value}>{label}</option>)}
+            </select>
+            <select className={inputClass + " w-auto"} value={filterAssign} onChange={(e) => setFilterAssign(e.target.value)}>
+              <option value="all">All Assignments</option>
+              {ASSIGN_TO.map(({ value, label }) => <option key={value} value={value}>{label}</option>)}
+            </select>
+            <span className="text-xs text-muted-foreground ml-auto">{filtered.length} expense{filtered.length !== 1 ? "s" : ""}</span>
+          </div>
+
+          {/* Expense List */}
+          <div className="space-y-2">
+            {filtered.map((e: any) => (
+              <div key={e.id} className="bg-card border border-border rounded-lg p-4">
+                {editingId === e.id ? (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    <input className={inputClass} value={editForm.title} onChange={(ev) => setEditForm({ ...editForm, title: ev.target.value })} />
+                    <input className={inputClass} type="number" step="0.01" value={editForm.amount} onChange={(ev) => setEditForm({ ...editForm, amount: ev.target.value })} />
+                    <select className={inputClass} value={editForm.expense_type} onChange={(ev) => setEditForm({ ...editForm, expense_type: ev.target.value })}>
+                      {EXPENSE_TYPES.map(({ value, label }) => <option key={value} value={value}>{label}</option>)}
+                    </select>
+                    <input className={inputClass} type="date" value={editForm.date} onChange={(ev) => setEditForm({ ...editForm, date: ev.target.value })} />
+                    <select className={inputClass} value={editForm.category} onChange={(ev) => setEditForm({ ...editForm, category: ev.target.value, booking_id: "", customer_id: "", package_id: "" })}>
+                      {ASSIGN_TO.map(({ value, label }) => <option key={value} value={value}>{label}</option>)}
+                    </select>
+                    <AssignmentFields data={editForm} setData={setEditForm} />
+                    <input className={inputClass} placeholder="Note" value={editForm.note} onChange={(ev) => setEditForm({ ...editForm, note: ev.target.value })} />
+                    <div className="flex gap-2 items-center sm:col-span-3">
+                      <button onClick={saveEdit} className="text-xs bg-primary text-primary-foreground px-3 py-1.5 rounded-md flex items-center gap-1"><Save className="h-3 w-3" /> Save</button>
+                      <button onClick={() => setEditingId(null)} className="text-xs bg-secondary px-3 py-1.5 rounded-md">Cancel</button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="font-medium text-sm truncate">{e.title}</p>
+                      <div className="flex flex-wrap gap-1.5 mt-1">
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary font-medium capitalize">{EXPENSE_TYPES.find(t => t.value === e.expense_type)?.label || e.expense_type}</span>
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-secondary text-muted-foreground capitalize">{e.category || "general"}</span>
+                        <span className="text-[10px] text-muted-foreground">{new Date(e.date).toLocaleDateString()}</span>
+                        {e.booking_id && <span className="text-[10px] text-muted-foreground">📋 {getBookingLabel(e.booking_id)}</span>}
+                        {e.customer_id && <span className="text-[10px] text-muted-foreground">👤 {getCustomerLabel(e.customer_id)}</span>}
+                        {e.package_id && <span className="text-[10px] text-muted-foreground">📦 {getPackageLabel(e.package_id)}</span>}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 shrink-0">
+                      <p className="font-heading font-bold text-destructive">{fmt(e.amount)}</p>
+                      {!isViewer && <button onClick={() => startEdit(e)} className="text-muted-foreground hover:text-foreground"><Edit2 className="h-3.5 w-3.5" /></button>}
+                      {!isViewer && <button onClick={() => setDeleteId(e.id)} className="text-destructive hover:underline"><Trash2 className="h-3.5 w-3.5" /></button>}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+            {filtered.length === 0 && <p className="text-center text-muted-foreground py-12">No expenses found.</p>}
+          </div>
+        </>
       )}
 
-      {/* Filters */}
-      <div className="flex flex-wrap gap-3 mb-4 items-center">
-        <Filter className="h-4 w-4 text-muted-foreground" />
-        <select className={inputClass + " w-auto"} value={filterType} onChange={(e) => setFilterType(e.target.value)}>
-          <option value="all">All Types</option>
-          {EXPENSE_TYPES.map(({ value, label }) => <option key={value} value={value}>{label}</option>)}
-        </select>
-        <select className={inputClass + " w-auto"} value={filterAssign} onChange={(e) => setFilterAssign(e.target.value)}>
-          <option value="all">All Assignments</option>
-          {ASSIGN_TO.map(({ value, label }) => <option key={value} value={value}>{label}</option>)}
-        </select>
-        <span className="text-xs text-muted-foreground ml-auto">{filtered.length} expense{filtered.length !== 1 ? "s" : ""}</span>
-      </div>
+      {/* ============ BOOKING PROFIT TAB ============ */}
+      {tab === "booking" && (
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border text-left text-muted-foreground">
+                <th className="pb-3 pr-4">Tracking ID</th>
+                <th className="pb-3 pr-4">Customer</th>
+                <th className="pb-3 pr-4">Package</th>
+                <th className="pb-3 pr-4">Payments</th>
+                <th className="pb-3 pr-4">Expenses</th>
+                <th className="pb-3 pr-4">Profit</th>
+                <th className="pb-3">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {bookingProfit.map((b: any) => (
+                <tr key={b.booking_id} className="border-b border-border/50">
+                  <td className="py-3 pr-4 font-mono text-xs">{b.tracking_id}</td>
+                  <td className="py-3 pr-4 text-sm">{b.guest_name || "—"}</td>
+                  <td className="py-3 pr-4 text-sm">{b.package_name || "—"}</td>
+                  <td className="py-3 pr-4 font-medium text-primary">{fmt(b.total_payments)}</td>
+                  <td className="py-3 pr-4 font-medium text-destructive">{fmt(b.total_expenses)}</td>
+                  <td className="py-3 pr-4"><ProfitBadge value={b.profit} /></td>
+                  <td className="py-3">
+                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full capitalize ${b.status === "completed" ? "text-emerald bg-emerald/10" : "text-primary bg-primary/10"}`}>{b.status}</span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {bookingProfit.length === 0 && <p className="text-center text-muted-foreground py-12">No booking data.</p>}
+          {bookingProfit.length > 0 && (
+            <div className="mt-4 bg-card border border-border rounded-lg p-4 flex flex-wrap gap-6">
+              <div><p className="text-xs text-muted-foreground">Total Payments</p><p className="font-heading font-bold text-primary">{fmt(bookingProfit.reduce((s: number, b: any) => s + Number(b.total_payments), 0))}</p></div>
+              <div><p className="text-xs text-muted-foreground">Total Expenses</p><p className="font-heading font-bold text-destructive">{fmt(bookingProfit.reduce((s: number, b: any) => s + Number(b.total_expenses), 0))}</p></div>
+              <div><p className="text-xs text-muted-foreground">Total Profit</p><p className="font-heading font-bold">{fmt(bookingProfit.reduce((s: number, b: any) => s + Number(b.profit), 0))}</p></div>
+            </div>
+          )}
+        </div>
+      )}
 
-      {/* Expense List */}
-      <div className="space-y-2">
-        {filtered.map((e: any) => (
-          <div key={e.id} className="bg-card border border-border rounded-lg p-4">
-            {editingId === e.id ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                <input className={inputClass} value={editForm.title} onChange={(ev) => setEditForm({ ...editForm, title: ev.target.value })} />
-                <input className={inputClass} type="number" step="0.01" value={editForm.amount} onChange={(ev) => setEditForm({ ...editForm, amount: ev.target.value })} />
-                <select className={inputClass} value={editForm.expense_type} onChange={(ev) => setEditForm({ ...editForm, expense_type: ev.target.value })}>
-                  {EXPENSE_TYPES.map(({ value, label }) => <option key={value} value={value}>{label}</option>)}
-                </select>
-                <input className={inputClass} type="date" value={editForm.date} onChange={(ev) => setEditForm({ ...editForm, date: ev.target.value })} />
-                <select className={inputClass} value={editForm.category} onChange={(ev) => setEditForm({ ...editForm, category: ev.target.value, booking_id: "", customer_id: "", package_id: "" })}>
-                  {ASSIGN_TO.map(({ value, label }) => <option key={value} value={value}>{label}</option>)}
-                </select>
-                <AssignmentFields data={editForm} setData={setEditForm} />
-                <input className={inputClass} placeholder="Note" value={editForm.note} onChange={(ev) => setEditForm({ ...editForm, note: ev.target.value })} />
-                <div className="flex gap-2 items-center sm:col-span-3">
-                  <button onClick={saveEdit} className="text-xs bg-primary text-primary-foreground px-3 py-1.5 rounded-md flex items-center gap-1"><Save className="h-3 w-3" /> Save</button>
-                  <button onClick={() => setEditingId(null)} className="text-xs bg-secondary px-3 py-1.5 rounded-md">Cancel</button>
-                </div>
-              </div>
-            ) : (
-              <div className="flex items-center justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="font-medium text-sm truncate">{e.title}</p>
-                  <div className="flex flex-wrap gap-1.5 mt-1">
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary font-medium capitalize">{EXPENSE_TYPES.find(t => t.value === e.expense_type)?.label || e.expense_type}</span>
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-secondary text-muted-foreground capitalize">{e.category || "general"}</span>
-                    <span className="text-[10px] text-muted-foreground">{new Date(e.date).toLocaleDateString()}</span>
-                    {e.booking_id && <span className="text-[10px] text-muted-foreground">📋 {getBookingLabel(e.booking_id)}</span>}
-                    {e.customer_id && <span className="text-[10px] text-muted-foreground">👤 {getCustomerLabel(e.customer_id)}</span>}
-                    {e.package_id && <span className="text-[10px] text-muted-foreground">📦 {getPackageLabel(e.package_id)}</span>}
-                  </div>
-                </div>
-                <div className="flex items-center gap-3 shrink-0">
-                  <p className="font-heading font-bold text-destructive">৳{Number(e.amount).toLocaleString()}</p>
-                  {!isViewer && <button onClick={() => startEdit(e)} className="text-muted-foreground hover:text-foreground"><Edit2 className="h-3.5 w-3.5" /></button>}
-                  {!isViewer && <button onClick={() => setDeleteId(e.id)} className="text-destructive hover:underline"><Trash2 className="h-3.5 w-3.5" /></button>}
-                </div>
-              </div>
-            )}
-          </div>
-        ))}
-        {filtered.length === 0 && <p className="text-center text-muted-foreground py-12">No expenses found.</p>}
-      </div>
+      {/* ============ PACKAGE PROFIT TAB ============ */}
+      {tab === "package" && (
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border text-left text-muted-foreground">
+                <th className="pb-3 pr-4">Package</th>
+                <th className="pb-3 pr-4">Type</th>
+                <th className="pb-3 pr-4">Bookings</th>
+                <th className="pb-3 pr-4">Revenue</th>
+                <th className="pb-3 pr-4">Expenses</th>
+                <th className="pb-3">Profit</th>
+              </tr>
+            </thead>
+            <tbody>
+              {packageProfit.map((p: any) => (
+                <tr key={p.package_id} className="border-b border-border/50">
+                  <td className="py-3 pr-4 font-medium">{p.package_name}</td>
+                  <td className="py-3 pr-4 capitalize text-xs">{p.package_type}</td>
+                  <td className="py-3 pr-4">{p.total_bookings}</td>
+                  <td className="py-3 pr-4 font-medium text-primary">{fmt(p.total_revenue)}</td>
+                  <td className="py-3 pr-4 font-medium text-destructive">{fmt(p.total_expenses)}</td>
+                  <td className="py-3"><ProfitBadge value={p.profit} /></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {packageProfit.length === 0 && <p className="text-center text-muted-foreground py-12">No package data.</p>}
+          {packageProfit.length > 0 && (
+            <div className="mt-4 bg-card border border-border rounded-lg p-4 flex flex-wrap gap-6">
+              <div><p className="text-xs text-muted-foreground">Total Revenue</p><p className="font-heading font-bold text-primary">{fmt(packageProfit.reduce((s: number, p: any) => s + Number(p.total_revenue), 0))}</p></div>
+              <div><p className="text-xs text-muted-foreground">Total Expenses</p><p className="font-heading font-bold text-destructive">{fmt(packageProfit.reduce((s: number, p: any) => s + Number(p.total_expenses), 0))}</p></div>
+              <div><p className="text-xs text-muted-foreground">Total Profit</p><p className="font-heading font-bold">{fmt(packageProfit.reduce((s: number, p: any) => s + Number(p.profit), 0))}</p></div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ============ CUSTOMER PROFIT TAB ============ */}
+      {tab === "customer" && (
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border text-left text-muted-foreground">
+                <th className="pb-3 pr-4">Customer</th>
+                <th className="pb-3 pr-4">Phone</th>
+                <th className="pb-3 pr-4">Bookings</th>
+                <th className="pb-3 pr-4">Payments</th>
+                <th className="pb-3 pr-4">Expenses</th>
+                <th className="pb-3">Profit</th>
+              </tr>
+            </thead>
+            <tbody>
+              {customerProfit.map((c: any) => (
+                <tr key={c.customer_id} className="border-b border-border/50">
+                  <td className="py-3 pr-4 font-medium">{c.full_name || "—"}</td>
+                  <td className="py-3 pr-4 text-xs">{c.phone || "—"}</td>
+                  <td className="py-3 pr-4">{c.total_bookings}</td>
+                  <td className="py-3 pr-4 font-medium text-primary">{fmt(c.total_payments)}</td>
+                  <td className="py-3 pr-4 font-medium text-destructive">{fmt(c.total_expenses)}</td>
+                  <td className="py-3"><ProfitBadge value={c.profit} /></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {customerProfit.length === 0 && <p className="text-center text-muted-foreground py-12">No customer data.</p>}
+          {customerProfit.length > 0 && (
+            <div className="mt-4 bg-card border border-border rounded-lg p-4 flex flex-wrap gap-6">
+              <div><p className="text-xs text-muted-foreground">Total Payments</p><p className="font-heading font-bold text-primary">{fmt(customerProfit.reduce((s: number, c: any) => s + Number(c.total_payments), 0))}</p></div>
+              <div><p className="text-xs text-muted-foreground">Total Expenses</p><p className="font-heading font-bold text-destructive">{fmt(customerProfit.reduce((s: number, c: any) => s + Number(c.total_expenses), 0))}</p></div>
+              <div><p className="text-xs text-muted-foreground">Total Profit</p><p className="font-heading font-bold">{fmt(customerProfit.reduce((s: number, c: any) => s + Number(c.profit), 0))}</p></div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Delete Modal */}
       {deleteId && (

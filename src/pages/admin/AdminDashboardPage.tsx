@@ -6,20 +6,21 @@ export default function AdminDashboardPage() {
   const [bookings, setBookings] = useState<any[]>([]);
   const [payments, setPayments] = useState<any[]>([]);
   const [expenses, setExpenses] = useState<any[]>([]);
+  const [accounts, setAccounts] = useState<any[]>([]);
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  useEffect(() => { fetchData(); }, []);
 
   const fetchData = async () => {
-    const [bk, py, ex] = await Promise.all([
+    const [bk, py, ex, ac] = await Promise.all([
       supabase.from("bookings").select("*, packages(name, type), profiles(full_name)").order("created_at", { ascending: false }),
       supabase.from("payments").select("*, bookings(tracking_id)").order("created_at", { ascending: false }),
       supabase.from("expenses").select("*").order("date", { ascending: false }),
+      supabase.from("accounts" as any).select("*"),
     ]);
     setBookings(bk.data || []);
     setPayments(py.data || []);
     setExpenses(ex.data || []);
+    setAccounts((ac.data as any[]) || []);
   };
 
   const markPaymentCompleted = async (paymentId: string) => {
@@ -28,5 +29,5 @@ export default function AdminDashboardPage() {
     fetchData();
   };
 
-  return <AdminDashboardCharts bookings={bookings} payments={payments} expenses={expenses} onMarkPaid={markPaymentCompleted} />;
+  return <AdminDashboardCharts bookings={bookings} payments={payments} expenses={expenses} accounts={accounts} onMarkPaid={markPaymentCompleted} />;
 }

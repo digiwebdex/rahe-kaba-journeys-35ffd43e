@@ -69,23 +69,46 @@ const TrackBooking = () => {
       });
   }, [user]);
 
+  const isPhoneNumber = (input: string) => /^[\+]?[0-9\s\-]{7,15}$/.test(input.trim());
+
   const handleSearch = async (idOverride?: string) => {
-    const id = (idOverride || trackingId).trim().toUpperCase();
-    if (!id) return;
-    setTrackingId(id);
+    const rawInput = (idOverride || trackingId).trim();
+    if (!rawInput) return;
+    setTrackingId(rawInput);
     setLoading(true);
     setSearched(true);
 
-    const { data: bookingData } = await supabase
-      .from("bookings")
-      .select("*, packages(name, type)")
-      .eq("tracking_id", id)
-      .maybeSingle();
+    let bookingData: any = null;
+
+    if (isPhoneNumber(rawInput)) {
+      // Search by phone number — check guest_phone or profiles.phone
+      const { data: guestBookings } = await supabase
+        .from("bookings")
+        .select("*, packages(name, type)")
+        .eq("guest_phone", rawInput)
+        .order("created_at", { ascending: false })
+        .limit(1);
+
+      if (guestBookings && guestBookings.length > 0) {
+        bookingData = guestBookings[0];
+      }
+    } else {
+      // Search by tracking ID
+      const id = rawInput.toUpperCase();
+      setTrackingId(id);
+      const { data } = await supabase
+        .from("bookings")
+        .select("*, packages(name, type)")
+        .eq("tracking_id", id)
+        .maybeSingle();
+      bookingData = data;
+    }
 
     setBooking(bookingData);
 
     if (bookingData) {
-      addToHistory(id);
+      const displayId = bookingData.tracking_id;
+      addToHistory(displayId);
       setHistory(getHistory());
       const { data: paymentData } = await supabase
         .from("payments")
@@ -144,14 +167,14 @@ const TrackBooking = () => {
             <h1 className="font-heading text-3xl md:text-4xl font-bold mt-3 mb-3">
               Track Your <span className="text-gradient-gold">Booking</span>
             </h1>
-            <p className="text-muted-foreground text-sm">Enter your Tracking ID to view your booking status and details</p>
+            <p className="text-muted-foreground text-sm">Enter your Tracking ID or Phone Number to view your booking status</p>
           </motion.div>
 
           {/* Search Bar */}
           <div className="flex gap-3 mb-6">
             <input
               type="text"
-              placeholder="Enter Tracking ID (e.g. RK-A1B2C3D4)"
+              placeholder="Enter Tracking ID or Phone Number"
               className="flex-1 bg-secondary border border-border rounded-md px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 uppercase"
               value={trackingId}
               onChange={(e) => setTrackingId(e.target.value)}

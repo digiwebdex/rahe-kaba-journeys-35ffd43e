@@ -55,11 +55,11 @@ const PersonalDetailsStep = ({ info, onChange }: Props) => {
         </div>
         <div>
           <label className="text-sm text-muted-foreground mb-1 block">
-            Passport Number <span className="text-destructive">*</span>
+            Passport Number (optional)
           </label>
           <input
             type="text"
-            required
+            required={false}
             maxLength={20}
             placeholder="Passport number"
             value={info.passportNumber}

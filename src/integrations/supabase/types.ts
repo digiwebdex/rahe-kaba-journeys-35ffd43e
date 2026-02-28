@@ -104,6 +104,11 @@ export type Database = {
         Row: {
           created_at: string
           due_amount: number | null
+          guest_address: string | null
+          guest_email: string | null
+          guest_name: string | null
+          guest_passport: string | null
+          guest_phone: string | null
           id: string
           installment_plan_id: string | null
           notes: string | null
@@ -114,11 +119,16 @@ export type Database = {
           total_amount: number
           tracking_id: string
           updated_at: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           created_at?: string
           due_amount?: number | null
+          guest_address?: string | null
+          guest_email?: string | null
+          guest_name?: string | null
+          guest_passport?: string | null
+          guest_phone?: string | null
           id?: string
           installment_plan_id?: string | null
           notes?: string | null
@@ -129,11 +139,16 @@ export type Database = {
           total_amount: number
           tracking_id?: string
           updated_at?: string
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           created_at?: string
           due_amount?: number | null
+          guest_address?: string | null
+          guest_email?: string | null
+          guest_name?: string | null
+          guest_passport?: string | null
+          guest_phone?: string | null
           id?: string
           installment_plan_id?: string | null
           notes?: string | null
@@ -144,7 +159,7 @@ export type Database = {
           total_amount?: number
           tracking_id?: string
           updated_at?: string
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: [
           {

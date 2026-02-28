@@ -35,6 +35,7 @@ const Booking = () => {
   const [numTravelers, setNumTravelers] = useState(1);
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [notes, setNotes] = useState("");
+  const [email, setEmail] = useState("");
   const [personalInfo, setPersonalInfo] = useState<PersonalInfo>({
     fullName: "",
     phone: "",
@@ -47,40 +48,41 @@ const Booking = () => {
 
   useEffect(() => {
     const init = async () => {
+      // Check session but DON'T redirect — guests can book too
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        toast.error(t("booking.signInToBook"));
-        navigate("/auth");
-        return;
+      if (session) {
+        setUser(session.user);
+        // Pre-fill from profile
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("user_id", session.user.id)
+          .single();
+        if (profile) {
+          setPersonalInfo({
+            fullName: profile.full_name || "",
+            phone: profile.phone || "",
+            passportNumber: profile.passport_number || "",
+            address: profile.address || "",
+          });
+          setEmail(session.user.email || "");
+        }
       }
-      setUser(session.user);
 
-      // Load profile, package, and plans in parallel
-      const [profileRes, pkgRes, planRes] = await Promise.all([
-        supabase.from("profiles").select("*").eq("user_id", session.user.id).single(),
+      // Load package and plans in parallel
+      const [pkgRes, planRes] = await Promise.all([
         packageId
           ? supabase.from("packages").select("*").eq("id", packageId).eq("is_active", true).single()
           : Promise.resolve({ data: null }),
         supabase.from("installment_plans").select("*").eq("is_active", true).order("num_installments"),
       ]);
 
-      // Pre-fill personal info from profile
-      if (profileRes.data) {
-        const p = profileRes.data;
-        setPersonalInfo({
-          fullName: p.full_name || "",
-          phone: p.phone || "",
-          passportNumber: p.passport_number || "",
-          address: p.address || "",
-        });
-      }
-
       setPkg(pkgRes.data);
       setPlans(planRes.data || []);
       setLoading(false);
     };
     init();
-  }, [packageId, navigate]);
+  }, [packageId]);
 
   const totalAmount = pkg ? Number(pkg.price) * numTravelers : 0;
 
@@ -98,10 +100,7 @@ const Booking = () => {
         toast.error(t("booking.phoneRequired"));
         return false;
       }
-      if (!personalInfo.passportNumber.trim()) {
-        toast.error(t("booking.passportRequired"));
-        return false;
-      }
+      // Passport is optional — no validation
     }
     return true;
   };
@@ -113,52 +112,30 @@ const Booking = () => {
   const prevStep = () => setStep((s) => Math.max(s - 1, 0));
 
   const handleSubmit = async () => {
-    if (!pkg || !user) return;
-
+    if (!pkg) return;
     setSubmitting(true);
     try {
-      // Update profile with personal details
-      await supabase
-        .from("profiles")
-        .update({
-          full_name: personalInfo.fullName.trim(),
+      // Use edge function for both guest and logged-in bookings
+      const response = await supabase.functions.invoke("create-guest-booking", {
+        body: {
+          fullName: personalInfo.fullName.trim(),
           phone: personalInfo.phone.trim(),
-          passport_number: personalInfo.passportNumber.trim(),
+          email: email.trim() || null,
           address: personalInfo.address.trim() || null,
-        })
-        .eq("user_id", user.id);
-
-      // Create booking
-      const { data: booking, error } = await supabase
-        .from("bookings")
-        .insert({
-          user_id: user.id,
-          package_id: pkg.id,
-          total_amount: totalAmount,
-          num_travelers: numTravelers,
-          installment_plan_id: selectedPlan || null,
+          passportNumber: personalInfo.passportNumber.trim() || null,
+          packageId: pkg.id,
+          numTravelers,
           notes: notes.trim() || null,
-        })
-        .select()
-        .single();
+          installmentPlanId: selectedPlan || null,
+        },
+      });
 
-      if (error) throw error;
+      if (response.error) throw new Error(response.error.message);
+      const result = response.data;
+      if (!result?.success) throw new Error(result?.error || "Booking failed");
 
-      // Generate installment schedule if plan selected
-      if (selectedPlan) {
-        const plan = plans.find((p) => p.id === selectedPlan);
-        if (plan) {
-          await supabase.rpc("generate_installment_schedule", {
-            p_booking_id: booking.id,
-            p_total_amount: totalAmount,
-            p_num_installments: plan.num_installments,
-            p_user_id: user.id,
-          });
-        }
-      }
-
-      setCreatedBooking({ id: booking.id, tracking_id: booking.tracking_id });
-      toast.success(`Booking created! Tracking ID: ${booking.tracking_id}`);
+      setCreatedBooking({ id: result.booking_id, tracking_id: result.tracking_id });
+      toast.success(`Booking created! Tracking ID: ${result.tracking_id}`);
     } catch (err: any) {
       toast.error(err.message || "Booking failed");
     } finally {
@@ -195,6 +172,11 @@ const Booking = () => {
             <h1 className="font-heading text-3xl md:text-4xl font-bold mt-3 mb-3">
               {t("booking.completeYour")} <span className="text-gradient-gold">{t("booking.booking")}</span>
             </h1>
+            {!user && (
+              <p className="text-xs text-muted-foreground">
+                No account needed! Or <Link to="/auth" className="text-primary hover:underline">sign in</Link> to manage your bookings later.
+              </p>
+            )}
           </motion.div>
 
           {!pkg && !createdBooking ? (
@@ -204,11 +186,10 @@ const Booking = () => {
               <Link to="/packages" className="text-primary hover:underline">{t("booking.browsePackages")}</Link>
             </div>
           ) : createdBooking ? (
-            /* Success + Document Upload */
             <BookingSuccess
               bookingId={createdBooking.id}
               trackingId={createdBooking.tracking_id}
-              userId={user.id}
+              userId={user?.id || ""}
             />
           ) : (
             <>
@@ -258,8 +239,24 @@ const Booking = () => {
 
               {/* Step 1: Personal Details */}
               {step === 1 && (
-                <motion.div key="step1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
+                <motion.div key="step1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
                   <PersonalDetailsStep info={personalInfo} onChange={setPersonalInfo} />
+                  {/* Email field for guests */}
+                  {!user && (
+                    <div className="bg-card border border-border rounded-xl p-6">
+                      <label className="text-sm text-muted-foreground mb-1 block">
+                        Email (optional)
+                      </label>
+                      <input
+                        type="email"
+                        maxLength={100}
+                        placeholder="your@email.com"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className={inputClass}
+                      />
+                    </div>
+                  )}
                 </motion.div>
               )}
 
@@ -270,6 +267,7 @@ const Booking = () => {
                     <h2 className="font-heading text-lg font-bold mb-4 flex items-center gap-2">
                       <CreditCard className="h-5 w-5 text-primary" /> {t("booking.paymentPlan")}
                     </h2>
+                    <p className="text-xs text-muted-foreground mb-4">Payment is not required now. You can pay later.</p>
                     <div className="space-y-3">
                       <button
                         type="button"
@@ -350,15 +348,21 @@ const Booking = () => {
                         <span className="text-muted-foreground">{t("booking.phone")}</span>
                         <span className="font-medium">{personalInfo.phone}</span>
                       </div>
-                      <div className="flex justify-between py-2 border-b border-border/50">
-                        <span className="text-muted-foreground">{t("booking.passport")}</span>
-                        <span className="font-medium">{personalInfo.passportNumber}</span>
-                      </div>
+                      {personalInfo.passportNumber && (
+                        <div className="flex justify-between py-2 border-b border-border/50">
+                          <span className="text-muted-foreground">{t("booking.passport")}</span>
+                          <span className="font-medium">{personalInfo.passportNumber}</span>
+                        </div>
+                      )}
                       <div className="flex justify-between py-2 border-b border-border/50">
                         <span className="text-muted-foreground">{t("booking.paymentPlan")}</span>
                         <span className="font-medium">
                           {selectedPlan ? plans.find((p) => p.id === selectedPlan)?.name : t("booking.fullPayment")}
                         </span>
+                      </div>
+                      <div className="flex justify-between py-2 border-b border-border/50">
+                        <span className="text-muted-foreground">Payment Status</span>
+                        <span className="font-medium text-primary">Not Paid (Pay Later)</span>
                       </div>
                       <div className="flex justify-between py-3 bg-secondary/50 rounded-lg px-3 mt-2">
                         <span className="font-medium">{t("booking.totalAmount")}</span>

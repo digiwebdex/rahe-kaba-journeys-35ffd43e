@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Printer, DollarSign, TrendingUp, TrendingDown, Clock, Download,
-  FileText, Hotel, Package, CreditCard, Eye
+  FileText, Hotel, Package, CreditCard, Eye, CalendarDays
 } from "lucide-react";
 import { generateInvoice, generateReceipt, CompanyInfo, InvoicePayment } from "@/lib/invoiceGenerator";
 import { toast } from "sonner";
@@ -18,6 +18,8 @@ interface CustomerFinancialReportProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
+
+const fmt = (n: number) => `৳${Number(n || 0).toLocaleString()}`;
 
 export default function CustomerFinancialReport({ customer, open, onOpenChange }: CustomerFinancialReportProps) {
   const [bookings, setBookings] = useState<any[]>([]);
@@ -70,11 +72,15 @@ export default function CustomerFinancialReport({ customer, open, onOpenChange }
     setLoading(true);
 
     const fetchData = async () => {
-      const [bksRes, pmtsRes, docsRes, hotelRes] = await Promise.all([
+      const bookingIds: string[] = [];
+
+      const [bksRes, pmtsRes, docsRes, hotelRes, directExpRes] = await Promise.all([
         supabase.from("bookings").select("*, packages(name, type, price, duration_days, start_date)").eq("user_id", customer.user_id),
         supabase.from("payments").select("*, bookings(tracking_id)").eq("user_id", customer.user_id).order("due_date", { ascending: true }),
         supabase.from("booking_documents").select("*").eq("user_id", customer.user_id).order("created_at", { ascending: false }),
         supabase.from("hotel_bookings").select("*, hotels(name, city, location), hotel_rooms(name, price_per_night)").eq("user_id", customer.user_id).order("created_at", { ascending: false }),
+        // Direct customer expenses
+        supabase.from("expenses").select("*").eq("customer_id", customer.user_id).order("date", { ascending: false }),
       ]);
 
       const bookingsList = bksRes.data || [];
@@ -83,14 +89,22 @@ export default function CustomerFinancialReport({ customer, open, onOpenChange }
       setDocuments(docsRes.data || []);
       setHotelBookings(hotelRes.data || []);
 
-      const bookingIds = bookingsList.map((b) => b.id);
-      if (bookingIds.length > 0) {
-        const { data: txns } = await supabase.from("transactions").select("*").eq("type", "expense").in("booking_id", bookingIds);
-        setExpenses(txns || []);
-      } else {
-        setExpenses([]);
+      // Get booking-linked expenses too
+      const bIds = bookingsList.map((b: any) => b.id);
+      let bookingExpenses: any[] = [];
+      if (bIds.length > 0) {
+        const { data: bExp } = await supabase.from("expenses").select("*").in("booking_id", bIds);
+        bookingExpenses = bExp || [];
       }
 
+      // Merge direct customer expenses + booking-linked expenses (deduplicate)
+      const allExpenses = [...(directExpRes.data || [])];
+      bookingExpenses.forEach((be: any) => {
+        if (!allExpenses.find((e: any) => e.id === be.id)) {
+          allExpenses.push(be);
+        }
+      });
+      setExpenses(allExpenses);
       setLoading(false);
     };
 
@@ -98,17 +112,76 @@ export default function CustomerFinancialReport({ customer, open, onOpenChange }
   }, [open, customer]);
 
   const summary = useMemo(() => {
-    const totalRevenue = payments.filter((p) => p.status === "completed").reduce((s, p) => s + Number(p.amount), 0);
-    const totalExpenses = expenses.reduce((s, e) => s + Number(e.amount), 0);
-    const totalDue = payments.filter((p) => p.status === "pending").reduce((s, p) => s + Number(p.amount), 0);
-    return { totalRevenue, totalExpenses, netProfit: totalRevenue - totalExpenses, totalDue };
-  }, [payments, expenses]);
+    const totalPaid = payments.filter((p) => p.status === "completed").reduce((s: number, p: any) => s + Number(p.amount), 0);
+    const totalExpenses = expenses.reduce((s: number, e: any) => s + Number(e.amount), 0);
+    const totalDue = payments.filter((p) => p.status === "pending").reduce((s: number, p: any) => s + Number(p.amount), 0);
+    const totalBookingValue = bookings.reduce((s: number, b: any) => s + Number(b.total_amount), 0);
+    return { totalPaid, totalExpenses, netProfit: totalPaid - totalExpenses, totalDue, totalBookingValue };
+  }, [payments, expenses, bookings]);
 
-  const fmt = (n: number) => `৳${n.toLocaleString()}`;
+  // Ledger timeline: merge all events chronologically
+  const ledgerTimeline = useMemo(() => {
+    const events: any[] = [];
+
+    bookings.forEach((b: any) => {
+      events.push({
+        date: b.created_at,
+        type: "booking",
+        icon: "📋",
+        label: `Booking Created`,
+        detail: `${b.tracking_id} — ${(b.packages as any)?.name || "Package"} (${b.num_travelers} travelers)`,
+        amount: Number(b.total_amount),
+        amountType: "neutral",
+      });
+    });
+
+    payments.forEach((p: any) => {
+      if (p.status === "completed") {
+        events.push({
+          date: p.paid_at || p.created_at,
+          type: "payment",
+          icon: "💰",
+          label: `Payment Received`,
+          detail: `${(p.bookings as any)?.tracking_id || ""} — Installment #${p.installment_number || "N/A"} via ${p.payment_method || "manual"}`,
+          amount: Number(p.amount),
+          amountType: "income",
+        });
+      } else if (p.status === "pending") {
+        events.push({
+          date: p.due_date || p.created_at,
+          type: "due",
+          icon: "⏳",
+          label: `Payment Due`,
+          detail: `${(p.bookings as any)?.tracking_id || ""} — Installment #${p.installment_number || "N/A"}`,
+          amount: Number(p.amount),
+          amountType: "pending",
+        });
+      }
+    });
+
+    expenses.forEach((e: any) => {
+      events.push({
+        date: e.date || e.created_at,
+        type: "expense",
+        icon: "📤",
+        label: `Expense: ${e.title}`,
+        detail: `${e.expense_type || e.category || "general"} ${e.booking_id ? "• Linked to booking" : ""}`,
+        amount: Number(e.amount),
+        amountType: "expense",
+      });
+    });
+
+    return events.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }, [bookings, payments, expenses]);
 
   const DOC_TYPE_LABELS: Record<string, string> = {
     passport_copy: "Passport Copy", nid_copy: "NID Copy", photo: "Photo",
     visa_copy: "Visa Copy", ticket_copy: "Ticket Copy", other: "Other",
+  };
+
+  const EXPENSE_TYPE_LABELS: Record<string, string> = {
+    visa: "Visa", ticket: "Ticket", hotel: "Hotel", transport: "Transport",
+    food: "Food", guide: "Guide", office: "Office", other: "Other",
   };
 
   if (!customer) return null;
@@ -118,9 +191,9 @@ export default function CustomerFinancialReport({ customer, open, onOpenChange }
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto print-report-content">
         <DialogHeader>
           <DialogTitle className="font-heading text-xl">
-            {customer.full_name || "Unnamed Customer"}
+            {customer.full_name || "Unnamed Customer"} — Ledger
           </DialogTitle>
-          <DialogDescription>Complete customer profile and financial overview.</DialogDescription>
+          <DialogDescription>Complete financial ledger with all bookings, payments, expenses, and profit.</DialogDescription>
         </DialogHeader>
 
         {/* Customer Info */}
@@ -132,42 +205,115 @@ export default function CustomerFinancialReport({ customer, open, onOpenChange }
         </div>
 
         {/* Summary Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <Card><CardContent className="p-4 flex items-center gap-3">
-            <DollarSign className="h-5 w-5 text-emerald-500" />
-            <div><p className="text-xs text-muted-foreground">Paid</p><p className="font-semibold text-sm">{fmt(summary.totalRevenue)}</p></div>
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+          <Card><CardContent className="p-3 flex items-center gap-2">
+            <Package className="h-4 w-4 text-muted-foreground" />
+            <div><p className="text-[10px] text-muted-foreground">Bookings</p><p className="font-semibold text-sm">{bookings.length}</p></div>
           </CardContent></Card>
-          <Card><CardContent className="p-4 flex items-center gap-3">
-            <TrendingDown className="h-5 w-5 text-destructive" />
-            <div><p className="text-xs text-muted-foreground">Expenses</p><p className="font-semibold text-sm">{fmt(summary.totalExpenses)}</p></div>
+          <Card><CardContent className="p-3 flex items-center gap-2">
+            <DollarSign className="h-4 w-4 text-emerald-500" />
+            <div><p className="text-[10px] text-muted-foreground">Total Paid</p><p className="font-semibold text-sm">{fmt(summary.totalPaid)}</p></div>
           </CardContent></Card>
-          <Card><CardContent className="p-4 flex items-center gap-3">
-            <TrendingUp className="h-5 w-5 text-primary" />
-            <div><p className="text-xs text-muted-foreground">Profit</p><p className={`font-semibold text-sm ${summary.netProfit < 0 ? "text-destructive" : ""}`}>{fmt(summary.netProfit)}</p></div>
+          <Card><CardContent className="p-3 flex items-center gap-2">
+            <Clock className="h-4 w-4 text-yellow-500" />
+            <div><p className="text-[10px] text-muted-foreground">Total Due</p><p className="font-semibold text-sm">{fmt(summary.totalDue)}</p></div>
           </CardContent></Card>
-          <Card><CardContent className="p-4 flex items-center gap-3">
-            <Clock className="h-5 w-5 text-yellow-500" />
-            <div><p className="text-xs text-muted-foreground">Due</p><p className="font-semibold text-sm">{fmt(summary.totalDue)}</p></div>
+          <Card><CardContent className="p-3 flex items-center gap-2">
+            <TrendingDown className="h-4 w-4 text-destructive" />
+            <div><p className="text-[10px] text-muted-foreground">Expenses</p><p className="font-semibold text-sm">{fmt(summary.totalExpenses)}</p></div>
+          </CardContent></Card>
+          <Card><CardContent className="p-3 flex items-center gap-2">
+            <TrendingUp className="h-4 w-4 text-primary" />
+            <div><p className="text-[10px] text-muted-foreground">Net Profit</p><p className={`font-semibold text-sm ${summary.netProfit < 0 ? "text-destructive" : ""}`}>{fmt(summary.netProfit)}</p></div>
           </CardContent></Card>
         </div>
 
         {loading ? (
           <p className="text-center text-muted-foreground py-8">Loading...</p>
         ) : (
-          <Tabs defaultValue="bookings" className="w-full">
-            <TabsList className="w-full grid grid-cols-5">
+          <Tabs defaultValue="ledger" className="w-full">
+            <TabsList className="w-full grid grid-cols-6">
+              <TabsTrigger value="ledger" className="text-xs gap-1"><CalendarDays className="h-3 w-3" /> Ledger</TabsTrigger>
               <TabsTrigger value="bookings" className="text-xs gap-1"><Package className="h-3 w-3" /> Bookings</TabsTrigger>
               <TabsTrigger value="payments" className="text-xs gap-1"><CreditCard className="h-3 w-3" /> Payments</TabsTrigger>
-              <TabsTrigger value="hotels" className="text-xs gap-1"><Hotel className="h-3 w-3" /> Hotels</TabsTrigger>
-              <TabsTrigger value="documents" className="text-xs gap-1"><FileText className="h-3 w-3" /> Documents</TabsTrigger>
               <TabsTrigger value="expenses" className="text-xs gap-1"><TrendingDown className="h-3 w-3" /> Expenses</TabsTrigger>
+              <TabsTrigger value="hotels" className="text-xs gap-1"><Hotel className="h-3 w-3" /> Hotels</TabsTrigger>
+              <TabsTrigger value="documents" className="text-xs gap-1"><FileText className="h-3 w-3" /> Docs</TabsTrigger>
             </TabsList>
 
-            {/* Bookings Tab */}
+            {/* ===== LEDGER TIMELINE TAB ===== */}
+            <TabsContent value="ledger">
+              <div className="relative pl-6 space-y-0">
+                {/* Vertical line */}
+                <div className="absolute left-[11px] top-2 bottom-2 w-0.5 bg-border" />
+
+                {ledgerTimeline.map((event, i) => (
+                  <div key={i} className="relative flex items-start gap-3 py-3">
+                    {/* Dot */}
+                    <div className={`absolute left-[-13px] top-4 h-3 w-3 rounded-full border-2 border-background z-10 ${
+                      event.amountType === "income" ? "bg-emerald-500" :
+                      event.amountType === "expense" ? "bg-destructive" :
+                      event.amountType === "pending" ? "bg-yellow-500" :
+                      "bg-primary"
+                    }`} />
+
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium flex items-center gap-1.5">
+                            <span>{event.icon}</span>
+                            <span className="truncate">{event.label}</span>
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-0.5 truncate">{event.detail}</p>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <p className={`text-sm font-bold ${
+                            event.amountType === "income" ? "text-emerald-500" :
+                            event.amountType === "expense" ? "text-destructive" :
+                            event.amountType === "pending" ? "text-yellow-600" :
+                            "text-foreground"
+                          }`}>
+                            {event.amountType === "income" ? "+" : event.amountType === "expense" ? "−" : ""}{fmt(event.amount)}
+                          </p>
+                          <p className="text-[10px] text-muted-foreground">{new Date(event.date).toLocaleDateString()}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                {ledgerTimeline.length === 0 && (
+                  <p className="text-center text-muted-foreground py-8 pl-4">No ledger entries yet.</p>
+                )}
+              </div>
+
+              {/* Running Balance */}
+              {ledgerTimeline.length > 0 && (
+                <div className="mt-4 bg-card border border-border rounded-lg p-4 flex flex-wrap gap-6">
+                  <div>
+                    <p className="text-xs text-muted-foreground">Total Inflow</p>
+                    <p className="font-heading font-bold text-emerald-500">{fmt(summary.totalPaid)}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Total Outflow</p>
+                    <p className="font-heading font-bold text-destructive">{fmt(summary.totalExpenses)}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Outstanding</p>
+                    <p className="font-heading font-bold text-yellow-600">{fmt(summary.totalDue)}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Net Profit</p>
+                    <p className={`font-heading font-bold ${summary.netProfit >= 0 ? "text-emerald-500" : "text-destructive"}`}>{fmt(summary.netProfit)}</p>
+                  </div>
+                </div>
+              )}
+            </TabsContent>
+
+            {/* ===== BOOKINGS TAB ===== */}
             <TabsContent value="bookings">
               <Table>
                 <TableHeader><TableRow>
-                  <TableHead>Tracking ID</TableHead><TableHead>Package</TableHead><TableHead>Start Date</TableHead>
+                  <TableHead>Tracking ID</TableHead><TableHead>Package</TableHead>
                   <TableHead>Travelers</TableHead><TableHead>Total</TableHead><TableHead>Paid</TableHead>
                   <TableHead>Due</TableHead><TableHead>Status</TableHead><TableHead></TableHead>
                 </TableRow></TableHeader>
@@ -176,15 +322,12 @@ export default function CustomerFinancialReport({ customer, open, onOpenChange }
                     <TableRow key={b.id}>
                       <TableCell className="font-mono text-xs">{b.tracking_id}</TableCell>
                       <TableCell>
-                        <div>
-                          <p className="text-sm">{(b.packages as any)?.name || "—"}</p>
-                          <p className="text-xs text-muted-foreground">{(b.packages as any)?.type} • {(b.packages as any)?.duration_days || "—"} days</p>
-                        </div>
+                        <p className="text-sm">{(b.packages as any)?.name || "—"}</p>
+                        <p className="text-xs text-muted-foreground">{(b.packages as any)?.type} • {(b.packages as any)?.duration_days || "—"} days</p>
                       </TableCell>
-                      <TableCell className="text-xs">{(b.packages as any)?.start_date ? new Date((b.packages as any).start_date).toLocaleDateString() : "—"}</TableCell>
                       <TableCell>{b.num_travelers}</TableCell>
                       <TableCell>{fmt(Number(b.total_amount))}</TableCell>
-                      <TableCell>{fmt(Number(b.paid_amount))}</TableCell>
+                      <TableCell className="text-emerald-500 font-medium">{fmt(Number(b.paid_amount))}</TableCell>
                       <TableCell className="text-destructive font-medium">{fmt(Number(b.due_amount || 0))}</TableCell>
                       <TableCell><Badge variant={b.status === "completed" ? "default" : "secondary"}>{b.status}</Badge></TableCell>
                       <TableCell>
@@ -194,27 +337,28 @@ export default function CustomerFinancialReport({ customer, open, onOpenChange }
                       </TableCell>
                     </TableRow>
                   ))}
-                  {bookings.length === 0 && <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground">No bookings</TableCell></TableRow>}
+                  {bookings.length === 0 && <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground">No bookings</TableCell></TableRow>}
                 </TableBody>
               </Table>
             </TabsContent>
 
-            {/* Payments Tab */}
+            {/* ===== PAYMENTS TAB ===== */}
             <TabsContent value="payments">
               <Table>
                 <TableHeader><TableRow>
-                  <TableHead>Booking</TableHead><TableHead>Installment</TableHead><TableHead>Amount</TableHead>
-                  <TableHead>Due Date</TableHead><TableHead>Status</TableHead><TableHead>Paid Date</TableHead><TableHead></TableHead>
+                  <TableHead>Booking</TableHead><TableHead>#</TableHead><TableHead>Amount</TableHead>
+                  <TableHead>Method</TableHead><TableHead>Due Date</TableHead><TableHead>Status</TableHead><TableHead>Paid</TableHead><TableHead></TableHead>
                 </TableRow></TableHeader>
                 <TableBody>
                   {payments.map((p) => (
                     <TableRow key={p.id}>
                       <TableCell className="font-mono text-xs">{(p.bookings as any)?.tracking_id || "—"}</TableCell>
                       <TableCell>{p.installment_number || "—"}</TableCell>
-                      <TableCell>{fmt(Number(p.amount))}</TableCell>
-                      <TableCell>{p.due_date ? new Date(p.due_date).toLocaleDateString() : "—"}</TableCell>
+                      <TableCell className="font-medium">{fmt(Number(p.amount))}</TableCell>
+                      <TableCell className="capitalize text-xs">{p.payment_method || "—"}</TableCell>
+                      <TableCell className="text-xs">{p.due_date ? new Date(p.due_date).toLocaleDateString() : "—"}</TableCell>
                       <TableCell><Badge variant={p.status === "completed" ? "default" : "secondary"}>{p.status}</Badge></TableCell>
-                      <TableCell>{p.paid_at ? new Date(p.paid_at).toLocaleDateString() : "—"}</TableCell>
+                      <TableCell className="text-xs">{p.paid_at ? new Date(p.paid_at).toLocaleDateString() : "—"}</TableCell>
                       <TableCell>
                         {p.status === "completed" && (
                           <button onClick={() => handleReceipt(p)} disabled={generatingPdf === p.id} className="inline-flex items-center gap-1 text-xs text-primary hover:underline disabled:opacity-50">
@@ -224,18 +368,50 @@ export default function CustomerFinancialReport({ customer, open, onOpenChange }
                       </TableCell>
                     </TableRow>
                   ))}
-                  {payments.length === 0 && <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground">No payments</TableCell></TableRow>}
+                  {payments.length === 0 && <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground">No payments</TableCell></TableRow>}
                 </TableBody>
               </Table>
             </TabsContent>
 
-            {/* Hotels Tab */}
+            {/* ===== EXPENSES TAB ===== */}
+            <TabsContent value="expenses">
+              <Table>
+                <TableHeader><TableRow>
+                  <TableHead>Title</TableHead><TableHead>Type</TableHead><TableHead>Amount</TableHead>
+                  <TableHead>Date</TableHead><TableHead>Linked Booking</TableHead>
+                </TableRow></TableHeader>
+                <TableBody>
+                  {expenses.map((e) => {
+                    const linkedBooking = bookings.find((b: any) => b.id === e.booking_id);
+                    return (
+                      <TableRow key={e.id}>
+                        <TableCell className="font-medium">{e.title}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="capitalize">{EXPENSE_TYPE_LABELS[e.expense_type] || e.category || "other"}</Badge>
+                        </TableCell>
+                        <TableCell className="text-destructive font-medium">{fmt(Number(e.amount))}</TableCell>
+                        <TableCell className="text-xs">{new Date(e.date).toLocaleDateString()}</TableCell>
+                        <TableCell className="font-mono text-xs">{linkedBooking?.tracking_id || "—"}</TableCell>
+                      </TableRow>
+                    );
+                  })}
+                  {expenses.length === 0 && <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground">No expenses assigned</TableCell></TableRow>}
+                </TableBody>
+              </Table>
+              {expenses.length > 0 && (
+                <div className="mt-3 text-right">
+                  <span className="text-sm text-muted-foreground">Total: </span>
+                  <span className="font-heading font-bold text-destructive">{fmt(summary.totalExpenses)}</span>
+                </div>
+              )}
+            </TabsContent>
+
+            {/* ===== HOTELS TAB ===== */}
             <TabsContent value="hotels">
               <Table>
                 <TableHeader><TableRow>
                   <TableHead>Hotel</TableHead><TableHead>Room</TableHead><TableHead>City</TableHead>
-                  <TableHead>Check In</TableHead><TableHead>Check Out</TableHead><TableHead>Guests</TableHead>
-                  <TableHead>Total</TableHead><TableHead>Status</TableHead>
+                  <TableHead>Check In</TableHead><TableHead>Check Out</TableHead><TableHead>Total</TableHead><TableHead>Status</TableHead>
                 </TableRow></TableHeader>
                 <TableBody>
                   {hotelBookings.map((hb) => (
@@ -245,29 +421,25 @@ export default function CustomerFinancialReport({ customer, open, onOpenChange }
                       <TableCell className="text-sm">{(hb.hotels as any)?.city || "—"}</TableCell>
                       <TableCell className="text-xs">{new Date(hb.check_in).toLocaleDateString()}</TableCell>
                       <TableCell className="text-xs">{new Date(hb.check_out).toLocaleDateString()}</TableCell>
-                      <TableCell>{hb.guests}</TableCell>
                       <TableCell>{fmt(Number(hb.total_price))}</TableCell>
                       <TableCell><Badge variant={hb.status === "confirmed" ? "default" : "secondary"}>{hb.status}</Badge></TableCell>
                     </TableRow>
                   ))}
-                  {hotelBookings.length === 0 && <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground">No hotel bookings</TableCell></TableRow>}
+                  {hotelBookings.length === 0 && <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground">No hotel bookings</TableCell></TableRow>}
                 </TableBody>
               </Table>
             </TabsContent>
 
-            {/* Documents Tab */}
+            {/* ===== DOCUMENTS TAB ===== */}
             <TabsContent value="documents">
               <Table>
                 <TableHeader><TableRow>
-                  <TableHead>Document Type</TableHead><TableHead>File Name</TableHead>
-                  <TableHead>Uploaded</TableHead><TableHead></TableHead>
+                  <TableHead>Type</TableHead><TableHead>File</TableHead><TableHead>Uploaded</TableHead><TableHead></TableHead>
                 </TableRow></TableHeader>
                 <TableBody>
                   {documents.map((doc) => (
                     <TableRow key={doc.id}>
-                      <TableCell>
-                        <Badge variant="outline">{DOC_TYPE_LABELS[doc.document_type] || doc.document_type}</Badge>
-                      </TableCell>
+                      <TableCell><Badge variant="outline">{DOC_TYPE_LABELS[doc.document_type] || doc.document_type}</Badge></TableCell>
                       <TableCell className="text-sm">{doc.file_name}</TableCell>
                       <TableCell className="text-xs text-muted-foreground">{new Date(doc.created_at).toLocaleDateString()}</TableCell>
                       <TableCell>
@@ -277,42 +449,16 @@ export default function CustomerFinancialReport({ customer, open, onOpenChange }
                       </TableCell>
                     </TableRow>
                   ))}
-                  {documents.length === 0 && <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground">No documents uploaded</TableCell></TableRow>}
-                </TableBody>
-              </Table>
-            </TabsContent>
-
-            {/* Expenses Tab */}
-            <TabsContent value="expenses">
-              <Table>
-                <TableHeader><TableRow>
-                  <TableHead>Title</TableHead><TableHead>Category</TableHead><TableHead>Amount</TableHead>
-                  <TableHead>Date</TableHead><TableHead>Linked Booking</TableHead>
-                </TableRow></TableHeader>
-                <TableBody>
-                  {expenses.map((e) => {
-                    const linkedBooking = bookings.find((b) => b.id === e.booking_id);
-                    return (
-                      <TableRow key={e.id}>
-                        <TableCell>{e.note || e.category}</TableCell>
-                        <TableCell>{e.category}</TableCell>
-                        <TableCell>{fmt(Number(e.amount))}</TableCell>
-                        <TableCell>{new Date(e.date).toLocaleDateString()}</TableCell>
-                        <TableCell className="font-mono text-xs">{linkedBooking?.tracking_id || "—"}</TableCell>
-                      </TableRow>
-                    );
-                  })}
-                  {expenses.length === 0 && <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground">No expenses</TableCell></TableRow>}
+                  {documents.length === 0 && <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground">No documents</TableCell></TableRow>}
                 </TableBody>
               </Table>
             </TabsContent>
           </Tabs>
         )}
 
-        {/* Print Button */}
         <div className="flex justify-end print-hide">
           <Button onClick={() => window.print()} variant="outline" className="gap-2">
-            <Printer className="h-4 w-4" /> Print Report
+            <Printer className="h-4 w-4" /> Print Ledger
           </Button>
         </div>
       </DialogContent>

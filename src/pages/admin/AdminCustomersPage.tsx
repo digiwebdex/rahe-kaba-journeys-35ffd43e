@@ -28,6 +28,7 @@ export default function AdminCustomersPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<any>({ ...emptyForm });
   const [search, setSearch] = useState("");
+  const [filterAutoCreated, setFilterAutoCreated] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [expandedData, setExpandedData] = useState<{ bookings: any[]; payments: any[]; documents: any[]; expenses: any[] }>({ bookings: [], payments: [], documents: [], expenses: [] });
@@ -209,6 +210,7 @@ export default function AdminCustomersPage() {
   };
 
   const filtered = customers.filter((c) => {
+    if (filterAutoCreated && !c.notes?.includes("Auto-created")) return false;
     if (!search) return true;
     const q = search.toLowerCase();
     return (
@@ -237,13 +239,18 @@ export default function AdminCustomersPage() {
 
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
         <h2 className="font-heading text-xl font-bold">কাস্টমার ব্যবস্থাপনা</h2>
-        <div className="flex items-center gap-3 w-full sm:w-auto">
+        <div className="flex items-center gap-3 w-full sm:w-auto flex-wrap">
           {!isViewer && (
             <button onClick={() => setShowAddModal(true)}
               className="inline-flex items-center gap-1.5 text-sm bg-gradient-gold text-primary-foreground font-semibold px-4 py-2 rounded-md hover:opacity-90 transition-opacity shadow-gold whitespace-nowrap">
               <Plus className="h-4 w-4" /> নতুন কাস্টমার
             </button>
           )}
+          <button onClick={() => setFilterAutoCreated(!filterAutoCreated)}
+            className={`inline-flex items-center gap-1.5 text-sm px-3 py-2 rounded-md border transition-colors whitespace-nowrap ${filterAutoCreated ? "bg-primary/10 border-primary/30 text-primary font-semibold" : "border-border text-muted-foreground hover:text-foreground"}`}>
+            {filterAutoCreated && <Check className="h-3.5 w-3.5" />}
+            Auto-created
+          </button>
           <div className="relative flex-1 sm:w-64">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <input className={inputClass + " pl-9"} placeholder="নাম, ফোন, পাসপোর্ট দিয়ে খুঁজুন..." value={search} onChange={(e) => setSearch(e.target.value)} />

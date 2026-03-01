@@ -133,8 +133,9 @@ export default function AdminCustomersPage() {
       const { data: existing } = await supabase.from("profiles").select("id").eq("phone", cleanPhone).maybeSingle();
       if (existing) { toast.error("এই ফোন নম্বরে কাস্টমার আছে"); setAddLoading(false); return; }
 
+      const newUserId = crypto.randomUUID();
       const { error } = await supabase.from("profiles").insert({
-        user_id: session.user.id, // admin's id as fallback
+        user_id: newUserId,
         full_name: addForm.full_name.trim(),
         phone: cleanPhone,
         email: addForm.email.trim() || null,

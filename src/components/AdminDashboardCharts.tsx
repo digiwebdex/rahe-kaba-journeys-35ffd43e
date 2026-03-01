@@ -291,6 +291,28 @@ const AdminDashboardCharts = ({ bookings, payments, expenses = [], accounts = []
         </div>
       </div>
 
+      {/* Receivable & Payable KPIs */}
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
+        {[
+          { label: "Total Receivable", desc: "Moallem Due", value: `৳${totalMoallemDueBooking.toLocaleString()}`, icon: Receipt, color: "text-yellow-600", bgColor: "bg-yellow-500/10" },
+          { label: "Total Payable", desc: "Supplier Due", value: `৳${totalSupplierDue.toLocaleString()}`, icon: AlertTriangle, color: "text-destructive", bgColor: "bg-destructive/10" },
+          { label: "Total Income", desc: "Revenue", value: `৳${totalRevenue.toLocaleString()}`, icon: DollarSign, color: "text-primary", bgColor: "bg-primary/10" },
+          { label: "Total Expense", desc: "All Costs", value: `৳${totalExpenses.toLocaleString()}`, icon: TrendingDown, color: "text-destructive", bgColor: "bg-destructive/10" },
+          { label: "Net Profit", desc: "Income − Expense", value: `৳${netProfit.toLocaleString()}`, icon: TrendingUp, color: netProfit >= 0 ? "text-emerald" : "text-destructive", bgColor: netProfit >= 0 ? "bg-emerald/10" : "bg-destructive/10" },
+        ].map((c) => (
+          <div key={c.label} className="bg-card border border-border rounded-xl p-4">
+            <div className="flex items-center justify-between mb-2">
+              <div>
+                <p className="text-xs text-muted-foreground">{c.label}</p>
+                <p className="text-[10px] text-muted-foreground/60">{c.desc}</p>
+              </div>
+              <div className={`w-8 h-8 rounded-lg ${c.bgColor} flex items-center justify-center`}><c.icon className={`h-3.5 w-3.5 ${c.color}`} /></div>
+            </div>
+            <p className={`text-xl font-heading font-bold ${c.color}`}>{c.value}</p>
+          </div>
+        ))}
+      </div>
+
       {/* Booking Profit KPIs */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {[
@@ -361,7 +383,7 @@ const AdminDashboardCharts = ({ bookings, payments, expenses = [], accounts = []
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {[
           { label: "Agent Expenses", value: `৳${agentExpenses.toLocaleString()}`, icon: TrendingDown, color: "text-destructive", bgColor: "bg-destructive/10" },
-          { label: "Moallem Advance", value: `৳${totalMoallemAdvance.toLocaleString()}`, icon: Wallet, color: "text-primary", bgColor: "bg-primary/10" },
+          { label: "Moallem Paid", value: `৳${totalMoallemPaidBooking.toLocaleString()}`, icon: Wallet, color: "text-emerald", bgColor: "bg-emerald/10" },
           { label: "Supplier Paid", value: `৳${totalSupplierPaid.toLocaleString()}`, icon: CheckCircle2, color: "text-emerald", bgColor: "bg-emerald/10" },
           { label: "Profit", value: `৳${overallProfit.toLocaleString()}`, icon: TrendingUp, color: overallProfit >= 0 ? "text-emerald" : "text-destructive", bgColor: overallProfit >= 0 ? "bg-emerald/10" : "bg-destructive/10" },
         ].map((c) => (

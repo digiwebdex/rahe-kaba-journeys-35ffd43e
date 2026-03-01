@@ -146,7 +146,7 @@ export default function AdminBookingsPage() {
   const [statusChangeVal, setStatusChangeVal] = useState("");
 
   const fetchBookings = () =>
-    supabase.from("bookings").select("*, packages(name, type, duration_days, price)")
+    supabase.from("bookings").select("*, packages(name, type, duration_days, price), moallems(name, phone)")
       .order("created_at", { ascending: false })
       .then(({ data }) => setBookings(data || []));
 
@@ -203,6 +203,7 @@ export default function AdminBookingsPage() {
       notes: `Duplicated from ${b.tracking_id}`, guest_name: b.guest_name,
       guest_phone: b.guest_phone, guest_email: b.guest_email,
       guest_address: b.guest_address, guest_passport: b.guest_passport,
+      moallem_id: b.moallem_id || null,
       status: "pending", paid_amount: 0, due_amount: Number(b.total_amount),
     });
     if (error) { toast.error(error.message); return; }
@@ -359,7 +360,7 @@ export default function AdminBookingsPage() {
               <div className="flex justify-between items-start mb-3">
                 <div>
                   <p className="font-mono font-bold text-primary text-sm">{b.tracking_id}</p>
-                  <p className="text-sm text-muted-foreground">{b.guest_name || "Unknown"} • {b.packages?.name || "N/A"}</p>
+                  <p className="text-sm text-muted-foreground">{b.guest_name || "Unknown"} • {b.packages?.name || "N/A"}{b.moallems?.name ? ` • মোয়াল্লেম: ${b.moallems.name}` : ""}</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className={`text-xs font-semibold px-2 py-0.5 rounded-full capitalize ${b.status === "completed" ? "text-emerald bg-emerald/10" : b.status === "cancelled" ? "text-destructive bg-destructive/10" : "text-primary bg-primary/10"}`}>
@@ -408,6 +409,7 @@ export default function AdminBookingsPage() {
                 <div><span className="text-muted-foreground text-xs block">বকেয়া</span><span className="font-medium text-destructive">{fmt(Number(viewBooking.due_amount || 0))}</span></div>
                 <div><span className="text-muted-foreground text-xs block">স্ট্যাটাস</span><Badge variant={viewBooking.status === "completed" ? "default" : "secondary"} className="text-xs capitalize">{viewBooking.status}</Badge></div>
                 <div><span className="text-muted-foreground text-xs block">পাসপোর্ট</span><span className="font-medium">{viewBooking.guest_passport || "—"}</span></div>
+                <div><span className="text-muted-foreground text-xs block">মোয়াল্লেম</span><span className="font-medium">{viewBooking.moallems?.name || "—"}</span></div>
                 <div><span className="text-muted-foreground text-xs block">তারিখ</span><span className="font-medium">{new Date(viewBooking.created_at).toLocaleDateString()}</span></div>
               </div>
               {viewBooking.notes && (

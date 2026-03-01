@@ -145,6 +145,7 @@ export type Database = {
           guest_phone: string | null
           id: string
           installment_plan_id: string | null
+          moallem_id: string | null
           notes: string | null
           num_travelers: number
           package_id: string
@@ -165,6 +166,7 @@ export type Database = {
           guest_phone?: string | null
           id?: string
           installment_plan_id?: string | null
+          moallem_id?: string | null
           notes?: string | null
           num_travelers?: number
           package_id: string
@@ -185,6 +187,7 @@ export type Database = {
           guest_phone?: string | null
           id?: string
           installment_plan_id?: string | null
+          moallem_id?: string | null
           notes?: string | null
           num_travelers?: number
           package_id?: string
@@ -201,6 +204,13 @@ export type Database = {
             columns: ["installment_plan_id"]
             isOneToOne: false
             referencedRelation: "installment_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_moallem_id_fkey"
+            columns: ["moallem_id"]
+            isOneToOne: false
+            referencedRelation: "moallems"
             referencedColumns: ["id"]
           },
           {

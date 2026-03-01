@@ -32,6 +32,8 @@ export default function AdminCreateBookingPage() {
     } catch { setPhoneSuggestion(null); }
   }, [selectedCustomerId]);
 
+  const [moallems, setMoallems] = useState<any[]>([]);
+
   const [form, setForm] = useState({
     guest_name: "",
     guest_phone: "",
@@ -45,6 +47,7 @@ export default function AdminCreateBookingPage() {
     paid_amount: 0,
     status: "pending",
     notes: "",
+    moallem_id: "",
   });
 
   const dueAmount = Math.max(0, form.total_amount - form.paid_amount);
@@ -56,6 +59,12 @@ export default function AdminCreateBookingPage() {
       .eq("is_active", true)
       .order("name")
       .then(({ data }) => setPackages(data || []));
+    supabase
+      .from("moallems")
+      .select("id, name, phone, status")
+      .eq("status", "active")
+      .order("name")
+      .then(({ data }) => setMoallems(data || []));
   }, []);
 
   const handleCustomerSelect = (customer: any | null) => {
@@ -171,6 +180,7 @@ export default function AdminCreateBookingPage() {
         status: form.status,
         notes: form.notes.trim() || null,
         user_id: customerId,
+        moallem_id: form.moallem_id || null,
       }).select("id, tracking_id").single();
 
       if (error) throw error;
@@ -313,6 +323,15 @@ export default function AdminCreateBookingPage() {
             <input className={inputClass} type="date" value={form.travel_date}
               onChange={(e) => setForm({ ...form, travel_date: e.target.value })} />
           </div>
+        </div>
+        <div className="sm:col-span-2">
+          <label className="text-xs text-muted-foreground block mb-1">মোয়াল্লেম (ঐচ্ছিক)</label>
+          <select className={inputClass} value={form.moallem_id} onChange={(e) => setForm({ ...form, moallem_id: e.target.value })}>
+            <option value="">-- মোয়াল্লেম নির্বাচন করুন --</option>
+            {moallems.map((m) => (
+              <option key={m.id} value={m.id}>{m.name} {m.phone ? `(${m.phone})` : ""}</option>
+            ))}
+          </select>
         </div>
         {selectedPkg && (
           <div className="bg-secondary/50 rounded-lg p-3 text-xs text-muted-foreground">

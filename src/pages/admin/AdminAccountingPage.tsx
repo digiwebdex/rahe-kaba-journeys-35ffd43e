@@ -82,7 +82,7 @@ export default function AdminAccountingPage() {
     const [expRes, payRes, bkRes, custRes, pkgRes, walletRes] = await Promise.all([
       supabase.from("expenses").select("*").order("date", { ascending: false }),
       supabase.from("payments").select("amount").eq("status", "completed"),
-      supabase.from("bookings").select("id, tracking_id, guest_name, user_id, profiles(full_name)").order("created_at", { ascending: false }),
+      supabase.from("bookings").select("id, tracking_id, guest_name, user_id").order("created_at", { ascending: false }),
       supabase.from("profiles").select("id, user_id, full_name, phone").order("full_name"),
       supabase.from("packages").select("id, name, type").eq("is_active", true).order("name"),
       supabase.from("accounts" as any).select("*").eq("type", "asset"),
@@ -177,7 +177,7 @@ export default function AdminAccountingPage() {
     return map;
   }, [expenses]);
 
-  const getBookingLabel = (id: string) => { const b = bookings.find((bk: any) => bk.id === id); return b ? `${b.tracking_id} — ${b.profiles?.full_name || b.guest_name || "N/A"}` : id?.slice(0, 8); };
+  const getBookingLabel = (id: string) => { const b = bookings.find((bk: any) => bk.id === id); return b ? `${b.tracking_id} — ${b.guest_name || "N/A"}` : id?.slice(0, 8); };
   const getCustomerLabel = (id: string) => { const c = customers.find((cu: any) => cu.user_id === id); return c ? `${c.full_name || "N/A"} (${c.phone || ""})` : id?.slice(0, 8); };
   const getPackageLabel = (id: string) => { const p = packages.find((pk: any) => pk.id === id); return p ? p.name : id?.slice(0, 8); };
 
@@ -186,7 +186,7 @@ export default function AdminAccountingPage() {
       {data.category === "booking" && (
         <select className={inputClass} value={data.booking_id} onChange={(e) => setData({ ...data, booking_id: e.target.value })}>
           <option value="">Select Booking</option>
-          {bookings.map((b: any) => <option key={b.id} value={b.id}>{b.tracking_id} — {b.profiles?.full_name || b.guest_name || "N/A"}</option>)}
+          {bookings.map((b: any) => <option key={b.id} value={b.id}>{b.tracking_id} — {b.guest_name || "N/A"}</option>)}
         </select>
       )}
       {data.category === "customer" && (

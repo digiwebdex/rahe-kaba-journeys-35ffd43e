@@ -12,7 +12,7 @@ export default function AdminDashboardPage() {
 
   const fetchData = async () => {
     const [bk, py, ex, ac] = await Promise.all([
-      supabase.from("bookings").select("*, packages(name, type), profiles(full_name)").order("created_at", { ascending: false }),
+      supabase.from("bookings").select("*, packages(name, type)").order("created_at", { ascending: false }),
       supabase.from("payments").select("*, bookings(tracking_id)").order("created_at", { ascending: false }),
       supabase.from("expenses").select("*").order("date", { ascending: false }),
       supabase.from("accounts" as any).select("*"),

@@ -49,7 +49,7 @@ const AdminPanel = () => {
 
   const fetchAll = async () => {
     const [bk, py, pk, ip, ht] = await Promise.all([
-      supabase.from("bookings").select("*, packages(name, type), profiles(full_name)").order("created_at", { ascending: false }),
+      supabase.from("bookings").select("*, packages(name, type)").order("created_at", { ascending: false }),
       supabase.from("payments").select("*, bookings(tracking_id)").order("created_at", { ascending: false }),
       supabase.from("packages").select("*").order("created_at", { ascending: false }),
       supabase.from("installment_plans").select("*").order("created_at", { ascending: false }),

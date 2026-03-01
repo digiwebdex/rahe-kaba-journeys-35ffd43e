@@ -146,7 +146,7 @@ export default function AdminBookingsPage() {
   const [statusChangeVal, setStatusChangeVal] = useState("");
 
   const fetchBookings = () =>
-    supabase.from("bookings").select("*, packages(name, type, duration_days, price), profiles(full_name, phone, passport_number, address)")
+    supabase.from("bookings").select("*, packages(name, type, duration_days, price)")
       .order("created_at", { ascending: false })
       .then(({ data }) => setBookings(data || []));
 
@@ -226,7 +226,7 @@ export default function AdminBookingsPage() {
       const { data: cms } = await supabase.from("site_content" as any).select("content").eq("section_key", "contact").maybeSingle();
       const cmsContent = (cms as any)?.content || {};
       const company: CompanyInfo = { name: "RAHE KABA", phone: cmsContent.phone || "", email: cmsContent.email || "", address: cmsContent.location || "" };
-      await generateInvoice({ ...b, packages: b.packages }, b.profiles || {}, (payments || []) as InvoicePayment[], company);
+      await generateInvoice({ ...b, packages: b.packages }, { full_name: b.guest_name, phone: b.guest_phone, passport_number: b.guest_passport, address: b.guest_address }, (payments || []) as InvoicePayment[], company);
       toast.success("Invoice downloaded");
     } catch { toast.error("Failed to generate invoice"); }
     setGeneratingId(null);
@@ -235,7 +235,7 @@ export default function AdminBookingsPage() {
   const filtered = bookings.filter((b) => {
     if (!search) return true;
     const q = search.toLowerCase();
-    return (b.tracking_id?.toLowerCase().includes(q) || b.profiles?.full_name?.toLowerCase().includes(q) || b.guest_name?.toLowerCase()?.includes(q) || b.packages?.name?.toLowerCase().includes(q) || b.status?.toLowerCase().includes(q));
+    return (b.tracking_id?.toLowerCase().includes(q) || b.guest_name?.toLowerCase()?.includes(q) || b.packages?.name?.toLowerCase().includes(q) || b.status?.toLowerCase().includes(q));
   });
 
   const getBookingActions = (b: any): ActionItem[] => [
@@ -359,7 +359,7 @@ export default function AdminBookingsPage() {
               <div className="flex justify-between items-start mb-3">
                 <div>
                   <p className="font-mono font-bold text-primary text-sm">{b.tracking_id}</p>
-                  <p className="text-sm text-muted-foreground">{b.profiles?.full_name || b.guest_name || "Unknown"} • {b.packages?.name || "N/A"}</p>
+                  <p className="text-sm text-muted-foreground">{b.guest_name || "Unknown"} • {b.packages?.name || "N/A"}</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className={`text-xs font-semibold px-2 py-0.5 rounded-full capitalize ${b.status === "completed" ? "text-emerald bg-emerald/10" : b.status === "cancelled" ? "text-destructive bg-destructive/10" : "text-primary bg-primary/10"}`}>
@@ -399,15 +399,15 @@ export default function AdminBookingsPage() {
           {viewBooking && (
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-3 text-sm">
-                <div><span className="text-muted-foreground text-xs block">কাস্টমার</span><span className="font-medium">{viewBooking.profiles?.full_name || viewBooking.guest_name || "—"}</span></div>
-                <div><span className="text-muted-foreground text-xs block">ফোন</span><span className="font-medium">{viewBooking.profiles?.phone || viewBooking.guest_phone || "—"}</span></div>
+                <div><span className="text-muted-foreground text-xs block">কাস্টমার</span><span className="font-medium">{viewBooking.guest_name || "—"}</span></div>
+                <div><span className="text-muted-foreground text-xs block">ফোন</span><span className="font-medium">{viewBooking.guest_phone || "—"}</span></div>
                 <div><span className="text-muted-foreground text-xs block">প্যাকেজ</span><span className="font-medium">{viewBooking.packages?.name || "—"}</span></div>
                 <div><span className="text-muted-foreground text-xs block">যাত্রী</span><span className="font-medium">{viewBooking.num_travelers}</span></div>
                 <div><span className="text-muted-foreground text-xs block">মোট মূল্য</span><span className="font-medium">{fmt(Number(viewBooking.total_amount))}</span></div>
                 <div><span className="text-muted-foreground text-xs block">পরিশোধিত</span><span className="font-medium text-emerald-500">{fmt(Number(viewBooking.paid_amount))}</span></div>
                 <div><span className="text-muted-foreground text-xs block">বকেয়া</span><span className="font-medium text-destructive">{fmt(Number(viewBooking.due_amount || 0))}</span></div>
                 <div><span className="text-muted-foreground text-xs block">স্ট্যাটাস</span><Badge variant={viewBooking.status === "completed" ? "default" : "secondary"} className="text-xs capitalize">{viewBooking.status}</Badge></div>
-                <div><span className="text-muted-foreground text-xs block">পাসপোর্ট</span><span className="font-medium">{viewBooking.profiles?.passport_number || viewBooking.guest_passport || "—"}</span></div>
+                <div><span className="text-muted-foreground text-xs block">পাসপোর্ট</span><span className="font-medium">{viewBooking.guest_passport || "—"}</span></div>
                 <div><span className="text-muted-foreground text-xs block">তারিখ</span><span className="font-medium">{new Date(viewBooking.created_at).toLocaleDateString()}</span></div>
               </div>
               {viewBooking.notes && (

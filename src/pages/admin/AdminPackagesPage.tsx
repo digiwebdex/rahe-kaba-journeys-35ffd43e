@@ -1,9 +1,10 @@
 import { useEffect, useState, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Plus, X, Edit2, Trash2, Save, ToggleLeft, ToggleRight, Upload, Loader2 } from "lucide-react";
+import { Plus, X, Edit2, Trash2, Save, ToggleLeft, ToggleRight, Upload, Loader2, Eye, Copy } from "lucide-react";
 import { useIsViewer } from "@/components/admin/AdminLayout";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import AdminActionMenu from "@/components/admin/AdminActionMenu";
 
 const inputClass = "w-full bg-secondary border border-border rounded-md px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40";
 const TYPES = ["hajj", "umrah", "tour", "visa", "hotel", "transport", "ziyara"];
@@ -24,6 +25,7 @@ export default function AdminPackagesPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [viewPkg, setViewPkg] = useState<any>(null);
 
   const fetchPkgs = () => supabase.from("packages").select("*").order("created_at", { ascending: false }).then(({ data }) => setPackages(data || []));
   useEffect(() => { fetchPkgs(); }, []);
@@ -87,6 +89,18 @@ export default function AdminPackagesPage() {
     fetchPkgs();
   };
 
+  const handleDuplicate = async (p: any) => {
+    const svc = Array.isArray(p.services) ? p.services : [];
+    const { error } = await supabase.from("packages").insert({
+      name: p.name + " (Copy)", type: p.type, description: p.description,
+      price: p.price, duration_days: p.duration_days, image_url: p.image_url,
+      start_date: p.start_date, services: svc, is_active: false,
+    });
+    if (error) { toast.error(error.message); return; }
+    toast.success("প্যাকেজ ডুপ্লিকেট হয়েছে");
+    fetchPkgs();
+  };
+
   const confirmDelete = async () => {
     if (!deleteId) return;
     const { error } = await supabase.from("packages").delete().eq("id", deleteId);
@@ -136,8 +150,6 @@ export default function AdminPackagesPage() {
           <textarea className={`${inputClass} resize-none`} placeholder="প্যাকেজের বিস্তারিত..." rows={3}
             value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} maxLength={1000} />
         </div>
-
-        {/* Image upload */}
         <div className="sm:col-span-2">
           <label className="text-xs text-muted-foreground block mb-1">ছবি</label>
           {form.image_url ? (
@@ -156,8 +168,6 @@ export default function AdminPackagesPage() {
             </label>
           )}
         </div>
-
-        {/* Status */}
         <div className="sm:col-span-2 flex items-center gap-3">
           <label className="text-xs text-muted-foreground">স্ট্যাটাস:</label>
           <button type="button" onClick={() => setForm({ ...form, is_active: !form.is_active })}
@@ -167,7 +177,6 @@ export default function AdminPackagesPage() {
           </button>
         </div>
       </div>
-
       <div className="flex justify-end gap-3 pt-2">
         <button type="button" onClick={closeModal} className="text-sm px-4 py-2 rounded-md bg-secondary">বাতিল</button>
         <button type="submit"
@@ -218,15 +227,16 @@ export default function AdminPackagesPage() {
               </div>
               <div className="flex items-center gap-3 flex-shrink-0">
                 <p className="font-heading font-bold text-primary">৳{Number(p.price).toLocaleString()}</p>
-                {!isViewer && (
-                  <>
-                    <button onClick={() => toggleActive(p)} className="text-muted-foreground hover:text-foreground" title={p.is_active ? "নিষ্ক্রিয় করুন" : "সক্রিয় করুন"}>
-                      {p.is_active ? <ToggleRight className="h-5 w-5 text-emerald" /> : <ToggleLeft className="h-5 w-5" />}
-                    </button>
-                    <button onClick={() => openEdit(p)} className="text-muted-foreground hover:text-foreground"><Edit2 className="h-3.5 w-3.5" /></button>
-                    <button onClick={() => setDeleteId(p.id)} className="text-destructive"><Trash2 className="h-3.5 w-3.5" /></button>
-                  </>
-                )}
+                <AdminActionMenu
+                  inlineCount={2}
+                  actions={[
+                    { label: "View", icon: <Eye className="h-3.5 w-3.5" />, onClick: () => setViewPkg(p) },
+                    { label: "Edit", icon: <Edit2 className="h-3.5 w-3.5" />, onClick: () => openEdit(p), variant: "warning", hidden: isViewer },
+                    { label: "Delete", icon: <Trash2 className="h-3.5 w-3.5" />, onClick: () => setDeleteId(p.id), variant: "destructive", hidden: isViewer, separator: true },
+                    { label: "Duplicate", icon: <Copy className="h-3.5 w-3.5" />, onClick: () => handleDuplicate(p), variant: "purple", hidden: isViewer },
+                    { label: p.is_active ? "নিষ্ক্রিয় করুন" : "সক্রিয় করুন", icon: p.is_active ? <ToggleRight className="h-3.5 w-3.5" /> : <ToggleLeft className="h-3.5 w-3.5" />, onClick: () => toggleActive(p), variant: p.is_active ? "warning" : "success", hidden: isViewer },
+                  ]}
+                />
               </div>
             </div>
           </div>
@@ -241,6 +251,32 @@ export default function AdminPackagesPage() {
             <DialogTitle className="font-heading">{editingId ? "প্যাকেজ সম্পাদনা" : "নতুন প্যাকেজ তৈরি করুন"}</DialogTitle>
           </DialogHeader>
           {renderForm()}
+        </DialogContent>
+      </Dialog>
+
+      {/* View Modal */}
+      <Dialog open={!!viewPkg} onOpenChange={(o) => { if (!o) setViewPkg(null); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-heading">{viewPkg?.name}</DialogTitle>
+          </DialogHeader>
+          {viewPkg && (
+            <div className="space-y-3 text-sm">
+              {viewPkg.image_url && <img src={viewPkg.image_url} alt={viewPkg.name} className="w-full h-48 rounded-lg object-cover" />}
+              <div className="grid grid-cols-2 gap-3">
+                <div><span className="text-muted-foreground text-xs block">ধরন</span><span className="font-medium capitalize">{viewPkg.type}</span></div>
+                <div><span className="text-muted-foreground text-xs block">মূল্য</span><span className="font-medium text-primary">৳{Number(viewPkg.price).toLocaleString()}</span></div>
+                <div><span className="text-muted-foreground text-xs block">সময়কাল</span><span className="font-medium">{viewPkg.duration_days ? `${viewPkg.duration_days} দিন` : "—"}</span></div>
+                <div><span className="text-muted-foreground text-xs block">স্ট্যাটাস</span><span className={`font-medium ${viewPkg.is_active ? "text-emerald" : "text-destructive"}`}>{viewPkg.is_active ? "সক্রিয়" : "নিষ্ক্রিয়"}</span></div>
+              </div>
+              {viewPkg.description && <div><span className="text-muted-foreground text-xs block">বিবরণ</span><p>{viewPkg.description}</p></div>}
+              {Array.isArray(viewPkg.services) && viewPkg.services.length > 0 && (
+                <div><span className="text-muted-foreground text-xs block mb-1">সেবাসমূহ</span>
+                  <div className="flex flex-wrap gap-1">{viewPkg.services.map((s: string, i: number) => <span key={i} className="text-xs bg-secondary px-2 py-0.5 rounded">{s}</span>)}</div>
+                </div>
+              )}
+            </div>
+          )}
         </DialogContent>
       </Dialog>
 

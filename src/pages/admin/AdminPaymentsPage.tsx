@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Download, Edit2, Trash2, Save, X, Plus, Wallet, Search } from "lucide-react";
+import { Download, Edit2, Trash2, Save, X, Plus, Wallet, Search, CheckCircle, XCircle } from "lucide-react";
 import { generateReceipt, CompanyInfo, InvoicePayment } from "@/lib/invoiceGenerator";
 import { useIsViewer, useCanModifyFinancials } from "@/components/admin/AdminLayout";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import AdminActionMenu from "@/components/admin/AdminActionMenu";
 
 const inputClass = "w-full bg-secondary border border-border rounded-md px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40";
 const fmt = (n: number) => `৳${Number(n || 0).toLocaleString()}`;
@@ -28,7 +29,6 @@ export default function AdminPaymentsPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Add payment modal
   const [showAddModal, setShowAddModal] = useState(() => {
     const params = new URLSearchParams(window.location.search);
     return params.get("action") === "add";
@@ -81,46 +81,26 @@ export default function AdminPaymentsPage() {
   const handleAddPayment = async () => {
     if (!addForm.booking_id) { toast.error("বুকিং নির্বাচন করুন"); return; }
     if (!addForm.amount || parseFloat(addForm.amount) <= 0) { toast.error("সঠিক পরিমাণ দিন"); return; }
-
     setAddLoading(true);
     try {
-      const booking = customerBookings.find((b) => b.id === addForm.booking_id);
       const maxInstallment = payments
         .filter((p) => p.booking_id === addForm.booking_id)
         .reduce((max, p) => Math.max(max, p.installment_number || 0), 0);
-
       const { error } = await supabase.from("payments").insert({
-        booking_id: addForm.booking_id,
-        user_id: addForm.customer_id,
-        customer_id: addForm.customer_id,
-        amount: parseFloat(addForm.amount),
-        payment_method: addForm.payment_method,
-        transaction_id: addForm.transaction_id.trim() || null,
-        status: "completed",
-        paid_at: new Date(addForm.paid_date).toISOString(),
-        due_date: addForm.paid_date,
-        installment_number: maxInstallment + 1,
-        notes: addForm.notes.trim() || null,
-        wallet_account_id: addForm.wallet_account_id || null,
+        booking_id: addForm.booking_id, user_id: addForm.customer_id,
+        customer_id: addForm.customer_id, amount: parseFloat(addForm.amount),
+        payment_method: addForm.payment_method, transaction_id: addForm.transaction_id.trim() || null,
+        status: "completed", paid_at: new Date(addForm.paid_date).toISOString(),
+        due_date: addForm.paid_date, installment_number: maxInstallment + 1,
+        notes: addForm.notes.trim() || null, wallet_account_id: addForm.wallet_account_id || null,
       } as any);
-
       if (error) throw error;
-
       toast.success("পেমেন্ট সফলভাবে যোগ হয়েছে");
       setShowAddModal(false);
-      setAddForm({
-        customer_id: "", booking_id: "", amount: "",
-        payment_method: "cash", transaction_id: "", paid_date: new Date().toISOString().split("T")[0],
-        notes: "", wallet_account_id: "",
-      });
-      setSelectedBookingInfo(null);
-      setCustomerBookings([]);
+      setAddForm({ customer_id: "", booking_id: "", amount: "", payment_method: "cash", transaction_id: "", paid_date: new Date().toISOString().split("T")[0], notes: "", wallet_account_id: "" });
+      setSelectedBookingInfo(null); setCustomerBookings([]);
       fetchPayments();
-    } catch (err: any) {
-      toast.error(err.message);
-    } finally {
-      setAddLoading(false);
-    }
+    } catch (err: any) { toast.error(err.message); } finally { setAddLoading(false); }
   };
 
   const markPaid = async (id: string, walletId?: string) => {
@@ -128,8 +108,7 @@ export default function AdminPaymentsPage() {
     if (walletId) update.wallet_account_id = walletId;
     const { error } = await supabase.from("payments").update(update).eq("id", id);
     if (error) { toast.error(error.message); return; }
-    toast.success("পেমেন্ট সম্পন্ন হয়েছে");
-    fetchPayments();
+    toast.success("পেমেন্ট সম্পন্ন হয়েছে"); fetchPayments();
   };
 
   const startEdit = (p: any) => {
@@ -140,27 +119,20 @@ export default function AdminPaymentsPage() {
   const saveEdit = async () => {
     if (!editingId) return;
     const { error } = await supabase.from("payments").update({
-      amount: parseFloat(editForm.amount),
-      due_date: editForm.due_date || null,
-      status: editForm.status,
-      payment_method: editForm.payment_method,
-      notes: editForm.notes || null,
-      transaction_id: editForm.transaction_id || null,
+      amount: parseFloat(editForm.amount), due_date: editForm.due_date || null,
+      status: editForm.status, payment_method: editForm.payment_method,
+      notes: editForm.notes || null, transaction_id: editForm.transaction_id || null,
       ...(editForm.status === "completed" && !payments.find(p => p.id === editingId)?.paid_at ? { paid_at: new Date().toISOString() } : {}),
     }).eq("id", editingId);
     if (error) { toast.error(error.message); return; }
-    toast.success("পেমেন্ট আপডেট হয়েছে");
-    setEditingId(null);
-    fetchPayments();
+    toast.success("পেমেন্ট আপডেট হয়েছে"); setEditingId(null); fetchPayments();
   };
 
   const confirmDelete = async () => {
     if (!deleteId) return;
     const { error } = await supabase.from("payments").delete().eq("id", deleteId);
     if (error) { toast.error(error.message); return; }
-    toast.success("পেমেন্ট মুছে ফেলা হয়েছে");
-    setDeleteId(null);
-    fetchPayments();
+    toast.success("পেমেন্ট মুছে ফেলা হয়েছে"); setDeleteId(null); fetchPayments();
   };
 
   const handleReceipt = async (p: any) => {
@@ -195,7 +167,6 @@ export default function AdminPaymentsPage() {
 
   return (
     <div>
-      {/* Wallet Balance Cards */}
       {walletAccounts.length > 0 && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
           {walletAccounts.map((w) => (
@@ -226,7 +197,6 @@ export default function AdminPaymentsPage() {
         </div>
       </div>
 
-      {/* Payments Table */}
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
@@ -279,28 +249,31 @@ export default function AdminPaymentsPage() {
                       </span>
                     </td>
                     <td className="py-3">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        {p.status === "pending" && markPaidId !== p.id && canModify && (
-                          <button onClick={() => { setMarkPaidId(p.id); setMarkPaidWallet(""); }} className="text-xs text-primary hover:underline">পেমেন্ট করুন</button>
-                        )}
-                        {p.status === "pending" && markPaidId === p.id && (
-                          <div className="flex items-center gap-1.5">
-                            <select className={inputClass + " w-28 !py-1 text-xs"} value={markPaidWallet} onChange={(e) => setMarkPaidWallet(e.target.value)}>
-                              <option value="">Wallet</option>
-                              {walletAccounts.map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
-                            </select>
-                            <button onClick={() => { markPaid(p.id, markPaidWallet || undefined); setMarkPaidId(null); }} className="text-xs bg-primary text-primary-foreground px-2 py-1 rounded">✓</button>
-                            <button onClick={() => setMarkPaidId(null)} className="text-xs text-muted-foreground">✕</button>
-                          </div>
-                        )}
-                        {p.status === "completed" && (
-                          <button onClick={() => handleReceipt(p)} disabled={generatingId === p.id} className="inline-flex items-center gap-1 text-xs text-primary hover:underline disabled:opacity-50">
-                            <Download className="h-3 w-3" /> {generatingId === p.id ? "..." : "রসিদ"}
-                          </button>
-                        )}
-                        {canModify && <button onClick={() => startEdit(p)} className="text-xs text-muted-foreground hover:text-foreground"><Edit2 className="h-3 w-3" /></button>}
-                        {canModify && <button onClick={() => setDeleteId(p.id)} className="text-xs text-destructive hover:underline"><Trash2 className="h-3 w-3" /></button>}
-                      </div>
+                      {p.status === "pending" && markPaidId === p.id ? (
+                        <div className="flex items-center gap-1.5">
+                          <select className={inputClass + " w-28 !py-1 text-xs"} value={markPaidWallet} onChange={(e) => setMarkPaidWallet(e.target.value)}>
+                            <option value="">Wallet</option>
+                            {walletAccounts.map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
+                          </select>
+                          <button onClick={() => { markPaid(p.id, markPaidWallet || undefined); setMarkPaidId(null); }} className="text-xs bg-primary text-primary-foreground px-2 py-1 rounded">✓</button>
+                          <button onClick={() => setMarkPaidId(null)} className="text-xs text-muted-foreground">✕</button>
+                        </div>
+                      ) : (
+                        <AdminActionMenu
+                          inlineCount={2}
+                          actions={[
+                            { label: "Edit", icon: <Edit2 className="h-3.5 w-3.5" />, onClick: () => startEdit(p), variant: "warning", hidden: !canModify },
+                            { label: "Delete", icon: <Trash2 className="h-3.5 w-3.5" />, onClick: () => setDeleteId(p.id), variant: "destructive", hidden: !canModify, separator: true },
+                            { label: "Approve", icon: <CheckCircle className="h-3.5 w-3.5" />, onClick: () => { setMarkPaidId(p.id); setMarkPaidWallet(""); }, variant: "success", hidden: !canModify || p.status !== "pending" },
+                            { label: "Reject", icon: <XCircle className="h-3.5 w-3.5" />, onClick: async () => {
+                              const { error } = await supabase.from("payments").update({ status: "failed" }).eq("id", p.id);
+                              if (error) toast.error(error.message);
+                              else { toast.success("পেমেন্ট প্রত্যাখ্যাত"); fetchPayments(); }
+                            }, variant: "destructive", hidden: !canModify || p.status !== "pending" },
+                            { label: "Receipt", icon: <Download className="h-3.5 w-3.5" />, onClick: () => handleReceipt(p), disabled: generatingId === p.id, hidden: p.status !== "completed", separator: true },
+                          ]}
+                        />
+                      )}
                     </td>
                   </>
                 )}
@@ -318,7 +291,6 @@ export default function AdminPaymentsPage() {
             <DialogTitle className="font-heading">নতুন পেমেন্ট যোগ করুন</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            {/* Customer Selection */}
             <div>
               <label className="text-xs text-muted-foreground block mb-1">কাস্টমার নির্বাচন *</label>
               <select className={inputClass} value={addForm.customer_id} onChange={(e) => handleCustomerChange(e.target.value)}>
@@ -328,8 +300,6 @@ export default function AdminPaymentsPage() {
                 ))}
               </select>
             </div>
-
-            {/* Booking Selection */}
             <div>
               <label className="text-xs text-muted-foreground block mb-1">বুকিং নির্বাচন *</label>
               <select className={inputClass} value={addForm.booking_id} onChange={(e) => handleBookingChange(e.target.value)} disabled={!addForm.customer_id}>
@@ -342,8 +312,6 @@ export default function AdminPaymentsPage() {
                 <p className="text-xs text-muted-foreground mt-1">এই কাস্টমারের কোনো সক্রিয় বুকিং নেই।</p>
               )}
             </div>
-
-            {/* Booking Info */}
             {selectedBookingInfo && (
               <div className="bg-secondary/50 rounded-lg p-3 grid grid-cols-3 gap-2 text-xs">
                 <div><span className="text-muted-foreground block">মোট</span><span className="font-bold">{fmt(Number(selectedBookingInfo.total_amount))}</span></div>
@@ -351,12 +319,10 @@ export default function AdminPaymentsPage() {
                 <div><span className="text-muted-foreground block">বকেয়া</span><span className="font-bold text-destructive">{fmt(Number(selectedBookingInfo.due_amount || 0))}</span></div>
               </div>
             )}
-
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="text-xs text-muted-foreground block mb-1">পরিমাণ (৳) *</label>
-                <input className={inputClass} type="number" min={1} value={addForm.amount}
-                  onChange={(e) => setAddForm({ ...addForm, amount: e.target.value })} placeholder="0" />
+                <input className={inputClass} type="number" min={1} value={addForm.amount} onChange={(e) => setAddForm({ ...addForm, amount: e.target.value })} placeholder="0" />
               </div>
               <div>
                 <label className="text-xs text-muted-foreground block mb-1">পদ্ধতি *</label>
@@ -366,16 +332,13 @@ export default function AdminPaymentsPage() {
               </div>
               <div>
                 <label className="text-xs text-muted-foreground block mb-1">Transaction ID</label>
-                <input className={inputClass} value={addForm.transaction_id}
-                  onChange={(e) => setAddForm({ ...addForm, transaction_id: e.target.value })} placeholder="ঐচ্ছিক" maxLength={50} />
+                <input className={inputClass} value={addForm.transaction_id} onChange={(e) => setAddForm({ ...addForm, transaction_id: e.target.value })} placeholder="ঐচ্ছিক" maxLength={50} />
               </div>
               <div>
                 <label className="text-xs text-muted-foreground block mb-1">তারিখ *</label>
-                <input className={inputClass} type="date" value={addForm.paid_date}
-                  onChange={(e) => setAddForm({ ...addForm, paid_date: e.target.value })} />
+                <input className={inputClass} type="date" value={addForm.paid_date} onChange={(e) => setAddForm({ ...addForm, paid_date: e.target.value })} />
               </div>
             </div>
-
             {walletAccounts.length > 0 && (
               <div>
                 <label className="text-xs text-muted-foreground block mb-1">ওয়ালেট অ্যাকাউন্ট</label>
@@ -385,13 +348,10 @@ export default function AdminPaymentsPage() {
                 </select>
               </div>
             )}
-
             <div>
               <label className="text-xs text-muted-foreground block mb-1">নোট</label>
-              <textarea className={inputClass + " resize-none"} rows={2} value={addForm.notes}
-                onChange={(e) => setAddForm({ ...addForm, notes: e.target.value })} placeholder="অতিরিক্ত তথ্য..." maxLength={500} />
+              <textarea className={inputClass + " resize-none"} rows={2} value={addForm.notes} onChange={(e) => setAddForm({ ...addForm, notes: e.target.value })} placeholder="অতিরিক্ত তথ্য..." maxLength={500} />
             </div>
-
             <div className="flex justify-end gap-3 pt-2">
               <button onClick={() => setShowAddModal(false)} className="text-sm px-4 py-2 rounded-md bg-secondary">বাতিল</button>
               <button onClick={handleAddPayment} disabled={addLoading}
@@ -404,7 +364,6 @@ export default function AdminPaymentsPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation */}
       {deleteId && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50" onClick={() => setDeleteId(null)}>
           <div className="bg-card border border-border rounded-xl p-6 max-w-sm mx-4" onClick={(e) => e.stopPropagation()}>

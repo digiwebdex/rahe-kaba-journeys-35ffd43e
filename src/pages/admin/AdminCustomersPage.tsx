@@ -22,6 +22,7 @@ const emptyForm = {
 };
 
 export default function AdminCustomersPage() {
+  const navigate = useNavigate();
   const isViewer = useIsViewer();
   const [customers, setCustomers] = useState<any[]>([]);
   const [selectedCustomer, setSelectedCustomer] = useState<any>(null);

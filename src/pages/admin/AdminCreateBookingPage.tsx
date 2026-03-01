@@ -43,17 +43,21 @@ export default function AdminCreateBookingPage() {
     package_id: "",
     num_travelers: 1,
     travel_date: "",
+    selling_price_per_person: 0,
     total_amount: 0,
     paid_amount: 0,
+    cost_price_per_person: 0,
+    extra_expense: 0,
     status: "pending",
     notes: "",
     moallem_id: "",
     supplier_agent_id: "",
-    cost_price_per_person: 0,
   });
 
-  const dueAmount = Math.max(0, form.total_amount - form.paid_amount);
+  const totalSellingPrice = form.selling_price_per_person * form.num_travelers;
   const totalCost = form.cost_price_per_person * form.num_travelers;
+  const profitAmount = totalSellingPrice - totalCost - form.extra_expense;
+  const dueAmount = Math.max(0, totalSellingPrice - form.paid_amount);
 
   useEffect(() => {
     supabase
@@ -106,16 +110,14 @@ export default function AdminCreateBookingPage() {
     setForm((prev) => ({
       ...prev,
       package_id: packageId,
-      total_amount: pkg ? Number(pkg.price) * prev.num_travelers : prev.total_amount,
+      selling_price_per_person: pkg ? Number(pkg.price) : prev.selling_price_per_person,
     }));
   };
 
   const handleTravelersChange = (num: number) => {
-    const pkg = packages.find((p) => p.id === form.package_id);
     setForm((prev) => ({
       ...prev,
       num_travelers: num,
-      total_amount: pkg ? Number(pkg.price) * num : prev.total_amount,
     }));
   };
 
@@ -183,16 +185,19 @@ export default function AdminCreateBookingPage() {
         guest_passport: form.guest_passport.trim() || null,
         package_id: form.package_id,
         num_travelers: form.num_travelers,
-        total_amount: form.total_amount,
+        selling_price_per_person: form.selling_price_per_person,
+        total_amount: totalSellingPrice,
         paid_amount: form.paid_amount,
         due_amount: dueAmount,
+        cost_price_per_person: form.cost_price_per_person || 0,
+        total_cost: totalCost,
+        extra_expense: form.extra_expense || 0,
+        profit_amount: profitAmount,
         status: form.status,
         notes: form.notes.trim() || null,
         user_id: customerId,
         moallem_id: form.moallem_id || null,
         supplier_agent_id: form.supplier_agent_id || null,
-        cost_price_per_person: form.cost_price_per_person || 0,
-        total_cost: totalCost,
       }).select("id, tracking_id").single();
 
       if (error) throw error;
@@ -381,29 +386,45 @@ export default function AdminCreateBookingPage() {
         )}
       </div>
 
-      {/* Payment & Status */}
+      {/* Pricing & Profit */}
       <div className="bg-card border border-border rounded-xl p-5 space-y-4">
         <h3 className="font-heading font-semibold text-sm flex items-center gap-2">
-          <CreditCard className="h-4 w-4 text-primary" /> পেমেন্ট ও স্ট্যাটাস
+          <CreditCard className="h-4 w-4 text-primary" /> মূল্য ও লাভ
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
-            <label className="text-xs text-muted-foreground block mb-1">মোট মূল্য (৳) *</label>
-            <input className={inputClass} type="number" min={0} value={form.total_amount}
-              onChange={(e) => {
-                const total = Math.max(0, parseFloat(e.target.value) || 0);
-                setForm(f => ({ ...f, total_amount: total, paid_amount: Math.min(f.paid_amount, total) }));
-              }} />
+            <label className="text-xs text-muted-foreground block mb-1">প্রতি ব্যক্তি বিক্রয় মূল্য (৳) *</label>
+            <input className={inputClass} type="number" min={0} value={form.selling_price_per_person}
+              onChange={(e) => setForm(f => ({ ...f, selling_price_per_person: Math.max(0, parseFloat(e.target.value) || 0) }))} />
           </div>
           <div>
+            <label className="text-xs text-muted-foreground block mb-1">মোট বিক্রয় মূল্য (৳) — স্বয়ংক্রিয়</label>
+            <div className={`${inputClass} bg-muted/50 font-bold text-foreground`}>
+              ৳{totalSellingPrice.toLocaleString()}
+            </div>
+          </div>
+          <div>
+            <label className="text-xs text-muted-foreground block mb-1">অতিরিক্ত খরচ (৳)</label>
+            <input className={inputClass} type="number" min={0} value={form.extra_expense}
+              onChange={(e) => setForm(f => ({ ...f, extra_expense: Math.max(0, parseFloat(e.target.value) || 0) }))} />
+          </div>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div>
             <label className="text-xs text-muted-foreground block mb-1">পরিশোধিত (৳)</label>
-            <input className={inputClass} type="number" min={0} max={form.total_amount} value={form.paid_amount}
-              onChange={(e) => setForm(f => ({ ...f, paid_amount: Math.min(Math.max(0, parseFloat(e.target.value) || 0), f.total_amount) }))} />
+            <input className={inputClass} type="number" min={0} max={totalSellingPrice} value={form.paid_amount}
+              onChange={(e) => setForm(f => ({ ...f, paid_amount: Math.min(Math.max(0, parseFloat(e.target.value) || 0), totalSellingPrice || Infinity) }))} />
           </div>
           <div>
             <label className="text-xs text-muted-foreground block mb-1">বকেয়া (৳)</label>
             <div className={`${inputClass} bg-muted/50 font-bold ${dueAmount > 0 ? "text-destructive" : "text-emerald"}`}>
               ৳{dueAmount.toLocaleString()}
+            </div>
+          </div>
+          <div>
+            <label className="text-xs text-muted-foreground block mb-1">লাভ (৳) — স্বয়ংক্রিয়</label>
+            <div className={`${inputClass} bg-muted/50 font-bold ${profitAmount >= 0 ? "text-emerald" : "text-destructive"}`}>
+              ৳{profitAmount.toLocaleString()}
             </div>
           </div>
         </div>
@@ -427,7 +448,7 @@ export default function AdminCreateBookingPage() {
       {/* Live Summary */}
       <div className="bg-primary/5 border border-primary/20 rounded-xl p-5">
         <h3 className="font-heading font-semibold text-sm mb-3">সারসংক্ষেপ</h3>
-        <div className="grid grid-cols-2 sm:grid-cols-6 gap-3 text-sm">
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3 text-sm">
           <div>
             <p className="text-xs text-muted-foreground">কাস্টমার</p>
             <p className="font-medium">{form.guest_name || "—"}</p>
@@ -437,8 +458,16 @@ export default function AdminCreateBookingPage() {
             <p className="font-medium">{selectedPkg?.name || "—"}</p>
           </div>
           <div>
-            <p className="text-xs text-muted-foreground">মোট</p>
-            <p className="font-heading font-bold text-foreground">৳{form.total_amount.toLocaleString()}</p>
+            <p className="text-xs text-muted-foreground">বিক্রয় মূল্য</p>
+            <p className="font-heading font-bold text-foreground">৳{totalSellingPrice.toLocaleString()}</p>
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground">ক্রয় মূল্য</p>
+            <p className="font-heading font-bold text-foreground">৳{totalCost.toLocaleString()}</p>
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground">অতিরিক্ত খরচ</p>
+            <p className="font-heading font-bold text-foreground">৳{form.extra_expense.toLocaleString()}</p>
           </div>
           <div>
             <p className="text-xs text-muted-foreground">পরিশোধিত</p>
@@ -449,8 +478,8 @@ export default function AdminCreateBookingPage() {
             <p className={`font-heading font-bold ${dueAmount > 0 ? "text-destructive" : "text-emerald"}`}>৳{dueAmount.toLocaleString()}</p>
           </div>
           <div>
-            <p className="text-xs text-muted-foreground">মোট খরচ</p>
-            <p className="font-heading font-bold text-foreground">৳{totalCost.toLocaleString()}</p>
+            <p className="text-xs text-muted-foreground">লাভ</p>
+            <p className={`font-heading font-bold ${profitAmount >= 0 ? "text-emerald" : "text-destructive"}`}>৳{profitAmount.toLocaleString()}</p>
           </div>
         </div>
       </div>

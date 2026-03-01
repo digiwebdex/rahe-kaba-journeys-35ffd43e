@@ -164,6 +164,12 @@ const AdminDashboardCharts = ({ bookings, payments, expenses = [], accounts = []
   const agentExpenses = expenses.filter((e: any) => e.category === "supplier" || e.expense_type === "supplier").reduce((s: number, e: any) => s + Number(e.amount || 0), 0) + totalSupplierPaid;
   const overallProfit = totalRevenue - totalExpenses;
 
+  // Booking-level profit aggregates
+  const totalSales = filteredBookings.reduce((s: number, b: any) => s + Number(b.total_amount || 0), 0);
+  const totalPurchaseCost = filteredBookings.reduce((s: number, b: any) => s + Number(b.total_cost || 0), 0);
+  const totalExtraExpense = filteredBookings.reduce((s: number, b: any) => s + Number(b.extra_expense || 0), 0);
+  const totalBookingProfit = filteredBookings.reduce((s: number, b: any) => s + Number(b.profit_amount || 0), 0);
+
   // Monthly profit chart (revenue - expenses per month)
   const monthlyProfitData = useMemo(() => {
     const months: Record<string, { revenue: number; expenses: number }> = {};
@@ -227,11 +233,12 @@ const AdminDashboardCharts = ({ bookings, payments, expenses = [], accounts = []
   const hajjiReport = useMemo(() => filteredBookings.map((b: any) => {
     const expenseTotal = expenses.filter((e: any) => e.booking_id === b.id).reduce((s: number, e: any) => s + Number(e.amount), 0);
     const supplierCost = Number(b.total_cost || 0);
+    const extraExp = Number(b.extra_expense || 0);
     return {
       trackingId: b.tracking_id, name: b.guest_name || "N/A", package: b.packages?.name || "N/A",
       type: b.packages?.type || "N/A", travelers: b.num_travelers, total: Number(b.total_amount),
-      paid: Number(b.paid_amount), due: Number(b.due_amount || 0), supplierCost, expenses: expenseTotal,
-      profit: Number(b.paid_amount) - supplierCost - expenseTotal, status: b.status, date: b.created_at,
+      paid: Number(b.paid_amount), due: Number(b.due_amount || 0), supplierCost, extraExpense: extraExp, expenses: expenseTotal,
+      profit: Number(b.profit_amount || 0), status: b.status, date: b.created_at,
     };
   }), [filteredBookings, expenses]);
 
@@ -279,7 +286,25 @@ const AdminDashboardCharts = ({ bookings, payments, expenses = [], accounts = []
         </div>
       </div>
 
-      {/* KPI Cards - 2 rows */}
+      {/* Booking Profit KPIs */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        {[
+          { label: "Total Sales", value: `৳${totalSales.toLocaleString()}`, icon: DollarSign, color: "text-primary", bgColor: "bg-primary/10" },
+          { label: "Purchase Cost", value: `৳${totalPurchaseCost.toLocaleString()}`, icon: TrendingDown, color: "text-muted-foreground", bgColor: "bg-secondary" },
+          { label: "Extra Expenses", value: `৳${totalExtraExpense.toLocaleString()}`, icon: Receipt, color: "text-destructive", bgColor: "bg-destructive/10" },
+          { label: "Booking Profit", value: `৳${totalBookingProfit.toLocaleString()}`, icon: TrendingUp, color: totalBookingProfit >= 0 ? "text-emerald" : "text-destructive", bgColor: totalBookingProfit >= 0 ? "bg-emerald/10" : "bg-destructive/10" },
+        ].map((c) => (
+          <div key={c.label} className="bg-card border border-border rounded-xl p-4">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs text-muted-foreground">{c.label}</p>
+              <div className={`w-8 h-8 rounded-lg ${c.bgColor} flex items-center justify-center`}><c.icon className={`h-3.5 w-3.5 ${c.color}`} /></div>
+            </div>
+            <p className={`text-xl font-heading font-bold ${c.color}`}>{c.value}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Financial KPIs */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {[
           { label: "Total Revenue", value: `৳${totalRevenue.toLocaleString()}`, icon: DollarSign, color: "text-primary", bgColor: "bg-primary/10" },

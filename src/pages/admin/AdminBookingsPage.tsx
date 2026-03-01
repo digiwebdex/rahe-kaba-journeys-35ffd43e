@@ -163,7 +163,9 @@ export default function AdminBookingsPage() {
   const startEdit = (b: any) => {
     setEditingId(b.id);
     setEditForm({
-      status: b.status, total_amount: b.total_amount, notes: b.notes || "",
+      status: b.status, selling_price_per_person: Number(b.selling_price_per_person || 0),
+      cost_price_per_person: Number(b.cost_price_per_person || 0), extra_expense: Number(b.extra_expense || 0),
+      notes: b.notes || "",
       num_travelers: b.num_travelers, paid_amount: Number(b.paid_amount || 0),
       guest_name: b.guest_name || "", guest_phone: b.guest_phone || "",
       guest_email: b.guest_email || "", guest_address: b.guest_address || "",
@@ -172,16 +174,28 @@ export default function AdminBookingsPage() {
     });
   };
 
-  const editDue = editingId ? Math.max(0, Number(editForm.total_amount || 0) - Number(editForm.paid_amount || 0)) : 0;
+  const editTotalSelling = editingId ? (Number(editForm.selling_price_per_person || 0) * Number(editForm.num_travelers || 1)) : 0;
+  const editTotalCost = editingId ? (Number(editForm.cost_price_per_person || 0) * Number(editForm.num_travelers || 1)) : 0;
+  const editProfit = editTotalSelling - editTotalCost - Number(editForm.extra_expense || 0);
+  const editDue = editingId ? Math.max(0, editTotalSelling - Number(editForm.paid_amount || 0)) : 0;
 
   const saveEdit = async () => {
     if (!editingId) return;
-    const total = Math.max(0, parseFloat(editForm.total_amount) || 0);
-    const paid = Math.min(Math.max(0, parseFloat(editForm.paid_amount) || 0), total);
-    const due = Math.max(0, total - paid);
+    const sellingPP = Math.max(0, parseFloat(editForm.selling_price_per_person) || 0);
+    const costPP = Math.max(0, parseFloat(editForm.cost_price_per_person) || 0);
+    const extraExp = Math.max(0, parseFloat(editForm.extra_expense) || 0);
+    const travelers = parseInt(editForm.num_travelers) || 1;
+    const totalSelling = sellingPP * travelers;
+    const totalCostVal = costPP * travelers;
+    const paid = Math.min(Math.max(0, parseFloat(editForm.paid_amount) || 0), totalSelling);
+    const due = Math.max(0, totalSelling - paid);
+    const profit = totalSelling - totalCostVal - extraExp;
     const { error } = await supabase.from("bookings").update({
-      status: editForm.status, total_amount: total, paid_amount: paid,
-      due_amount: due, notes: editForm.notes || null, num_travelers: parseInt(editForm.num_travelers),
+      status: editForm.status, selling_price_per_person: sellingPP,
+      total_amount: totalSelling, paid_amount: paid,
+      due_amount: due, cost_price_per_person: costPP, total_cost: totalCostVal,
+      extra_expense: extraExp, profit_amount: profit,
+      notes: editForm.notes || null, num_travelers: travelers,
       guest_name: editForm.guest_name?.trim() || null, guest_phone: editForm.guest_phone?.trim() || null,
       guest_email: editForm.guest_email?.trim() || null, guest_address: editForm.guest_address?.trim() || null,
       guest_passport: editForm.guest_passport?.trim() || null, user_id: editForm.user_id || null,
@@ -325,6 +339,28 @@ export default function AdminBookingsPage() {
                 </div>
               </div>
 
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div>
+                  <label className="text-xs text-muted-foreground block mb-1">বিক্রয় মূল্য/ব্যক্তি (৳)</label>
+                  <input className={inputClass} type="number" min={0} value={editForm.selling_price_per_person}
+                    onChange={(e) => setEditForm((f: any) => ({ ...f, selling_price_per_person: e.target.value }))} />
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground block mb-1">ক্রয় মূল্য/ব্যক্তি (৳)</label>
+                  <input className={inputClass} type="number" min={0} value={editForm.cost_price_per_person}
+                    onChange={(e) => setEditForm((f: any) => ({ ...f, cost_price_per_person: e.target.value }))} />
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground block mb-1">অতিরিক্ত খরচ (৳)</label>
+                  <input className={inputClass} type="number" min={0} value={editForm.extra_expense}
+                    onChange={(e) => setEditForm((f: any) => ({ ...f, extra_expense: e.target.value }))} />
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground block mb-1">যাত্রী</label>
+                  <input className={inputClass} type="number" min={1} value={editForm.num_travelers} onChange={(e) => setEditForm({ ...editForm, num_travelers: e.target.value })} />
+                </div>
+              </div>
+
               <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
                 <div>
                   <label className="text-xs text-muted-foreground block mb-1">স্ট্যাটাস</label>
@@ -333,17 +369,13 @@ export default function AdminBookingsPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="text-xs text-muted-foreground block mb-1">মোট মূল্য (৳)</label>
-                  <input className={inputClass} type="number" min={0} value={editForm.total_amount}
-                    onChange={(e) => {
-                      const total = Math.max(0, parseFloat(e.target.value) || 0);
-                      setEditForm((f: any) => ({ ...f, total_amount: total, paid_amount: Math.min(f.paid_amount, total) }));
-                    }} />
+                  <label className="text-xs text-muted-foreground block mb-1">মোট বিক্রয় (৳)</label>
+                  <div className={`${inputClass} bg-muted/50 font-bold`}>৳{editTotalSelling.toLocaleString()}</div>
                 </div>
                 <div>
                   <label className="text-xs text-muted-foreground block mb-1">পরিশোধিত (৳)</label>
-                  <input className={inputClass} type="number" min={0} max={editForm.total_amount} value={editForm.paid_amount}
-                    onChange={(e) => setEditForm((f: any) => ({ ...f, paid_amount: Math.min(Math.max(0, parseFloat(e.target.value) || 0), f.total_amount) }))} />
+                  <input className={inputClass} type="number" min={0} max={editTotalSelling} value={editForm.paid_amount}
+                    onChange={(e) => setEditForm((f: any) => ({ ...f, paid_amount: Math.min(Math.max(0, parseFloat(e.target.value) || 0), editTotalSelling) }))} />
                 </div>
                 <div>
                   <label className="text-xs text-muted-foreground block mb-1">বকেয়া (৳)</label>
@@ -352,8 +384,10 @@ export default function AdminBookingsPage() {
                   </div>
                 </div>
                 <div>
-                  <label className="text-xs text-muted-foreground block mb-1">যাত্রী</label>
-                  <input className={inputClass} type="number" min={1} value={editForm.num_travelers} onChange={(e) => setEditForm({ ...editForm, num_travelers: e.target.value })} />
+                  <label className="text-xs text-muted-foreground block mb-1">লাভ (৳)</label>
+                  <div className={`${inputClass} bg-muted/50 font-bold ${editProfit >= 0 ? "text-emerald" : "text-destructive"}`}>
+                    ৳{editProfit.toLocaleString()}
+                  </div>
                 </div>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -385,11 +419,12 @@ export default function AdminBookingsPage() {
                   </span>
                 </div>
               </div>
-              <div className="grid grid-cols-4 gap-3 text-sm">
-                <div><p className="text-muted-foreground text-xs">Package Price</p><p className="font-medium">{fmt(Number(b.packages?.price || b.total_amount))}</p></div>
-                <div><p className="text-muted-foreground text-xs">Total</p><p className="font-medium">{fmt(Number(b.total_amount))}</p></div>
+              <div className="grid grid-cols-5 gap-3 text-sm">
+                <div><p className="text-muted-foreground text-xs">Selling</p><p className="font-medium">{fmt(Number(b.total_amount))}</p></div>
+                <div><p className="text-muted-foreground text-xs">Cost</p><p className="font-medium text-muted-foreground">{fmt(Number(b.total_cost || 0))}</p></div>
                 <div><p className="text-muted-foreground text-xs">Paid</p><p className="font-medium text-emerald-500">{fmt(Number(b.paid_amount))}</p></div>
                 <div><p className="text-muted-foreground text-xs">Due</p><p className="font-medium text-destructive">{fmt(Number(b.due_amount || 0))}</p></div>
+                <div><p className="text-muted-foreground text-xs">Profit</p><p className={`font-medium ${Number(b.profit_amount || 0) >= 0 ? "text-emerald-500" : "text-destructive"}`}>{fmt(Number(b.profit_amount || 0))}</p></div>
               </div>
               <div className="mt-3 pt-3 border-t border-border/50 flex items-center justify-between" onClick={(e) => e.stopPropagation()}>
                 <button
@@ -421,9 +456,14 @@ export default function AdminBookingsPage() {
                 <div><span className="text-muted-foreground text-xs block">ফোন</span><span className="font-medium">{viewBooking.guest_phone || "—"}</span></div>
                 <div><span className="text-muted-foreground text-xs block">প্যাকেজ</span><span className="font-medium">{viewBooking.packages?.name || "—"}</span></div>
                 <div><span className="text-muted-foreground text-xs block">যাত্রী</span><span className="font-medium">{viewBooking.num_travelers}</span></div>
-                <div><span className="text-muted-foreground text-xs block">মোট মূল্য</span><span className="font-medium">{fmt(Number(viewBooking.total_amount))}</span></div>
+                <div><span className="text-muted-foreground text-xs block">বিক্রয় মূল্য/ব্যক্তি</span><span className="font-medium">{fmt(Number(viewBooking.selling_price_per_person || 0))}</span></div>
+                <div><span className="text-muted-foreground text-xs block">মোট বিক্রয়</span><span className="font-medium">{fmt(Number(viewBooking.total_amount))}</span></div>
+                <div><span className="text-muted-foreground text-xs block">ক্রয় মূল্য/ব্যক্তি</span><span className="font-medium">{fmt(Number(viewBooking.cost_price_per_person || 0))}</span></div>
+                <div><span className="text-muted-foreground text-xs block">মোট ক্রয়</span><span className="font-medium">{fmt(Number(viewBooking.total_cost || 0))}</span></div>
+                <div><span className="text-muted-foreground text-xs block">অতিরিক্ত খরচ</span><span className="font-medium">{fmt(Number(viewBooking.extra_expense || 0))}</span></div>
                 <div><span className="text-muted-foreground text-xs block">পরিশোধিত</span><span className="font-medium text-emerald-500">{fmt(Number(viewBooking.paid_amount))}</span></div>
                 <div><span className="text-muted-foreground text-xs block">বকেয়া</span><span className="font-medium text-destructive">{fmt(Number(viewBooking.due_amount || 0))}</span></div>
+                <div><span className="text-muted-foreground text-xs block">লাভ</span><span className={`font-medium ${Number(viewBooking.profit_amount || 0) >= 0 ? "text-emerald-500" : "text-destructive"}`}>{fmt(Number(viewBooking.profit_amount || 0))}</span></div>
                 <div><span className="text-muted-foreground text-xs block">স্ট্যাটাস</span><Badge variant={viewBooking.status === "completed" ? "default" : "secondary"} className="text-xs capitalize">{viewBooking.status}</Badge></div>
                 <div><span className="text-muted-foreground text-xs block">পাসপোর্ট</span><span className="font-medium">{viewBooking.guest_passport || "—"}</span></div>
                 <div><span className="text-muted-foreground text-xs block">মোয়াল্লেম</span><span className="font-medium">{viewBooking.moallems?.name || "—"}</span></div>

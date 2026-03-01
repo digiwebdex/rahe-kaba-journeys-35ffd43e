@@ -7,6 +7,7 @@ import { useAdminRole } from "@/components/admin/AdminLayout";
 
 const inputClass = "w-full bg-secondary border border-border rounded-md px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40";
 const ROLES = ["admin", "manager", "accountant", "staff"];
+const PRIMARY_ADMIN_EMAIL = "admin@rahekaba.com";
 
 export default function AdminSettingsPage() {
   const currentRole = useAdminRole();
@@ -37,7 +38,7 @@ export default function AdminSettingsPage() {
 
   const fetchRoleData = async () => {
     const [profilesRes, rolesRes] = await Promise.all([
-      supabase.from("profiles").select("user_id, full_name, phone, created_at").order("created_at", { ascending: false }),
+      supabase.from("profiles").select("user_id, full_name, phone, email, created_at").order("created_at", { ascending: false }),
       supabase.from("user_roles").select("*"),
     ]);
     setUsers(profilesRes.data || []);
@@ -88,6 +89,13 @@ export default function AdminSettingsPage() {
     const user = users.find((u) => u.user_id === userId);
     return user?.full_name || user?.phone || userId.slice(0, 8);
   };
+
+  const getUserEmail = (userId: string) => {
+    const user = users.find((u) => u.user_id === userId);
+    return user?.email || "";
+  };
+
+  const isPrimaryAdmin = (userId: string) => getUserEmail(userId) === PRIMARY_ADMIN_EMAIL;
 
   // Users without any role yet
   const usersWithoutRole = users.filter((u) => !userRoles.some((r) => r.user_id === u.user_id));
@@ -162,16 +170,22 @@ export default function AdminSettingsPage() {
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  <select
-                    className="bg-secondary border border-border rounded-md px-3 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
-                    value={ur.role}
-                    onChange={(e) => handleChangeRole(ur.id, e.target.value)}
-                  >
-                    {ROLES.map((r) => <option key={r} value={r}>{r.charAt(0).toUpperCase() + r.slice(1)}</option>)}
-                  </select>
-                  <button onClick={() => handleRemoveRole(ur.id)} className="text-destructive hover:underline">
-                    <Trash2 className="h-4 w-4" />
-                  </button>
+                  {isPrimaryAdmin(ur.user_id) ? (
+                    <span className="bg-primary/10 text-primary text-xs font-bold px-3 py-1.5 rounded-full">Primary Admin (Protected)</span>
+                  ) : (
+                    <>
+                      <select
+                        className="bg-secondary border border-border rounded-md px-3 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
+                        value={ur.role}
+                        onChange={(e) => handleChangeRole(ur.id, e.target.value)}
+                      >
+                        {ROLES.map((r) => <option key={r} value={r}>{r.charAt(0).toUpperCase() + r.slice(1)}</option>)}
+                      </select>
+                      <button onClick={() => handleRemoveRole(ur.id)} className="text-destructive hover:underline">
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
             ))}

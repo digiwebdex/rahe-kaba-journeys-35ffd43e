@@ -225,6 +225,7 @@ export default function AdminCustomersPage() {
     { key: "nid_copy", label: "NID কপি" },
     { key: "photo", label: "ছবি" },
     { key: "visa_copy", label: "ভিসা কপি" },
+    { key: "ticket", label: "টিকেট" },
     { key: "other", label: "অন্যান্য" },
   ];
 

@@ -6,6 +6,7 @@ import { generateReceipt, CompanyInfo, InvoicePayment } from "@/lib/invoiceGener
 import { useIsViewer, useCanModifyFinancials } from "@/components/admin/AdminLayout";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import AdminActionMenu from "@/components/admin/AdminActionMenu";
+import CustomerSearchSelect from "@/components/admin/CustomerSearchSelect";
 
 const inputClass = "w-full bg-secondary border border-border rounded-md px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40";
 const fmt = (n: number) => `৳${Number(n || 0).toLocaleString()}`;
@@ -300,12 +301,16 @@ export default function AdminPaymentsPage() {
           <div className="space-y-4">
             <div>
               <label className="text-xs text-muted-foreground block mb-1">কাস্টমার নির্বাচন *</label>
-              <select className={inputClass} value={addForm.customer_id} onChange={(e) => handleCustomerChange(e.target.value)}>
-                <option value="">-- কাস্টমার বাছাই করুন --</option>
-                {customers.map((c) => (
-                  <option key={c.user_id} value={c.user_id}>{c.full_name || "Unnamed"} — {c.phone || "No phone"}</option>
-                ))}
-              </select>
+              <CustomerSearchSelect
+                selectedId={addForm.customer_id || null}
+                onSelect={(c) => {
+                  if (c) {
+                    handleCustomerChange(c.user_id);
+                  } else {
+                    handleCustomerChange("");
+                  }
+                }}
+              />
             </div>
             <div>
               <label className="text-xs text-muted-foreground block mb-1">বুকিং নির্বাচন *</label>

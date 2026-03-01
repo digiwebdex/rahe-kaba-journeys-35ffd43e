@@ -44,6 +44,7 @@ export default function AdminSupplierAgentProfilePage() {
     date: new Date().toISOString().split("T")[0],
     notes: "",
     wallet_account_id: "",
+    booking_id: "",
   };
   const [paymentForm, setPaymentForm] = useState(emptyPaymentForm);
 
@@ -99,6 +100,7 @@ export default function AdminSupplierAgentProfilePage() {
         date: paymentForm.date,
         notes: paymentForm.notes.trim() || null,
         wallet_account_id: paymentForm.wallet_account_id || null,
+        booking_id: paymentForm.booking_id || null,
         recorded_by: session.user.id,
       });
       if (apErr) throw apErr;
@@ -225,19 +227,21 @@ export default function AdminSupplierAgentProfilePage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-border text-left text-muted-foreground text-xs">
-                    <th className="pb-2 pr-3">তারিখ</th>
-                    <th className="pb-2 pr-3">পরিমাণ</th>
-                    <th className="pb-2 pr-3">পদ্ধতি</th>
-                    <th className="pb-2">নোট</th>
+                     <th className="pb-2 pr-3">তারিখ</th>
+                     <th className="pb-2 pr-3">বুকিং</th>
+                     <th className="pb-2 pr-3">পরিমাণ</th>
+                     <th className="pb-2 pr-3">পদ্ধতি</th>
+                     <th className="pb-2">নোট</th>
                   </tr>
                 </thead>
                 <tbody>
                   {agentPayments.map((ap: any) => (
                     <tr key={ap.id} className="border-b border-border/30">
-                      <td className="py-2 pr-3 text-xs">{format(new Date(ap.date), "dd MMM yyyy")}</td>
-                      <td className="py-2 pr-3 font-bold text-emerald-500">{fmt(ap.amount)}</td>
-                      <td className="py-2 pr-3 capitalize">{ap.payment_method}</td>
-                      <td className="py-2 text-xs text-muted-foreground">{ap.notes || "—"}</td>
+                       <td className="py-2 pr-3 text-xs">{format(new Date(ap.date), "dd MMM yyyy")}</td>
+                       <td className="py-2 pr-3 text-xs font-mono text-primary">{ap.booking_id ? bookings.find((b: any) => b.id === ap.booking_id)?.tracking_id || "—" : "General"}</td>
+                       <td className="py-2 pr-3 font-bold text-emerald-500">{fmt(ap.amount)}</td>
+                       <td className="py-2 pr-3 capitalize">{ap.payment_method}</td>
+                       <td className="py-2 text-xs text-muted-foreground">{ap.notes || "—"}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -262,28 +266,30 @@ export default function AdminSupplierAgentProfilePage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-border text-left text-muted-foreground text-xs">
-                    <th className="pb-2 pr-3">ট্র্যাকিং</th>
-                    <th className="pb-2 pr-3">কাস্টমার</th>
-                    <th className="pb-2 pr-3">প্যাকেজ</th>
-                    <th className="pb-2 pr-3">যাত্রী</th>
-                    <th className="pb-2 pr-3">প্রতি জন খরচ</th>
-                    <th className="pb-2 pr-3">মোট খরচ</th>
-                    <th className="pb-2 pr-3">বিক্রয় মূল্য</th>
-                    <th className="pb-2 pr-3">স্ট্যাটাস</th>
-                    <th className="pb-2">তারিখ</th>
+                     <th className="pb-2 pr-3">ট্র্যাকিং</th>
+                     <th className="pb-2 pr-3">কাস্টমার</th>
+                     <th className="pb-2 pr-3">প্যাকেজ</th>
+                     <th className="pb-2 pr-3">যাত্রী</th>
+                     <th className="pb-2 pr-3">মোট খরচ</th>
+                     <th className="pb-2 pr-3">সাপ্লায়ার পরিশোধিত</th>
+                     <th className="pb-2 pr-3">সাপ্লায়ার বকেয়া</th>
+                     <th className="pb-2 pr-3">বিক্রয় মূল্য</th>
+                     <th className="pb-2 pr-3">স্ট্যাটাস</th>
+                     <th className="pb-2">তারিখ</th>
                   </tr>
                 </thead>
                 <tbody>
                   {bookings.map((b) => (
                     <tr key={b.id} className="border-b border-border/30 cursor-pointer hover:bg-muted/30 transition-colors"
                       onClick={() => navigate(`/admin/bookings`)}>
-                      <td className="py-2 pr-3 font-mono text-primary font-medium text-xs">{b.tracking_id}</td>
-                      <td className="py-2 pr-3">{b.guest_name || "—"}</td>
-                      <td className="py-2 pr-3">{b.packages?.name || "—"}</td>
-                      <td className="py-2 pr-3">{b.num_travelers}</td>
-                      <td className="py-2 pr-3">{fmt(b.cost_price_per_person)}</td>
-                      <td className="py-2 pr-3 font-medium">{fmt(b.total_cost)}</td>
-                      <td className="py-2 pr-3 font-medium">{fmt(b.total_amount)}</td>
+                       <td className="py-2 pr-3 font-mono text-primary font-medium text-xs">{b.tracking_id}</td>
+                       <td className="py-2 pr-3">{b.guest_name || "—"}</td>
+                       <td className="py-2 pr-3">{b.packages?.name || "—"}</td>
+                       <td className="py-2 pr-3">{b.num_travelers}</td>
+                       <td className="py-2 pr-3 font-medium">{fmt(b.total_cost)}</td>
+                       <td className="py-2 pr-3 font-medium text-emerald-500">{fmt(b.paid_to_supplier)}</td>
+                       <td className="py-2 pr-3 font-medium text-destructive">{fmt(b.supplier_due)}</td>
+                       <td className="py-2 pr-3 font-medium">{fmt(b.total_amount)}</td>
                       <td className="py-2 pr-3">
                         <Badge variant={b.status === "completed" ? "default" : "secondary"} className="text-[10px] capitalize">{b.status}</Badge>
                       </td>
@@ -395,6 +401,20 @@ export default function AdminSupplierAgentProfilePage() {
             <DialogDescription>{agent.agent_name} — বকেয়া: {fmt(dueToAgent)}</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium">বুকিং (ঐচ্ছিক)</label>
+              <Select value={paymentForm.booking_id} onValueChange={(v) => setPaymentForm({ ...paymentForm, booking_id: v })}>
+                <SelectTrigger><SelectValue placeholder="-- বুকিং নির্বাচন করুন --" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">সাধারণ পেমেন্ট</SelectItem>
+                  {bookings.filter((b: any) => Number(b.supplier_due || 0) > 0).map((b: any) => (
+                    <SelectItem key={b.id} value={b.id}>
+                      {b.tracking_id} — {b.guest_name || "N/A"} — বকেয়া: {fmt(b.supplier_due)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <div>
               <label className="text-sm font-medium">পরিমাণ (৳) *</label>
               <Input type="number" min={1} value={paymentForm.amount}

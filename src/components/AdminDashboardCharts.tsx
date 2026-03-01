@@ -155,9 +155,9 @@ const AdminDashboardCharts = ({ bookings, payments, expenses = [], accounts = []
 
   // Moallem & Supplier totals
   const totalMoallemAdvance = moallemPayments.reduce((s: number, p: any) => s + Number(p.amount || 0), 0);
-  const totalSupplierPaid = supplierPayments.reduce((s: number, p: any) => s + Number(p.amount || 0), 0);
+  const totalSupplierPaid = filteredBookings.reduce((s: number, b: any) => s + Number(b.paid_to_supplier || 0), 0);
   const totalSupplierCost = filteredBookings.reduce((s: number, b: any) => s + Number(b.total_cost || 0), 0);
-  const totalSupplierDue = Math.max(0, totalSupplierCost - totalSupplierPaid);
+  const totalSupplierDue = filteredBookings.reduce((s: number, b: any) => s + Number(b.supplier_due || 0), 0);
   const totalMoallemDue = moallems.reduce((s: number, m: any) => s + Number(m.total_due || 0), 0);
   const totalMoallems = moallems.length;
   const totalAgents = supplierAgents.length;
@@ -238,6 +238,7 @@ const AdminDashboardCharts = ({ bookings, payments, expenses = [], accounts = []
       trackingId: b.tracking_id, name: b.guest_name || "N/A", package: b.packages?.name || "N/A",
       type: b.packages?.type || "N/A", travelers: b.num_travelers, total: Number(b.total_amount),
       paid: Number(b.paid_amount), due: Number(b.due_amount || 0), supplierCost, extraExpense: extraExp, expenses: expenseTotal,
+      supplierPaid: Number(b.paid_to_supplier || 0), supplierDue: Number(b.supplier_due || 0),
       profit: Number(b.profit_amount || 0), status: b.status, date: b.created_at,
     };
   }), [filteredBookings, expenses]);
@@ -629,7 +630,7 @@ const AdminDashboardCharts = ({ bookings, payments, expenses = [], accounts = []
               <thead><tr className="border-b border-border text-left text-muted-foreground">
                 <th className="pb-3 pr-3">Tracking</th><th className="pb-3 pr-3">Name</th><th className="pb-3 pr-3">Package</th>
                 <th className="pb-3 pr-3">Travelers</th><th className="pb-3 pr-3">Total</th><th className="pb-3 pr-3">Paid</th>
-                <th className="pb-3 pr-3">Due</th><th className="pb-3 pr-3">Supplier</th><th className="pb-3 pr-3">Expenses</th><th className="pb-3 pr-3">Profit</th>
+                <th className="pb-3 pr-3">Due</th><th className="pb-3 pr-3">Supplier Cost</th><th className="pb-3 pr-3">Supplier Paid</th><th className="pb-3 pr-3">Supplier Due</th><th className="pb-3 pr-3">Expenses</th><th className="pb-3 pr-3">Profit</th>
                 <th className="pb-3 pr-3">Status</th><th className="pb-3">Date</th>
               </tr></thead>
               <tbody>
@@ -643,6 +644,8 @@ const AdminDashboardCharts = ({ bookings, payments, expenses = [], accounts = []
                     <td className="py-2.5 pr-3" style={{ color: CHART_COLORS.emerald }}>৳{r.paid.toLocaleString()}</td>
                     <td className="py-2.5 pr-3 text-destructive font-medium">৳{r.due.toLocaleString()}</td>
                     <td className="py-2.5 pr-3 text-muted-foreground">৳{r.supplierCost.toLocaleString()}</td>
+                    <td className="py-2.5 pr-3" style={{ color: CHART_COLORS.emerald }}>৳{r.supplierPaid.toLocaleString()}</td>
+                    <td className="py-2.5 pr-3 text-destructive">৳{r.supplierDue.toLocaleString()}</td>
                     <td className="py-2.5 pr-3 text-muted-foreground">৳{r.expenses.toLocaleString()}</td>
                     <td className={`py-2.5 pr-3 font-bold ${r.profit >= 0 ? "text-primary" : "text-destructive"}`}>৳{r.profit.toLocaleString()}</td>
                     <td className="py-2.5 pr-3">
@@ -660,6 +663,8 @@ const AdminDashboardCharts = ({ bookings, payments, expenses = [], accounts = []
                   <td className="py-3 pr-3" style={{ color: CHART_COLORS.emerald }}>৳{hajjiReport.reduce((s, r) => s + r.paid, 0).toLocaleString()}</td>
                   <td className="py-3 pr-3 text-destructive">৳{hajjiReport.reduce((s, r) => s + r.due, 0).toLocaleString()}</td>
                   <td className="py-3 pr-3 text-muted-foreground">৳{hajjiReport.reduce((s, r) => s + r.supplierCost, 0).toLocaleString()}</td>
+                  <td className="py-3 pr-3" style={{ color: CHART_COLORS.emerald }}>৳{hajjiReport.reduce((s, r) => s + r.supplierPaid, 0).toLocaleString()}</td>
+                  <td className="py-3 pr-3 text-destructive">৳{hajjiReport.reduce((s, r) => s + r.supplierDue, 0).toLocaleString()}</td>
                   <td className="py-3 pr-3 text-muted-foreground">৳{hajjiReport.reduce((s, r) => s + r.expenses, 0).toLocaleString()}</td>
                   <td className="py-3 pr-3 text-primary">৳{hajjiReport.reduce((s, r) => s + r.profit, 0).toLocaleString()}</td>
                   <td colSpan={2}></td>

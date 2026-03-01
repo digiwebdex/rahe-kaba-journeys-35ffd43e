@@ -152,10 +152,12 @@ export type Database = {
           num_travelers: number
           package_id: string
           paid_amount: number
+          paid_to_supplier: number
           profit_amount: number | null
           selling_price_per_person: number | null
           status: string
           supplier_agent_id: string | null
+          supplier_due: number
           total_amount: number
           total_cost: number | null
           tracking_id: string
@@ -179,10 +181,12 @@ export type Database = {
           num_travelers?: number
           package_id: string
           paid_amount?: number
+          paid_to_supplier?: number
           profit_amount?: number | null
           selling_price_per_person?: number | null
           status?: string
           supplier_agent_id?: string | null
+          supplier_due?: number
           total_amount: number
           total_cost?: number | null
           tracking_id?: string
@@ -206,10 +210,12 @@ export type Database = {
           num_travelers?: number
           package_id?: string
           paid_amount?: number
+          paid_to_supplier?: number
           profit_amount?: number | null
           selling_price_per_person?: number | null
           status?: string
           supplier_agent_id?: string | null
+          supplier_due?: number
           total_amount?: number
           total_cost?: number | null
           tracking_id?: string
@@ -960,6 +966,7 @@ export type Database = {
       supplier_agent_payments: {
         Row: {
           amount: number
+          booking_id: string | null
           created_at: string
           date: string
           id: string
@@ -971,6 +978,7 @@ export type Database = {
         }
         Insert: {
           amount: number
+          booking_id?: string | null
           created_at?: string
           date?: string
           id?: string
@@ -982,6 +990,7 @@ export type Database = {
         }
         Update: {
           amount?: number
+          booking_id?: string | null
           created_at?: string
           date?: string
           id?: string
@@ -992,6 +1001,20 @@ export type Database = {
           wallet_account_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "supplier_agent_payments_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_agent_payments_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "v_booking_profit"
+            referencedColumns: ["booking_id"]
+          },
           {
             foreignKeyName: "supplier_agent_payments_supplier_agent_id_fkey"
             columns: ["supplier_agent_id"]
@@ -1136,9 +1159,11 @@ export type Database = {
           package_name: string | null
           package_type: string | null
           paid_amount: number | null
+          paid_to_supplier: number | null
           profit_amount: number | null
           selling_price_per_person: number | null
           status: string | null
+          supplier_due: number | null
           total_amount: number | null
           total_cost: number | null
           total_expenses: number | null

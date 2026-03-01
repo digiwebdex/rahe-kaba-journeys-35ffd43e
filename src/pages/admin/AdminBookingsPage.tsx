@@ -419,11 +419,13 @@ export default function AdminBookingsPage() {
                   </span>
                 </div>
               </div>
-              <div className="grid grid-cols-5 gap-3 text-sm">
+              <div className="grid grid-cols-3 sm:grid-cols-7 gap-3 text-sm">
                 <div><p className="text-muted-foreground text-xs">Selling</p><p className="font-medium">{fmt(Number(b.total_amount))}</p></div>
                 <div><p className="text-muted-foreground text-xs">Cost</p><p className="font-medium text-muted-foreground">{fmt(Number(b.total_cost || 0))}</p></div>
                 <div><p className="text-muted-foreground text-xs">Paid</p><p className="font-medium text-emerald-500">{fmt(Number(b.paid_amount))}</p></div>
                 <div><p className="text-muted-foreground text-xs">Due</p><p className="font-medium text-destructive">{fmt(Number(b.due_amount || 0))}</p></div>
+                <div><p className="text-muted-foreground text-xs">Supplier Paid</p><p className="font-medium text-emerald-500">{fmt(Number(b.paid_to_supplier || 0))}</p></div>
+                <div><p className="text-muted-foreground text-xs">Supplier Due</p><p className="font-medium text-destructive">{fmt(Number(b.supplier_due || 0))}</p></div>
                 <div><p className="text-muted-foreground text-xs">Profit</p><p className={`font-medium ${Number(b.profit_amount || 0) >= 0 ? "text-emerald-500" : "text-destructive"}`}>{fmt(Number(b.profit_amount || 0))}</p></div>
               </div>
               <div className="mt-3 pt-3 border-t border-border/50 flex items-center justify-between" onClick={(e) => e.stopPropagation()}>
@@ -461,6 +463,8 @@ export default function AdminBookingsPage() {
                 <div><span className="text-muted-foreground text-xs block">ক্রয় মূল্য/ব্যক্তি</span><span className="font-medium">{fmt(Number(viewBooking.cost_price_per_person || 0))}</span></div>
                 <div><span className="text-muted-foreground text-xs block">মোট ক্রয়</span><span className="font-medium">{fmt(Number(viewBooking.total_cost || 0))}</span></div>
                 <div><span className="text-muted-foreground text-xs block">অতিরিক্ত খরচ</span><span className="font-medium">{fmt(Number(viewBooking.extra_expense || 0))}</span></div>
+                <div><span className="text-muted-foreground text-xs block">সাপ্লায়ার পরিশোধিত</span><span className="font-medium text-emerald-500">{fmt(Number(viewBooking.paid_to_supplier || 0))}</span></div>
+                <div><span className="text-muted-foreground text-xs block">সাপ্লায়ার বকেয়া</span><span className="font-medium text-destructive">{fmt(Number(viewBooking.supplier_due || 0))}</span></div>
                 <div><span className="text-muted-foreground text-xs block">পরিশোধিত</span><span className="font-medium text-emerald-500">{fmt(Number(viewBooking.paid_amount))}</span></div>
                 <div><span className="text-muted-foreground text-xs block">বকেয়া</span><span className="font-medium text-destructive">{fmt(Number(viewBooking.due_amount || 0))}</span></div>
                 <div><span className="text-muted-foreground text-xs block">লাভ</span><span className={`font-medium ${Number(viewBooking.profit_amount || 0) >= 0 ? "text-emerald-500" : "text-destructive"}`}>{fmt(Number(viewBooking.profit_amount || 0))}</span></div>

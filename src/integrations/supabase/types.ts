@@ -948,6 +948,57 @@ export type Database = {
         }
         Relationships: []
       }
+      supplier_agent_payments: {
+        Row: {
+          amount: number
+          created_at: string
+          date: string
+          id: string
+          notes: string | null
+          payment_method: string | null
+          recorded_by: string | null
+          supplier_agent_id: string
+          wallet_account_id: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          date?: string
+          id?: string
+          notes?: string | null
+          payment_method?: string | null
+          recorded_by?: string | null
+          supplier_agent_id: string
+          wallet_account_id?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          date?: string
+          id?: string
+          notes?: string | null
+          payment_method?: string | null
+          recorded_by?: string | null
+          supplier_agent_id?: string
+          wallet_account_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_agent_payments_supplier_agent_id_fkey"
+            columns: ["supplier_agent_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_agent_payments_wallet_account_id_fkey"
+            columns: ["wallet_account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       supplier_agents: {
         Row: {
           address: string | null

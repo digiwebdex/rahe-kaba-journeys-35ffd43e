@@ -23,6 +23,7 @@ export default function InvoicePage() {
     email: "rahekaba.info@gmail.com",
     address: "Dailorbagh Palli Bidyut Adjacent, Sonargaon Thana Road, Narayanganj-Dhaka",
   };
+  const companyAddressBn = "দৈলরবাগ পল্লী বিদ্যুৎ সংলগ্ন, সোনারগাঁও থানা রোড, নারায়ণগঞ্জ-ঢাকা";
 
   const search = async () => {
     if (!trackingId.trim()) return;
@@ -115,7 +116,7 @@ export default function InvoicePage() {
                 <h1 className="text-2xl font-bold text-gray-900">{company.name}</h1>
                 <p className="text-sm text-gray-600">Hajj & Umrah Services</p>
                 <p className="text-xs text-gray-500 mt-1">{company.phone} | {company.email}</p>
-                <p className="text-xs text-gray-500">{company.address}</p>
+                <p className="text-xs text-gray-500" style={{ fontFamily: "'Noto Sans Bengali', Arial, sans-serif" }}>{companyAddressBn}</p>
               </div>
               <div className="text-right">
                 <h2 className="text-xl font-bold text-gray-800">INVOICE</h2>

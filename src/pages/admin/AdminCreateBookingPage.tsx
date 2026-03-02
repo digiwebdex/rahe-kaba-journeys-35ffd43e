@@ -127,9 +127,9 @@ export default function AdminCreateBookingPage() {
     if (!form.guest_name.trim()) { toast.error("Customer name is required"); return; }
     if (!form.guest_phone.trim()) { toast.error("Phone number is required"); return; }
     if (!form.package_id) { toast.error("Please select a package"); return; }
-    if (form.total_amount <= 0) { toast.error("Total amount must be greater than 0"); return; }
+    if (totalSellingPrice <= 0) { toast.error("Total amount must be greater than 0"); return; }
     if (form.paid_amount < 0) { toast.error("Paid amount cannot be negative"); return; }
-    if (form.paid_amount > form.total_amount) { toast.error("Paid amount cannot exceed total"); return; }
+    if (form.paid_amount > totalSellingPrice) { toast.error("Paid amount cannot exceed total"); return; }
 
     setLoading(true);
     try {

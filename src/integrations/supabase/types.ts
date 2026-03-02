@@ -843,6 +843,39 @@ export type Database = {
           },
         ]
       }
+      notification_settings: {
+        Row: {
+          email_enabled: boolean
+          enabled: boolean
+          event_key: string
+          event_label: string
+          id: string
+          sms_enabled: boolean
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          email_enabled?: boolean
+          enabled?: boolean
+          event_key: string
+          event_label: string
+          id?: string
+          sms_enabled?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          email_enabled?: boolean
+          enabled?: boolean
+          event_key?: string
+          event_label?: string
+          id?: string
+          sms_enabled?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       otp_codes: {
         Row: {
           code: string

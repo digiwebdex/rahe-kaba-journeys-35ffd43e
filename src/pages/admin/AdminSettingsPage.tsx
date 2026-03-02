@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Plus, X, Shield, Trash2, Users, Bell, Mail, MessageSquare, CheckCircle2 } from "lucide-react";
+import { Plus, X, Shield, Trash2, Users, Bell } from "lucide-react";
 import AdminDocumentViewer from "@/components/AdminDocumentViewer";
 import { useAdminRole } from "@/components/admin/AdminLayout";
+import NotificationSettingsManager from "@/components/admin/NotificationSettingsManager";
 
 const inputClass = "w-full bg-secondary border border-border rounded-md px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40";
 const ROLES = ["admin", "manager", "accountant", "staff"];
@@ -231,58 +232,8 @@ export default function AdminSettingsPage() {
           <h2 className="font-heading text-xl font-bold flex items-center gap-2 mb-4">
             <Bell className="h-5 w-5 text-primary" /> Notification & Automation
           </h2>
-
-          <div className="bg-card border border-border rounded-lg p-5 space-y-5">
-            {/* Status overview */}
-            <div>
-              <p className="text-sm font-semibold mb-3 text-foreground">Automated Triggers (Active)</p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {[
-                  { event: "Booking Created", channels: "Email + SMS", icon: CheckCircle2 },
-                  { event: "Payment Received", channels: "Email + SMS", icon: CheckCircle2 },
-                  { event: "Booking Status Updated", channels: "Email + SMS", icon: CheckCircle2 },
-                  { event: "Booking Completed", channels: "Email + SMS", icon: CheckCircle2 },
-                  { event: "Supplier Payment Recorded", channels: "Email", icon: CheckCircle2 },
-                  { event: "Commission Paid", channels: "Email", icon: CheckCircle2 },
-                  { event: "Daily Due Reminder (Cron)", channels: "Email + SMS", icon: CheckCircle2 },
-                ].map((t) => (
-                  <div key={t.event} className="flex items-center gap-2 bg-secondary/50 rounded-md px-3 py-2 text-sm">
-                    <t.icon className="h-4 w-4 text-primary shrink-0" />
-                    <span className="font-medium">{t.event}</span>
-                    <span className="ml-auto text-xs text-muted-foreground">{t.channels}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Provider info */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="bg-secondary/30 rounded-lg p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <Mail className="h-4 w-4 text-primary" />
-                  <p className="font-semibold text-sm">Email Provider</p>
-                </div>
-                <p className="text-xs text-muted-foreground">Resend API — configured via RESEND_API_KEY secret</p>
-                <p className="text-xs text-muted-foreground mt-1">From: NOTIFICATION_FROM_EMAIL secret</p>
-              </div>
-              <div className="bg-secondary/30 rounded-lg p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <MessageSquare className="h-4 w-4 text-primary" />
-                  <p className="font-semibold text-sm">SMS Provider</p>
-                </div>
-                <p className="text-xs text-muted-foreground">BulkSMSBD — configured via BULKSMSBD_API_KEY secret</p>
-                <p className="text-xs text-muted-foreground mt-1">Sender ID: BULKSMSBD_SENDER_ID secret</p>
-              </div>
-            </div>
-
-            <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
-              <p className="text-xs text-muted-foreground">
-                <strong className="text-foreground">How it works:</strong> All notifications fire automatically via database triggers. 
-                When a booking/payment/commission event occurs, the system calls the notification edge function which sends 
-                Email (Resend) and SMS (BulkSMSBD) to the related user. A daily cron job at 9:00 AM checks for overdue payments 
-                and sends reminders. All delivery logs are visible in the <strong>Notifications</strong> page.
-              </p>
-            </div>
+          <div className="bg-card border border-border rounded-lg p-5">
+            <NotificationSettingsManager />
           </div>
         </section>
       )}

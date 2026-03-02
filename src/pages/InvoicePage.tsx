@@ -112,29 +112,46 @@ export default function InvoicePage() {
           </div>
 
           {/* Printable Invoice - A4 format */}
-          <div ref={printRef} className="max-w-4xl mx-auto bg-white text-black p-8 print:p-6 print:m-0 print:max-w-none" style={{ fontFamily: "Arial, sans-serif" }}>
+          <div ref={printRef} className="max-w-4xl mx-auto bg-white text-black p-8 print:p-6 print:m-0 print:max-w-none relative overflow-hidden" style={{ fontFamily: "Arial, sans-serif" }}>
+            {/* Payment Status Watermark */}
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none" style={{ zIndex: 0 }}>
+              <span
+                className="text-7xl font-bold uppercase"
+                style={{
+                  transform: "rotate(-35deg)",
+                  opacity: 0.07,
+                  color: totalDue <= 0 ? "#228B22" : totalPaid > 0 ? "#D28C14" : "#C82828",
+                }}
+              >
+                {totalDue <= 0 ? "PAID" : totalPaid > 0 ? "PARTIAL" : "DUE"}
+              </span>
+            </div>
+
             {/* Header */}
-            <div className="flex items-start justify-between border-b-2 border-gray-800 pb-4 mb-6">
+            <div className="flex items-start justify-between border-b-2 border-gray-800 pb-4 mb-6 relative" style={{ zIndex: 1 }}>
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">{company.name}</h1>
                 <p className="text-sm text-gray-600">Hajj & Umrah Services</p>
                 <p className="text-xs text-gray-500 mt-1">{company.phone} | {company.email}</p>
                 <p className="text-xs text-gray-500" style={{ fontFamily: "'Noto Sans Bengali', Arial, sans-serif" }}>{companyAddressBn}</p>
               </div>
-              <div className="text-right flex flex-col items-end gap-2">
+              <div className="text-right flex flex-col items-end gap-1">
                 <div>
                   <h2 className="text-xl font-bold text-gray-800">INVOICE</h2>
                   <p className="text-sm text-gray-600">#{booking.tracking_id}</p>
                   <p className="text-sm text-gray-600">{fmtDate(new Date().toISOString())}</p>
                 </div>
-                {/* QR Code for print */}
-                <img
-                  src={`https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(`https://rahe-kaba-journeys.lovable.app/track?id=${booking.tracking_id}`)}`}
-                  alt="QR Code"
-                  className="w-20 h-20"
-                  style={{ imageRendering: "pixelated" }}
-                />
-                <p className="text-[8px] text-gray-400">Scan to verify booking authenticity</p>
+                {/* QR Verification Stamp */}
+                <div className="border border-gray-700 rounded p-1.5 mt-1 flex flex-col items-center">
+                  <p className="text-[7px] font-bold text-green-700 mb-0.5">✓ Verified Booking</p>
+                  <img
+                    src={`https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(`https://rahe-kaba-journeys.lovable.app/track?id=${booking.tracking_id}`)}`}
+                    alt="QR Code"
+                    className="w-[72px] h-[72px]"
+                    style={{ imageRendering: "pixelated" }}
+                  />
+                  <p className="text-[6px] text-gray-400 mt-0.5">Scan to verify booking authenticity</p>
+                </div>
               </div>
             </div>
 

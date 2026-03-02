@@ -3,7 +3,7 @@ import autoTable from "jspdf-autotable";
 import logoImg from "@/assets/logo.jpg";
 import { CompanyInfo } from "./invoiceGenerator";
 import { getSignatureData, SignatureData } from "./pdfSignature";
-import { generateTrackingQr, addQrToDoc } from "./pdfQrCode";
+import { generateTrackingQr, addQrToDoc, addPaymentWatermark, getWatermarkStatus } from "./pdfQrCode";
 
 const fmt = (n: number) => `BDT ${n.toLocaleString()}`;
 const fmtDate = (d: string | null) =>
@@ -123,7 +123,10 @@ export async function generateMoallemPdf(data: MoallemPdfData, company: CompanyI
   let y = addHeader(doc, company, logoBase64);
   const pw = doc.internal.pageSize.getWidth();
 
-  if (qrDataUrl) addQrToDoc(doc, qrDataUrl, { x: pw - 42, y: 10, size: 26 });
+  if (qrDataUrl) addQrToDoc(doc, qrDataUrl, { x: pw - 44, y: 8, size: 26 });
+
+  // Watermark based on moallem summary
+  addPaymentWatermark(doc, getWatermarkStatus(data.summary.totalPaid, data.summary.totalDue));
 
   doc.setFontSize(14);
   doc.setFont("helvetica", "bold");
@@ -236,7 +239,10 @@ export async function generateSupplierPdf(data: SupplierPdfData, company: Compan
   let y = addHeader(doc, company, logoBase64);
   const pw = doc.internal.pageSize.getWidth();
 
-  if (qrDataUrl) addQrToDoc(doc, qrDataUrl, { x: pw - 42, y: 10, size: 26 });
+  if (qrDataUrl) addQrToDoc(doc, qrDataUrl, { x: pw - 44, y: 8, size: 26 });
+
+  // Watermark based on supplier summary
+  addPaymentWatermark(doc, getWatermarkStatus(data.summary.totalPaid, data.summary.totalDue));
 
   doc.setFontSize(14);
   doc.setFont("helvetica", "bold");
@@ -327,7 +333,10 @@ export async function generateCustomerPdf(data: CustomerPdfData, company: Compan
   let y = addHeader(doc, company, logoBase64);
   const pw = doc.internal.pageSize.getWidth();
 
-  if (qrDataUrl) addQrToDoc(doc, qrDataUrl, { x: pw - 42, y: 10, size: 26 });
+  if (qrDataUrl) addQrToDoc(doc, qrDataUrl, { x: pw - 44, y: 8, size: 26 });
+
+  // Watermark based on customer summary
+  addPaymentWatermark(doc, getWatermarkStatus(data.summary.totalPaid, data.summary.totalDue));
 
   doc.setFontSize(14);
   doc.setFont("helvetica", "bold");

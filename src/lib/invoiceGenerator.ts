@@ -2,7 +2,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import logoImg from "@/assets/logo.jpg";
 import { getSignatureData, SignatureData } from "./pdfSignature";
-import { generateTrackingQr, addQrToDoc } from "./pdfQrCode";
+import { generateTrackingQr, addQrToDoc, addPaymentWatermark, getWatermarkStatus } from "./pdfQrCode";
 
 export interface CompanyInfo {
   name?: string;
@@ -155,8 +155,11 @@ export async function generateInvoice(
   let y = addHeader(doc, company, logoBase64);
   const pageWidth = doc.internal.pageSize.getWidth();
 
-  // QR code top-right
-  addQrToDoc(doc, qrDataUrl, { x: pageWidth - 42, y: 10, size: 26 });
+  // QR verification stamp top-right
+  addQrToDoc(doc, qrDataUrl, { x: pageWidth - 44, y: 8, size: 26 });
+
+  // Payment watermark
+  addPaymentWatermark(doc, getWatermarkStatus(Number(booking.paid_amount), Number(booking.due_amount || 0)));
 
   // Invoice title
   doc.setFontSize(14);
@@ -258,8 +261,11 @@ export async function generateReceipt(
   let y = addHeader(doc, company, logoBase64);
   const pageWidth = doc.internal.pageSize.getWidth();
 
-  // QR code top-right
-  addQrToDoc(doc, qrDataUrl, { x: pageWidth - 42, y: 10, size: 26 });
+  // QR verification stamp top-right
+  addQrToDoc(doc, qrDataUrl, { x: pageWidth - 44, y: 8, size: 26 });
+
+  // Payment watermark (receipt is always for a completed payment)
+  addPaymentWatermark(doc, "paid");
 
   // Receipt title
   doc.setFontSize(14);
@@ -351,8 +357,11 @@ export async function generateCommissionReceipt(
   let y = addHeader(doc, company, logoBase64);
   const pageWidth = doc.internal.pageSize.getWidth();
 
-  // QR code top-right
-  addQrToDoc(doc, qrDataUrl, { x: pageWidth - 42, y: 10, size: 26 });
+  // QR verification stamp top-right
+  addQrToDoc(doc, qrDataUrl, { x: pageWidth - 44, y: 8, size: 26 });
+
+  // Commission watermark
+  addPaymentWatermark(doc, getWatermarkStatus(data.commissionPaid, data.commissionDue));
 
   doc.setFontSize(14);
   doc.setFont("helvetica", "bold");

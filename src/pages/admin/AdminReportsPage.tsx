@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { CalendarIcon, FileDown, FileSpreadsheet, ChevronDown, ChevronUp, Users, TrendingUp, TrendingDown, DollarSign, Filter } from "lucide-react";
 import { format, parseISO, isSameDay, isSameMonth, isSameYear, differenceInDays, startOfMonth, endOfMonth, getYear, getMonth, isWithinInterval, eachDayOfInterval, eachMonthOfInterval, subMonths } from "date-fns";
 import { cn } from "@/lib/utils";
-import { exportPDF, exportExcel } from "@/lib/reportExport";
+import { exportPDF, exportExcel, exportHajjiPDF, exportHajjiExcel } from "@/lib/reportExport";
 
 const fmt = (n: number) => `৳${n.toLocaleString()}`;
 const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
@@ -441,8 +441,16 @@ export default function AdminReportsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <h2 className="font-heading text-xl font-bold">Financial Reports</h2>
         <div className="flex gap-2">
-          <Button size="sm" variant="outline" onClick={() => exportPDF(getExportData())}><FileDown className="h-4 w-4 mr-1" /> PDF</Button>
-          <Button size="sm" variant="outline" onClick={() => exportExcel(getExportData())}><FileSpreadsheet className="h-4 w-4 mr-1" /> Excel</Button>
+          <Button size="sm" variant="outline" onClick={() => {
+            if (activeTab === "hajji") {
+              exportHajjiPDF({ title: "Hajji-wise Full Booking Report", customers: hajjiRows.map(r => ({ ...r, bookings: r.count })) });
+            } else { exportPDF(getExportData()); }
+          }}><FileDown className="h-4 w-4 mr-1" /> PDF</Button>
+          <Button size="sm" variant="outline" onClick={() => {
+            if (activeTab === "hajji") {
+              exportHajjiExcel({ title: "Hajji-wise Full Booking Report", customers: hajjiRows.map(r => ({ ...r, bookings: r.count })) });
+            } else { exportExcel(getExportData()); }
+          }}><FileSpreadsheet className="h-4 w-4 mr-1" /> Excel</Button>
         </div>
       </div>
 

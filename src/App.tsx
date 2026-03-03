@@ -27,16 +27,11 @@ const AdminDashboardPage = lazy(() => import("./pages/admin/AdminDashboardPage")
 const AdminBookingsPage = lazy(() => import("./pages/admin/AdminBookingsPage"));
 const AdminCustomersPage = lazy(() => import("./pages/admin/AdminCustomersPage"));
 const AdminPackagesPage = lazy(() => import("./pages/admin/AdminPackagesPage"));
-const AdminHotelsPage = lazy(() => import("./pages/admin/AdminHotelsPage"));
 const AdminPaymentsPage = lazy(() => import("./pages/admin/AdminPaymentsPage"));
-const AdminDueAlertsPage = lazy(() => import("./pages/admin/AdminDueAlertsPage"));
 const AdminAccountingPage = lazy(() => import("./pages/admin/AdminAccountingPage"));
 const AdminReportsPage = lazy(() => import("./pages/admin/AdminReportsPage"));
 const AdminCmsPage = lazy(() => import("./pages/admin/AdminCmsPage"));
 const AdminSettingsPage = lazy(() => import("./pages/admin/AdminSettingsPage"));
-const AdminNotificationsPage = lazy(() => import("./pages/admin/AdminNotificationsPage"));
-const AdminChartOfAccountsPage = lazy(() => import("./pages/admin/AdminChartOfAccountsPage"));
-const AdminReceivablesPage = lazy(() => import("./pages/admin/AdminReceivablesPage"));
 const AdminCreateBookingPage = lazy(() => import("./pages/admin/AdminCreateBookingPage"));
 const AdminMoallemsPage = lazy(() => import("./pages/admin/AdminMoallemsPage"));
 const AdminMoallemProfilePage = lazy(() => import("./pages/admin/AdminMoallemProfilePage"));
@@ -79,13 +74,8 @@ const App = () => (
               <Route path="bookings/create" element={<AdminCreateBookingPage />} />
               <Route path="customers" element={<AdminCustomersPage />} />
               <Route path="packages" element={<AdminPackagesPage />} />
-              <Route path="hotels" element={<AdminHotelsPage />} />
               <Route path="payments" element={<AdminPaymentsPage />} />
-              <Route path="due-alerts" element={<AdminDueAlertsPage />} />
-              <Route path="notifications" element={<AdminNotificationsPage />} />
               <Route path="accounting" element={<AdminAccountingPage />} />
-              <Route path="chart-of-accounts" element={<AdminChartOfAccountsPage />} />
-              <Route path="receivables" element={<AdminReceivablesPage />} />
               <Route path="reports" element={<AdminReportsPage />} />
               <Route path="moallems" element={<AdminMoallemsPage />} />
               <Route path="moallems/:id" element={<AdminMoallemProfilePage />} />

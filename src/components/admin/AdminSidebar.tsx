@@ -1,6 +1,6 @@
 import {
-  LayoutDashboard, FileText, Users, Package, Building2, CreditCard,
-  Calculator, BarChart3, Pencil, Settings, LogOut, AlertTriangle, Bell, BookOpen, Receipt, UserCheck, Truck,
+  LayoutDashboard, FileText, Users, Package, CreditCard,
+  Calculator, BarChart3, Pencil, Settings, LogOut, UserCheck, Truck,
 } from "lucide-react";
 import logo from "@/assets/logo.jpg";
 import { NavLink } from "@/components/NavLink";
@@ -13,22 +13,17 @@ import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import type { AppRole } from "@/hooks/useUserRole";
 
-// Role access matrix
+// Role access matrix — ordered as requested
 const menuItems = [
   { title: "Dashboard", url: "/admin", icon: LayoutDashboard, roles: ["admin", "manager", "accountant", "staff", "viewer"] },
   { title: "Bookings", url: "/admin/bookings", icon: FileText, roles: ["admin", "manager", "staff", "viewer"] },
   { title: "Customers", url: "/admin/customers", icon: Users, roles: ["admin", "manager", "staff", "viewer"] },
-  { title: "Packages", url: "/admin/packages", icon: Package, roles: ["admin", "manager", "viewer"] },
-  { title: "Hotels", url: "/admin/hotels", icon: Building2, roles: ["admin", "manager", "viewer"] },
-  { title: "Payments", url: "/admin/payments", icon: CreditCard, roles: ["admin", "manager", "accountant", "staff", "viewer"] },
-  { title: "Due Alerts", url: "/admin/due-alerts", icon: AlertTriangle, roles: ["admin", "manager", "accountant", "staff", "viewer"] },
-  { title: "Notifications", url: "/admin/notifications", icon: Bell, roles: ["admin", "manager", "viewer"] },
-  { title: "Accounting", url: "/admin/accounting", icon: Calculator, roles: ["admin", "accountant", "viewer"] },
-  { title: "Chart of Accounts", url: "/admin/chart-of-accounts", icon: BookOpen, roles: ["admin", "accountant"] },
-  { title: "Receivables", url: "/admin/receivables", icon: Receipt, roles: ["admin", "manager", "accountant", "viewer"] },
-  { title: "Reports", url: "/admin/reports", icon: BarChart3, roles: ["admin", "manager", "accountant", "viewer"] },
   { title: "Moallems", url: "/admin/moallems", icon: UserCheck, roles: ["admin", "manager", "staff", "viewer"] },
   { title: "Supplier Agents", url: "/admin/supplier-agents", icon: Truck, roles: ["admin", "manager", "staff", "viewer"] },
+  { title: "Payments", url: "/admin/payments", icon: CreditCard, roles: ["admin", "manager", "accountant", "staff", "viewer"] },
+  { title: "Accounting", url: "/admin/accounting", icon: Calculator, roles: ["admin", "accountant", "viewer"] },
+  { title: "Reports", url: "/admin/reports", icon: BarChart3, roles: ["admin", "manager", "accountant", "viewer"] },
+  { title: "Packages", url: "/admin/packages", icon: Package, roles: ["admin", "manager", "viewer"] },
   { title: "CMS", url: "/admin/cms", icon: Pencil, roles: ["admin"] },
   { title: "Settings", url: "/admin/settings", icon: Settings, roles: ["admin"] },
 ];

@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import logo from "@/assets/logo.jpg";
 import { Eye, EyeOff, Phone, Mail, Shield, CheckCircle2, XCircle } from "lucide-react";
 import { useLanguage } from "@/i18n/LanguageContext";
+import { normalizePhone, getPhoneError, handlePhoneChange } from "@/lib/phoneValidation";
 
 type AuthMode = "login" | "register" | "otp" | "forgot";
 
@@ -66,13 +67,18 @@ const Auth = () => {
       toast.error(t("auth.meetPwReq"));
       return;
     }
+    if (phone.trim()) {
+      const phoneErr = getPhoneError(phone, true);
+      if (phoneErr) { toast.error(phoneErr); return; }
+    }
     setLoading(true);
     try {
+      const normalizedPhone = phone.trim() ? normalizePhone(phone) : "";
       const { error } = await supabase.auth.signUp({
         email: email.trim(),
         password,
         options: {
-          data: { full_name: fullName.trim(), phone: phone.trim() },
+          data: { full_name: fullName.trim(), phone: normalizedPhone },
           emailRedirectTo: window.location.origin,
         },
       });
@@ -228,8 +234,9 @@ const Auth = () => {
               <label className="text-sm font-medium mb-1 block">{t("auth.phoneNumber")}</label>
               <div className="relative">
                 <Phone className="absolute left-3 top-3.5 h-4 w-4 text-muted-foreground" />
-                <input type="tel" required value={phone} onChange={(e) => setPhone(e.target.value)}
-                  className={`${inputClass} pl-10`} placeholder={t("auth.phonePlaceholder")} maxLength={15} />
+                <input type="tel" required value={phone} onChange={(e) => handlePhoneChange(e.target.value, setPhone)}
+                  className={`${inputClass} pl-10`} placeholder="01XXXXXXXXX" maxLength={15} />
+                {phone.trim() && getPhoneError(phone) && <p className="text-xs text-destructive mt-1">{getPhoneError(phone)}</p>}
               </div>
             </div>
             <div>

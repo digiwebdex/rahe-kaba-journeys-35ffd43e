@@ -18,6 +18,7 @@ import {
 import AdminActionMenu, { ActionItem } from "@/components/admin/AdminActionMenu";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Pencil, Trash2, Eye, Search, Truck, ChevronLeft, ChevronRight } from "lucide-react";
+import { normalizePhone, getPhoneError, handlePhoneChange } from "@/lib/phoneValidation";
 
 const fmt = (n: number) => `৳${n.toLocaleString()}`;
 const PAGE_SIZE = 15;
@@ -70,10 +71,14 @@ export default function AdminSupplierAgentsPage() {
   }, [bookings]);
 
   const handleSave = async () => {
-    if (!form.agent_name.trim()) { toast({ title: "এজেন্টের নাম আবশ্যক", variant: "destructive" }); return; }
+    if (!form.agent_name.trim()) { toast({ title: "Agent name is required.", variant: "destructive" }); return; }
+    if (form.phone.trim()) {
+      const phoneErr = getPhoneError(form.phone);
+      if (phoneErr) { toast({ title: phoneErr, variant: "destructive" }); return; }
+    }
     const payload = {
       agent_name: form.agent_name.trim(), company_name: form.company_name.trim() || null,
-      phone: form.phone.trim() || null, address: form.address.trim() || null,
+      phone: form.phone.trim() ? normalizePhone(form.phone) : null, address: form.address.trim() || null,
       notes: form.notes.trim() || null, status: form.status,
     };
     if (editId) {
@@ -243,7 +248,11 @@ export default function AdminSupplierAgentsPage() {
           <div className="space-y-3">
             <div><label className="text-sm font-medium">এজেন্টের নাম *</label><Input value={form.agent_name} onChange={e => setForm({ ...form, agent_name: e.target.value })} /></div>
             <div><label className="text-sm font-medium">কোম্পানির নাম</label><Input value={form.company_name} onChange={e => setForm({ ...form, company_name: e.target.value })} /></div>
-            <div><label className="text-sm font-medium">ফোন</label><Input value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} /></div>
+            <div>
+              <label className="text-sm font-medium">Phone</label>
+              <Input value={form.phone} onChange={e => handlePhoneChange(e.target.value, (v) => setForm({ ...form, phone: v }))} placeholder="01XXXXXXXXX" maxLength={15} />
+              {form.phone.trim() && getPhoneError(form.phone) && <p className="text-xs text-destructive mt-1">{getPhoneError(form.phone)}</p>}
+            </div>
             <div><label className="text-sm font-medium">ঠিকানা</label><Input value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} /></div>
             <div>
               <label className="text-sm font-medium">স্ট্যাটাস</label>

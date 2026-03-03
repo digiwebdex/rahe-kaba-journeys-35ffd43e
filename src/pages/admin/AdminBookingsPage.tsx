@@ -13,6 +13,7 @@ import { useIsViewer } from "@/components/admin/AdminLayout";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import AdminActionMenu, { ActionItem } from "@/components/admin/AdminActionMenu";
+import { handlePhoneChange } from "@/lib/phoneValidation";
 import CustomerSearchSelect from "@/components/admin/CustomerSearchSelect";
 
 const inputClass = "w-full bg-secondary border border-border rounded-md px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40";
@@ -335,7 +336,7 @@ export default function AdminBookingsPage() {
                 </div>
                 <div>
                   <label className="text-xs text-muted-foreground block mb-1">ফোন</label>
-                  <input className={inputClass} value={editForm.guest_phone} onChange={(e) => setEditForm({ ...editForm, guest_phone: e.target.value })} placeholder="ফোন" />
+                  <input className={inputClass} value={editForm.guest_phone} onChange={(e) => handlePhoneChange(e.target.value, (v) => setEditForm({ ...editForm, guest_phone: v }))} placeholder="01XXXXXXXXX" maxLength={15} />
                 </div>
                 <div>
                   <label className="text-xs text-muted-foreground block mb-1">পাসপোর্ট</label>

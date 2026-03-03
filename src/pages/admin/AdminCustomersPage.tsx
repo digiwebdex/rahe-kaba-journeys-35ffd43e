@@ -9,6 +9,7 @@ import {
 import { useIsViewer } from "@/components/admin/AdminLayout";
 import CustomerFinancialReport from "@/components/admin/CustomerFinancialReport";
 import { Badge } from "@/components/ui/badge";
+import { normalizePhone, getPhoneError, handlePhoneChange } from "@/lib/phoneValidation";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 const inputClass =
@@ -94,9 +95,15 @@ export default function AdminCustomersPage() {
 
   const saveEdit = async () => {
     if (!editingId) return;
+    if (editForm.phone?.trim()) {
+      const phoneErr = getPhoneError(editForm.phone, false);
+      if (phoneErr) { toast.error(phoneErr); return; }
+    }
+    const normalizedPhone = editForm.phone?.trim() ? normalizePhone(editForm.phone) : null;
     const { error } = await supabase.from("profiles").update({
+      ...{},
       full_name: editForm.full_name || null,
-      phone: editForm.phone || null,
+      phone: normalizedPhone,
       email: editForm.email || null,
       address: editForm.address || null,
       passport_number: editForm.passport_number || null,
@@ -121,8 +128,10 @@ export default function AdminCustomersPage() {
   };
 
   const handleAddCustomer = async () => {
-    if (!addForm.full_name.trim()) { toast.error("নাম আবশ্যক"); return; }
-    if (!addForm.phone.trim()) { toast.error("ফোন নম্বর আবশ্যক"); return; }
+    if (!addForm.full_name.trim()) { toast.error("Name is required."); return; }
+    if (!addForm.phone.trim()) { toast.error("Phone number is required."); return; }
+    const phoneErr = getPhoneError(addForm.phone, true);
+    if (phoneErr) { toast.error(phoneErr); return; }
     setAddLoading(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -267,7 +276,8 @@ export default function AdminCustomersPage() {
                   </div>
                   <div>
                     <label className="text-xs text-muted-foreground block mb-1">ফোন *</label>
-                    <input className={inputClass} value={editForm.phone} onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })} maxLength={15} />
+                    <input className={inputClass} value={editForm.phone} onChange={(e) => handlePhoneChange(e.target.value, (v) => setEditForm({ ...editForm, phone: v }))} maxLength={15} placeholder="01XXXXXXXXX" />
+                    {editForm.phone?.trim() && getPhoneError(editForm.phone) && <p className="text-xs text-destructive mt-1">{getPhoneError(editForm.phone)}</p>}
                   </div>
                   <div>
                     <label className="text-xs text-muted-foreground block mb-1">ইমেইল</label>
@@ -550,7 +560,8 @@ export default function AdminCustomersPage() {
               </div>
               <div>
                 <label className="text-xs text-muted-foreground block mb-1">ফোন *</label>
-                <input className={inputClass} value={addForm.phone} onChange={(e) => setAddForm({ ...addForm, phone: e.target.value })} placeholder="+8801XXXXXXXXX" maxLength={15} />
+                <input className={inputClass} value={addForm.phone} onChange={(e) => handlePhoneChange(e.target.value, (v) => setAddForm({ ...addForm, phone: v }))} placeholder="01XXXXXXXXX" maxLength={15} />
+                {addForm.phone?.trim() && getPhoneError(addForm.phone) && <p className="text-xs text-destructive mt-1">{getPhoneError(addForm.phone)}</p>}
               </div>
               <div>
                 <label className="text-xs text-muted-foreground block mb-1">ইমেইল</label>

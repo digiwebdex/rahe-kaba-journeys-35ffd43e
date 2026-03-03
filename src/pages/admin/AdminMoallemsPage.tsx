@@ -18,6 +18,7 @@ import {
 import AdminActionMenu, { ActionItem } from "@/components/admin/AdminActionMenu";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Pencil, Trash2, Eye, Search, Users, ChevronLeft, ChevronRight } from "lucide-react";
+import { normalizePhone, getPhoneError, handlePhoneChange } from "@/lib/phoneValidation";
 
 const fmt = (n: number) => `৳${n.toLocaleString()}`;
 const PAGE_SIZE = 15;
@@ -71,9 +72,13 @@ export default function AdminMoallemsPage() {
   }, [bookings]);
 
   const handleSave = async () => {
-    if (!form.name.trim()) { toast({ title: "নাম আবশ্যক", variant: "destructive" }); return; }
+    if (!form.name.trim()) { toast({ title: "Name is required.", variant: "destructive" }); return; }
+    if (form.phone.trim()) {
+      const phoneErr = getPhoneError(form.phone);
+      if (phoneErr) { toast({ title: phoneErr, variant: "destructive" }); return; }
+    }
     const payload = {
-      name: form.name.trim(), phone: form.phone.trim() || null,
+      name: form.name.trim(), phone: form.phone.trim() ? normalizePhone(form.phone) : null,
       address: form.address.trim() || null, nid_number: form.nid_number.trim() || null,
       contract_date: form.contract_date || null, notes: form.notes.trim() || null, status: form.status,
     };
@@ -243,7 +248,11 @@ export default function AdminMoallemsPage() {
           </DialogHeader>
           <div className="space-y-3">
             <div><label className="text-sm font-medium">নাম *</label><Input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} /></div>
-            <div><label className="text-sm font-medium">ফোন</label><Input value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} /></div>
+            <div>
+              <label className="text-sm font-medium">Phone</label>
+              <Input value={form.phone} onChange={e => handlePhoneChange(e.target.value, (v) => setForm({ ...form, phone: v }))} placeholder="01XXXXXXXXX" maxLength={15} />
+              {form.phone.trim() && getPhoneError(form.phone) && <p className="text-xs text-destructive mt-1">{getPhoneError(form.phone)}</p>}
+            </div>
             <div><label className="text-sm font-medium">ঠিকানা</label><Input value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} /></div>
             <div><label className="text-sm font-medium">NID নম্বর</label><Input value={form.nid_number} onChange={e => setForm({ ...form, nid_number: e.target.value })} /></div>
             <div><label className="text-sm font-medium">চুক্তির তারিখ</label><Input type="date" value={form.contract_date} onChange={e => setForm({ ...form, contract_date: e.target.value })} /></div>

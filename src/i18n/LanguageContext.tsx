@@ -12,8 +12,8 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
 export const LanguageProvider = ({ children }: { children: ReactNode }) => {
   const [language, setLanguageState] = useState<Language>(() => {
     const saved = localStorage.getItem("rk_language");
-    if (saved === "en") return "en";
-    return "bn";
+    if (saved === "bn") return "bn";
+    return "en";
   });
 
   const setLanguage = useCallback((lang: Language) => {
@@ -38,9 +38,9 @@ export const useLanguage = () => {
   if (!context) {
     // Fallback for HMR or components rendered outside provider
     return {
-      language: "bn" as Language,
+      language: "en" as Language,
       setLanguage: () => {},
-      t: (key: string) => translations.bn[key] || translations.en[key] || key,
+      t: (key: string) => translations.en[key] || translations.bn[key] || key,
     };
   }
   return context;

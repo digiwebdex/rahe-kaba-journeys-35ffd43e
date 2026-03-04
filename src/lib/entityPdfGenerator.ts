@@ -63,7 +63,7 @@ function addSignatureAndFooter(doc: jsPDF, sig: SignatureData) {
     try { doc.addImage(sig.stamp_base64, "PNG", rightCenter - 18, y - 46, 36, 36); } catch { /* skip */ }
   }
   if (sig.signature_base64) {
-    try { doc.addImage(sig.signature_base64, "PNG", rightCenter - 20, y - 18, 40, 16); } catch { /* skip */ }
+    try { doc.addImage(sig.signature_base64, "PNG", rightCenter - 14, y - 16, 28, 12); } catch { /* skip */ }
   }
 
   doc.setDrawColor(180);

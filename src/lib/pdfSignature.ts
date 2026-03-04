@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import defaultSignatureImg from "@/assets/default-signature.png";
 
 export interface SignatureData {
   authorized_name: string;
@@ -42,14 +43,19 @@ export async function getSignatureData(): Promise<SignatureData> {
 
   const val = (data?.setting_value as any) || {};
   
-  const [signature_base64, stamp_base64] = await Promise.all([
+  let [signature_base64, stamp_base64] = await Promise.all([
     loadImageBase64(val.signature_url || ""),
     loadImageBase64(val.stamp_url || ""),
   ]);
 
+  // Use default signature image as fallback if none configured
+  if (!signature_base64) {
+    signature_base64 = await loadImageBase64(defaultSignatureImg);
+  }
+
   cachedSignature = {
-    authorized_name: val.authorized_name || "",
-    designation: val.designation || "",
+    authorized_name: val.authorized_name || "Md. Amin",
+    designation: val.designation || "Managing Director",
     signature_base64,
     stamp_base64,
   };

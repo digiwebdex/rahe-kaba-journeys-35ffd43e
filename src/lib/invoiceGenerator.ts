@@ -416,10 +416,10 @@ function addSignatureSection(doc: jsPDF, y: number, sig: SignatureData): number 
   const rightCenter = pageWidth - 47;
 
   if (sig.stamp_base64) {
-    try { doc.addImage(sig.stamp_base64, "PNG", rightCenter - 18, y - 44, 36, 36); } catch { /* skip */ }
+    try { doc.addImage(sig.stamp_base64, "PNG", rightCenter - 18, y - 46, 36, 36); } catch { /* skip */ }
   }
   if (sig.signature_base64) {
-    try { doc.addImage(sig.signature_base64, "PNG", rightCenter - 22, y - 14, 44, 13); } catch { /* skip */ }
+    try { doc.addImage(sig.signature_base64, "PNG", rightCenter - 20, y - 18, 40, 16); } catch { /* skip */ }
   }
 
   doc.setDrawColor(180);

@@ -63,14 +63,13 @@ export default function AdminMoallemsPage() {
   // Aggregate booking data per moallem
   const moallemStats = useMemo(() => {
     const map: Record<string, { hajji: number; received: number; due: number }> = {};
-    bookings.filter(b => b.moallem_id).forEach(b => {
-      if (!map[b.moallem_id]) map[b.moallem_id] = { hajji: 0, received: 0, due: 0 };
-      map[b.moallem_id].hajji += Number(b.num_travelers || 0);
-      map[b.moallem_id].received += Number(b.paid_by_moallem || 0);
-      map[b.moallem_id].due += Number(b.moallem_due || 0);
+    moallems.forEach(m => {
+      const received = Number(m.total_deposit || 0);
+      const due = Number(m.contracted_amount || 0) - received;
+      map[m.id] = { hajji: m.contracted_hajji || 0, received, due: Math.max(0, due) };
     });
     return map;
-  }, [bookings]);
+  }, [moallems]);
 
   const handleSave = async () => {
     if (!form.name.trim()) { toast({ title: "Name is required.", variant: "destructive" }); return; }

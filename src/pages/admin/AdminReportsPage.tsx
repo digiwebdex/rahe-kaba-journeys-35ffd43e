@@ -231,22 +231,22 @@ export default function AdminReportsPage() {
   // ══════════════════════════════════════════════
   const moallemRows = useMemo(() => {
     const map: Record<string, any> = {};
-    filteredBookings.filter(b => b.moallem_id).forEach(b => {
-      const ml = moallemMap[b.moallem_id];
-      if (!map[b.moallem_id]) {
-        map[b.moallem_id] = {
-          name: ml?.name || "Unknown", phone: ml?.phone || "-", status: ml?.status || "active",
-          totalHajji: 0, totalSale: 0, totalReceived: 0, totalDue: 0,
-          totalCommission: 0, commissionPaid: 0, commissionDue: 0,
-          expenses: 0, deposit: 0,
-          bookingDetails: [], paymentDetails: [],
-        };
-      }
+    // Initialize from moallems table with contract-based due/received
+    moallems.forEach(ml => {
+      const deposit = Number(ml.total_deposit || 0);
+      const contracted = Number(ml.contracted_amount || 0);
+      map[ml.id] = {
+        name: ml.name || "Unknown", phone: ml.phone || "-", status: ml.status || "active",
+        totalHajji: ml.contracted_hajji || 0, totalSale: contracted,
+        totalReceived: deposit, totalDue: Math.max(0, contracted - deposit),
+        totalCommission: 0, commissionPaid: 0, commissionDue: 0,
+        expenses: 0, deposit,
+        bookingDetails: [], paymentDetails: [],
+      };
+    });
+    // Add booking details
+    filteredBookings.filter(b => b.moallem_id && map[b.moallem_id]).forEach(b => {
       const m = map[b.moallem_id];
-      m.totalHajji += Number(b.num_travelers || 1);
-      m.totalSale += Number(b.total_amount || 0);
-      m.totalReceived += Number(b.paid_amount || 0);
-      m.totalDue += Number(b.due_amount || 0);
       m.totalCommission += Number(b.total_commission || 0);
       m.commissionPaid += Number(b.commission_paid || 0);
       m.commissionDue += Number(b.commission_due || 0);
@@ -262,7 +262,6 @@ export default function AdminReportsPage() {
         if (!isWithinInterval(parseISO(mp.date), dateInterval)) return;
       } catch { return; }
       if (map[mp.moallem_id]) {
-        map[mp.moallem_id].deposit += Number(mp.amount);
         map[mp.moallem_id].paymentDetails.push({
           amount: Number(mp.amount), date: format(parseISO(mp.date), "dd MMM yyyy"),
           method: mp.payment_method || "cash", notes: mp.notes || "-",
@@ -271,10 +270,11 @@ export default function AdminReportsPage() {
     });
     const q = searchQuery.toLowerCase();
     return Object.values(map)
+      .filter((r: any) => r.totalSale > 0)
       .map((d: any) => ({ ...d, profit: d.totalSale - d.expenses - d.totalCommission }))
       .filter((r: any) => !q || r.name.toLowerCase().includes(q))
       .sort((a: any, b: any) => b.totalSale - a.totalSale);
-  }, [filteredBookings, moallemPayments, moallemMap, profileMap, dateInterval, searchQuery]);
+  }, [filteredBookings, moallemPayments, moallems, moallemMap, profileMap, dateInterval, searchQuery]);
 
   // ══════════════════════════════════════════════
   //  SUPPLIER REPORT

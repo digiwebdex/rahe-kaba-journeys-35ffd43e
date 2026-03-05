@@ -146,9 +146,9 @@ export default function AdminMoallemProfilePage() {
   if (loading) return <div className="flex justify-center py-20"><div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>;
   if (!moallem) return <div className="text-center py-20 text-muted-foreground">মোয়াল্লেম পাওয়া যায়নি</div>;
 
-  const totalSelling = bookings.reduce((s, b) => s + Number(b.total_amount || 0), 0);
+  const totalSelling = Number(moallem.contracted_amount || 0);
   const totalPaid = moallemPayments.reduce((s, p) => s + Number(p.amount || 0), 0);
-  const totalMoallemDue = bookings.reduce((s, b) => s + Number(b.moallem_due || 0), 0);
+  const totalMoallemDue = Math.max(0, totalSelling - totalPaid);
 
   // Filter payments by date
   const filterByDate = (items: any[]) => {
@@ -265,7 +265,7 @@ export default function AdminMoallemProfilePage() {
         <Card><CardContent className="pt-4 pb-4 text-center">
           <CreditCard className="h-5 w-5 text-primary mx-auto mb-1" />
           <p className="text-lg font-bold">{fmt(totalSelling)}</p>
-          <p className="text-[10px] text-muted-foreground uppercase">মোট বিক্রয়</p>
+          <p className="text-[10px] text-muted-foreground uppercase">চুক্তিকৃত টাকা</p>
         </CardContent></Card>
         <Card><CardContent className="pt-4 pb-4 text-center">
           <Wallet className="h-5 w-5 text-emerald-500 mx-auto mb-1" />

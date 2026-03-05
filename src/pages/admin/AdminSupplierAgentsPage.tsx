@@ -28,6 +28,7 @@ interface SupplierAgent {
   id: string; agent_name: string; company_name: string | null; phone: string | null;
   address: string | null; notes: string | null; status: string;
   created_at: string; updated_at: string;
+  contracted_amount: number; contracted_hajji: number; contract_date: string | null;
 }
 
 const emptyForm = { agent_name: "", company_name: "", phone: "", address: "", notes: "", status: "active", contract_date: "", contracted_hajji: "", contracted_amount: "" };
@@ -37,7 +38,7 @@ export default function AdminSupplierAgentsPage() {
   const { toast } = useToast();
   const isViewer = useIsViewer();
   const [agents, setAgents] = useState<SupplierAgent[]>([]);
-  const [bookings, setBookings] = useState<any[]>([]);
+  const [payments, setPayments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [form, setForm] = useState(emptyForm);
@@ -48,28 +49,33 @@ export default function AdminSupplierAgentsPage() {
 
   const fetchData = async () => {
     setLoading(true);
-    const [a, b] = await Promise.all([
+    const [a, p] = await Promise.all([
       supabase.from("supplier_agents").select("*").order("created_at", { ascending: false }),
-      supabase.from("bookings").select("id, supplier_agent_id, num_travelers, total_cost, paid_to_supplier, supplier_due"),
+      supabase.from("supplier_agent_payments").select("id, supplier_agent_id, amount"),
     ]);
     if (a.data) setAgents(a.data as SupplierAgent[]);
-    if (b.data) setBookings(b.data);
+    if (p.data) setPayments(p.data);
     setLoading(false);
   };
 
   useEffect(() => { fetchData(); }, []);
 
   const supplierStats = useMemo(() => {
-    const map: Record<string, { bookingCount: number; totalCost: number; totalPaid: number; totalDue: number }> = {};
-    bookings.filter(b => b.supplier_agent_id).forEach(b => {
-      if (!map[b.supplier_agent_id]) map[b.supplier_agent_id] = { bookingCount: 0, totalCost: 0, totalPaid: 0, totalDue: 0 };
-      map[b.supplier_agent_id].bookingCount += 1;
-      map[b.supplier_agent_id].totalCost += Number(b.total_cost || 0);
-      map[b.supplier_agent_id].totalPaid += Number(b.paid_to_supplier || 0);
-      map[b.supplier_agent_id].totalDue += Number(b.supplier_due || 0);
+    const map: Record<string, { totalPaid: number }> = {};
+    payments.forEach(p => {
+      if (!p.supplier_agent_id) return;
+      if (!map[p.supplier_agent_id]) map[p.supplier_agent_id] = { totalPaid: 0 };
+      map[p.supplier_agent_id].totalPaid += Number(p.amount || 0);
     });
     return map;
-  }, [bookings]);
+  }, [payments]);
+
+  const getStats = (a: SupplierAgent) => {
+    const totalPaid = supplierStats[a.id]?.totalPaid || 0;
+    const contractedAmount = Number(a.contracted_amount || 0);
+    const totalDue = Math.max(0, contractedAmount - totalPaid);
+    return { contractedAmount, totalPaid, totalDue };
+  };
 
   const handleSave = async () => {
     if (!form.agent_name.trim()) { toast({ title: "Agent name is required.", variant: "destructive" }); return; }
@@ -98,7 +104,7 @@ export default function AdminSupplierAgentsPage() {
   };
 
   const startEdit = (a: SupplierAgent) => {
-    setForm({ agent_name: a.agent_name, company_name: a.company_name || "", phone: a.phone || "", address: a.address || "", notes: a.notes || "", status: a.status, contract_date: (a as any).contract_date || "", contracted_hajji: String((a as any).contracted_hajji || ""), contracted_amount: String((a as any).contracted_amount || "") });
+    setForm({ agent_name: a.agent_name, company_name: a.company_name || "", phone: a.phone || "", address: a.address || "", notes: a.notes || "", status: a.status, contract_date: a.contract_date || "", contracted_hajji: String(a.contracted_hajji || ""), contracted_amount: String(a.contracted_amount || "") });
     setEditId(a.id); setShowForm(true);
   };
 
@@ -126,10 +132,10 @@ export default function AdminSupplierAgentsPage() {
   ];
 
   const totals = useMemo(() => {
-    let bookingCount = 0, totalCost = 0, totalPaid = 0, totalDue = 0;
-    Object.values(supplierStats).forEach(s => { bookingCount += s.bookingCount; totalCost += s.totalCost; totalPaid += s.totalPaid; totalDue += s.totalDue; });
-    return { bookingCount, totalCost, totalPaid, totalDue };
-  }, [supplierStats]);
+    let totalContracted = 0, totalPaid = 0, totalDue = 0;
+    filtered.forEach(a => { const s = getStats(a); totalContracted += s.contractedAmount; totalPaid += s.totalPaid; totalDue += s.totalDue; });
+    return { totalContracted, totalPaid, totalDue };
+  }, [filtered, supplierStats]);
 
   return (
     <div className="space-y-5">
@@ -142,8 +148,8 @@ export default function AdminSupplierAgentsPage() {
           <p className="text-muted-foreground text-sm">মোট {agents.length} জন সাপ্লায়ার</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => exportPDF({ title: "Supplier Agents Report", columns: ["Name", "Company", "Phone", "Bookings", "Total Cost", "Paid", "Due"], rows: filtered.map(a => { const s = supplierStats[a.id] || { bookingCount: 0, totalCost: 0, totalPaid: 0, totalDue: 0 }; return [a.agent_name, a.company_name || "—", a.phone || "—", s.bookingCount, s.totalCost, s.totalPaid, s.totalDue]; }) })}><FileDown className="h-4 w-4 mr-1" />PDF</Button>
-          <Button variant="outline" size="sm" onClick={() => exportExcel({ title: "Supplier Agents Report", columns: ["Name", "Company", "Phone", "Bookings", "Total Cost", "Paid", "Due"], rows: filtered.map(a => { const s = supplierStats[a.id] || { bookingCount: 0, totalCost: 0, totalPaid: 0, totalDue: 0 }; return [a.agent_name, a.company_name || "—", a.phone || "—", s.bookingCount, s.totalCost, s.totalPaid, s.totalDue]; }) })}><FileSpreadsheet className="h-4 w-4 mr-1" />Excel</Button>
+          <Button variant="outline" size="sm" onClick={() => { const rows = filtered.map(a => { const s = getStats(a); return [a.agent_name, a.company_name || "—", a.phone || "—", Number(a.contracted_hajji || 0), s.contractedAmount, s.totalPaid, s.totalDue]; }); rows.push([]); rows.push(["", "", "মোট", "", totals.totalContracted, totals.totalPaid, totals.totalDue]); exportPDF({ title: "Supplier Agents Report", columns: ["Name", "Company", "Phone", "Hajji", "Contract Amount", "Paid", "Due"], rows }); }}><FileDown className="h-4 w-4 mr-1" />PDF</Button>
+          <Button variant="outline" size="sm" onClick={() => { const rows = filtered.map(a => { const s = getStats(a); return [a.agent_name, a.company_name || "—", a.phone || "—", Number(a.contracted_hajji || 0), s.contractedAmount, s.totalPaid, s.totalDue]; }); rows.push([]); rows.push(["", "", "মোট", "", totals.totalContracted, totals.totalPaid, totals.totalDue]); exportExcel({ title: "Supplier Agents Report", columns: ["Name", "Company", "Phone", "Hajji", "Contract Amount", "Paid", "Due"], rows }); }}><FileSpreadsheet className="h-4 w-4 mr-1" />Excel</Button>
           {!isViewer && (
             <Button onClick={() => { setForm(emptyForm); setEditId(null); setShowForm(true); }}>
               <Plus className="h-4 w-4 mr-1" /> নতুন এজেন্ট
@@ -159,8 +165,8 @@ export default function AdminSupplierAgentsPage() {
           <p className="text-lg font-bold text-foreground">{agents.length}</p>
         </div>
         <div className="bg-card border border-border rounded-xl p-4">
-          <p className="text-[11px] text-muted-foreground uppercase tracking-wider">মোট বুকিং</p>
-          <p className="text-lg font-bold text-foreground">{totals.bookingCount}</p>
+          <p className="text-[11px] text-muted-foreground uppercase tracking-wider">চুক্তিকৃত টাকা</p>
+          <p className="text-lg font-bold text-foreground">{fmt(totals.totalContracted)}</p>
         </div>
         <div className="bg-card border border-border rounded-xl p-4">
           <p className="text-[11px] text-muted-foreground uppercase tracking-wider">মোট পরিশোধ</p>
@@ -192,8 +198,8 @@ export default function AdminSupplierAgentsPage() {
                   <TableHead className="w-12 text-center">SL</TableHead>
                   <TableHead>নাম</TableHead>
                   <TableHead>ফোন</TableHead>
-                  <TableHead className="text-right">মোট বুকিং</TableHead>
-                  <TableHead className="text-right">মোট খরচ</TableHead>
+                  <TableHead className="text-right">হাজী সংখ্যা</TableHead>
+                  <TableHead className="text-right">চুক্তিকৃত টাকা</TableHead>
                   <TableHead className="text-right">মোট পরিশোধ</TableHead>
                   <TableHead className="text-right">মোট বকেয়া</TableHead>
                   <TableHead className="text-center w-24">অ্যাকশন</TableHead>
@@ -201,7 +207,7 @@ export default function AdminSupplierAgentsPage() {
               </TableHeader>
               <TableBody>
                 {paginated.map((a, i) => {
-                  const stats = supplierStats[a.id] || { bookingCount: 0, totalCost: 0, totalPaid: 0, totalDue: 0 };
+                  const stats = getStats(a);
                   return (
                     <TableRow key={a.id} className="cursor-pointer hover:bg-muted/30 transition-colors" onClick={() => navigate(`/admin/supplier-agents/${a.id}`)}>
                       <TableCell className="text-center text-muted-foreground text-xs">{(page - 1) * PAGE_SIZE + i + 1}</TableCell>
@@ -212,8 +218,8 @@ export default function AdminSupplierAgentsPage() {
                         </div>
                       </TableCell>
                       <TableCell className="text-muted-foreground">{a.phone || "—"}</TableCell>
-                      <TableCell className="text-right font-medium">{stats.bookingCount}</TableCell>
-                      <TableCell className="text-right font-medium">{fmt(stats.totalCost)}</TableCell>
+                      <TableCell className="text-right font-medium">{a.contracted_hajji || 0}</TableCell>
+                      <TableCell className="text-right font-medium">{fmt(stats.contractedAmount)}</TableCell>
                       <TableCell className="text-right font-medium text-emerald-600">{fmt(stats.totalPaid)}</TableCell>
                       <TableCell className="text-right font-medium text-destructive">{fmt(stats.totalDue)}</TableCell>
                       <TableCell className="text-center" onClick={e => e.stopPropagation()}>

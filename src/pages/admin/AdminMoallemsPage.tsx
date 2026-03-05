@@ -27,10 +27,11 @@ interface Moallem {
   id: string; name: string; phone: string | null; address: string | null;
   nid_number: string | null; contract_date: string | null; notes: string | null;
   status: string; total_deposit: number; total_due: number;
+  contracted_hajji: number; contracted_amount: number;
   created_at: string; updated_at: string;
 }
 
-const emptyForm = { name: "", phone: "", address: "", nid_number: "", contract_date: "", notes: "", status: "active" };
+const emptyForm = { name: "", phone: "", address: "", nid_number: "", contract_date: "", notes: "", status: "active", contracted_hajji: "", contracted_amount: "" };
 
 export default function AdminMoallemsPage() {
   const navigate = useNavigate();
@@ -81,6 +82,8 @@ export default function AdminMoallemsPage() {
       name: form.name.trim(), phone: form.phone.trim() ? normalizePhone(form.phone) : null,
       address: form.address.trim() || null, nid_number: form.nid_number.trim() || null,
       contract_date: form.contract_date || null, notes: form.notes.trim() || null, status: form.status,
+      contracted_hajji: parseInt(form.contracted_hajji) || 0,
+      contracted_amount: parseFloat(form.contracted_amount) || 0,
     };
     if (editId) {
       const { error } = await supabase.from("moallems").update(payload).eq("id", editId);
@@ -95,7 +98,7 @@ export default function AdminMoallemsPage() {
   };
 
   const startEdit = (m: Moallem) => {
-    setForm({ name: m.name, phone: m.phone || "", address: m.address || "", nid_number: m.nid_number || "", contract_date: m.contract_date || "", notes: m.notes || "", status: m.status });
+    setForm({ name: m.name, phone: m.phone || "", address: m.address || "", nid_number: m.nid_number || "", contract_date: m.contract_date || "", notes: m.notes || "", status: m.status, contracted_hajji: String(m.contracted_hajji || ""), contracted_amount: String(m.contracted_amount || "") });
     setEditId(m.id); setShowForm(true);
   };
 
@@ -124,10 +127,11 @@ export default function AdminMoallemsPage() {
 
   // Summary KPIs
   const totals = useMemo(() => {
-    let hajji = 0, received = 0, due = 0;
+    let hajji = 0, received = 0, due = 0, contractedHajji = 0, contractedAmount = 0;
     Object.values(moallemStats).forEach(s => { hajji += s.hajji; received += s.received; due += s.due; });
-    return { hajji, received, due };
-  }, [moallemStats]);
+    moallems.forEach(m => { contractedHajji += (m.contracted_hajji || 0); contractedAmount += (m.contracted_amount || 0); });
+    return { hajji, received, due, contractedHajji, contractedAmount };
+  }, [moallemStats, moallems]);
 
   return (
     <div className="space-y-5">
@@ -147,14 +151,18 @@ export default function AdminMoallemsPage() {
       </div>
 
       {/* KPI Summary */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
         <div className="bg-card border border-border rounded-xl p-4">
           <p className="text-[11px] text-muted-foreground uppercase tracking-wider">মোট মোয়াল্লেম</p>
           <p className="text-lg font-bold text-foreground">{moallems.length}</p>
         </div>
         <div className="bg-card border border-border rounded-xl p-4">
-          <p className="text-[11px] text-muted-foreground uppercase tracking-wider">মোট হাজী</p>
-          <p className="text-lg font-bold text-foreground">{totals.hajji}</p>
+          <p className="text-[11px] text-muted-foreground uppercase tracking-wider">চুক্তিকৃত হাজী</p>
+          <p className="text-lg font-bold text-foreground">{totals.contractedHajji}</p>
+        </div>
+        <div className="bg-card border border-border rounded-xl p-4">
+          <p className="text-[11px] text-muted-foreground uppercase tracking-wider">চুক্তিকৃত টাকা</p>
+          <p className="text-lg font-bold text-foreground">{fmt(totals.contractedAmount)}</p>
         </div>
         <div className="bg-card border border-border rounded-xl p-4">
           <p className="text-[11px] text-muted-foreground uppercase tracking-wider">মোট প্রাপ্ত</p>
@@ -186,7 +194,8 @@ export default function AdminMoallemsPage() {
                   <TableHead className="w-12 text-center">SL</TableHead>
                   <TableHead>নাম</TableHead>
                   <TableHead>ফোন</TableHead>
-                  <TableHead className="text-right">মোট হাজী</TableHead>
+                  <TableHead className="text-right">চুক্তিকৃত হাজী</TableHead>
+                  <TableHead className="text-right">চুক্তিকৃত টাকা</TableHead>
                   <TableHead className="text-right">মোট প্রাপ্ত</TableHead>
                   <TableHead className="text-right">মোট বকেয়া</TableHead>
                   <TableHead className="text-center">স্ট্যাটাস</TableHead>
@@ -201,7 +210,8 @@ export default function AdminMoallemsPage() {
                       <TableCell className="text-center text-muted-foreground text-xs">{(page - 1) * PAGE_SIZE + i + 1}</TableCell>
                       <TableCell className="font-medium">{m.name}</TableCell>
                       <TableCell className="text-muted-foreground">{m.phone || "—"}</TableCell>
-                      <TableCell className="text-right font-medium">{stats.hajji}</TableCell>
+                      <TableCell className="text-right font-medium">{m.contracted_hajji || 0}</TableCell>
+                      <TableCell className="text-right font-medium">{fmt(m.contracted_amount || 0)}</TableCell>
                       <TableCell className="text-right font-medium text-emerald-600">{fmt(stats.received)}</TableCell>
                       <TableCell className="text-right font-medium text-destructive">{fmt(stats.due)}</TableCell>
                       <TableCell className="text-center">
@@ -256,6 +266,10 @@ export default function AdminMoallemsPage() {
             <div><label className="text-sm font-medium">ঠিকানা</label><Input value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} /></div>
             <div><label className="text-sm font-medium">NID নম্বর</label><Input value={form.nid_number} onChange={e => setForm({ ...form, nid_number: e.target.value })} /></div>
             <div><label className="text-sm font-medium">চুক্তির তারিখ</label><Input type="date" value={form.contract_date} onChange={e => setForm({ ...form, contract_date: e.target.value })} /></div>
+            <div className="grid grid-cols-2 gap-3">
+              <div><label className="text-sm font-medium">চুক্তিকৃত হাজী সংখ্যা</label><Input type="number" min={0} value={form.contracted_hajji} onChange={e => setForm({ ...form, contracted_hajji: e.target.value })} placeholder="0" /></div>
+              <div><label className="text-sm font-medium">চুক্তিকৃত মোট টাকা (৳)</label><Input type="number" min={0} value={form.contracted_amount} onChange={e => setForm({ ...form, contracted_amount: e.target.value })} placeholder="0" /></div>
+            </div>
             <div>
               <label className="text-sm font-medium">স্ট্যাটাস</label>
               <Select value={form.status} onValueChange={v => setForm({ ...form, status: v })}>

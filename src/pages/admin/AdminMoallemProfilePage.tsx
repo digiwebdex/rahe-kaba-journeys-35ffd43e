@@ -250,11 +250,13 @@ export default function AdminMoallemProfilePage() {
 
       {/* Info */}
       <Card><CardContent className="pt-4">
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 text-sm">
           <div className="flex items-center gap-2"><Phone className="h-4 w-4 text-muted-foreground" />{moallem.phone || "—"}</div>
           <div className="flex items-center gap-2"><MapPin className="h-4 w-4 text-muted-foreground" />{moallem.address || "—"}</div>
           <div className="flex items-center gap-2"><Hash className="h-4 w-4 text-muted-foreground" />NID: {moallem.nid_number || "—"}</div>
           <div className="flex items-center gap-2"><CalendarDays className="h-4 w-4 text-muted-foreground" />চুক্তি: {moallem.contract_date || "—"}</div>
+          <div className="flex items-center gap-2"><Users className="h-4 w-4 text-muted-foreground" />চুক্তিকৃত হাজী: {moallem.contracted_hajji || 0}</div>
+          <div className="flex items-center gap-2"><CreditCard className="h-4 w-4 text-muted-foreground" />চুক্তিকৃত টাকা: {fmt(moallem.contracted_amount || 0)}</div>
         </div>
       </CardContent></Card>
 

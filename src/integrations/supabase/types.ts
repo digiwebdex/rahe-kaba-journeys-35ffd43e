@@ -827,6 +827,8 @@ export type Database = {
         Row: {
           address: string | null
           contract_date: string | null
+          contracted_amount: number
+          contracted_hajji: number
           created_at: string
           id: string
           name: string
@@ -841,6 +843,8 @@ export type Database = {
         Insert: {
           address?: string | null
           contract_date?: string | null
+          contracted_amount?: number
+          contracted_hajji?: number
           created_at?: string
           id?: string
           name: string
@@ -855,6 +859,8 @@ export type Database = {
         Update: {
           address?: string | null
           contract_date?: string | null
+          contracted_amount?: number
+          contracted_hajji?: number
           created_at?: string
           id?: string
           name?: string

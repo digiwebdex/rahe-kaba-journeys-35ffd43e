@@ -129,7 +129,7 @@ export default function AdminSupplierAgentsPage() {
     const stats = getStats(a);
     return [
       { label: "দেখুন", icon: <Eye className="h-3.5 w-3.5" />, onClick: () => navigate(`/admin/supplier-agents/${a.id}`) },
-      { label: "PDF", icon: <FileDown className="h-3.5 w-3.5" />, onClick: () => exportPDF({ title: `Supplier - ${a.agent_name}`, columns: ["Name", "Phone", "Pilgrim Count", "Contract Amount", "Total Paid", "Total Due"], rows: [[a.agent_name, a.phone || "—", a.contracted_hajji || 0, stats.contractedAmount, stats.totalPaid, stats.totalDue]], summary: [`Total Paid: ৳${stats.totalPaid.toLocaleString()}`, `Total Due: ৳${stats.totalDue.toLocaleString()}`] }) },
+      { label: "PDF", icon: <FileDown className="h-3.5 w-3.5" />, onClick: () => exportPDF({ title: `Supplier - ${a.agent_name}`, columns: ["Name", "Phone", "Pilgrim Count", "Contract Amount", "Total Paid", "Total Due"], rows: [[a.agent_name, a.phone || "—", a.contracted_hajji || 0, stats.contractedAmount, stats.totalPaid, stats.totalDue]], summary: [`Total Paid: BDT ${stats.totalPaid.toLocaleString("en-IN")}`, `Total Due: BDT ${stats.totalDue.toLocaleString("en-IN")}`] }) },
       { label: "সম্পাদনা", icon: <Pencil className="h-3.5 w-3.5" />, onClick: () => startEdit(a), variant: "warning", hidden: isViewer },
       { label: "মুছুন", icon: <Trash2 className="h-3.5 w-3.5" />, onClick: () => setDeleteId(a.id), variant: "destructive", hidden: isViewer, separator: true },
     ];
@@ -152,7 +152,7 @@ export default function AdminSupplierAgentsPage() {
           <p className="text-muted-foreground text-sm">মোট {agents.length} জন সাপ্লায়ার</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => { const rows = filtered.map(a => { const s = getStats(a); return [a.agent_name, a.phone || "—", Number(a.contracted_hajji || 0), s.contractedAmount, s.totalPaid, s.totalDue]; }); exportPDF({ title: "Supplier Agents Report", columns: ["Name", "Phone", "Pilgrim Count", "Contract Amount", "Total Paid", "Total Due"], rows, summary: [`Total Paid: ৳${totals.totalPaid.toLocaleString()}`, `Total Due: ৳${totals.totalDue.toLocaleString()}`] }); }}><FileDown className="h-4 w-4 mr-1" />PDF</Button>
+          <Button variant="outline" size="sm" onClick={() => { const rows = filtered.map(a => { const s = getStats(a); return [a.agent_name, a.phone || "—", Number(a.contracted_hajji || 0), s.contractedAmount, s.totalPaid, s.totalDue]; }); exportPDF({ title: "Supplier Agents Report", columns: ["Name", "Phone", "Pilgrim Count", "Contract Amount", "Total Paid", "Total Due"], rows, summary: [`Total Paid: BDT ${totals.totalPaid.toLocaleString("en-IN")}`, `Total Due: BDT ${totals.totalDue.toLocaleString("en-IN")}`] }); }}><FileDown className="h-4 w-4 mr-1" />PDF</Button>
           <Button variant="outline" size="sm" onClick={() => { const rows = filtered.map(a => { const s = getStats(a); return [a.agent_name, a.phone || "—", Number(a.contracted_hajji || 0), s.contractedAmount, s.totalPaid, s.totalDue]; }); exportExcel({ title: "Supplier Agents Report", columns: ["Name", "Phone", "Pilgrim Count", "Contract Amount", "Total Paid", "Total Due"], rows, summary: [`Total Paid: ৳${totals.totalPaid.toLocaleString()}`, `Total Due: ৳${totals.totalDue.toLocaleString()}`] }); }}><FileSpreadsheet className="h-4 w-4 mr-1" />Excel</Button>
           {!isViewer && (
             <Button onClick={() => { setForm(emptyForm); setEditId(null); setShowForm(true); }}>

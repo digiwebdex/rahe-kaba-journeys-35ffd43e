@@ -77,16 +77,23 @@ export async function exportPDF({ title, columns, rows, summary }: ReportData) {
   const logoBase64 = await loadLogoBase64();
   const doc = new jsPDF();
   doc.setFontSize(16);
+  doc.setFont("helvetica", "bold");
   doc.text(title, 14, 18);
   doc.setFontSize(9);
+  doc.setFont("helvetica", "normal");
   doc.text(`Generated: ${new Date().toLocaleDateString()}`, 14, 25);
+
+  const fmtCell = (val: string | number) =>
+    typeof val === "number" ? `BDT ${val.toLocaleString("en-IN")}` : val;
+
+  const formattedRows = rows.map(row => row.map(fmtCell));
 
   autoTable(doc, {
     head: [columns],
-    body: rows,
+    body: formattedRows,
     startY: 30,
-    styles: { fontSize: 8 },
-    headStyles: { fillColor: [40, 46, 56] },
+    styles: { fontSize: 8, font: "helvetica" },
+    headStyles: { fillColor: [40, 46, 56], font: "helvetica", fontStyle: "bold" },
   });
 
   let y = (doc as any).lastAutoTable?.finalY + 10 || 50;

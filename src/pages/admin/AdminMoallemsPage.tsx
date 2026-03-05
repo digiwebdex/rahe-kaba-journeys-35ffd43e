@@ -123,7 +123,7 @@ export default function AdminMoallemsPage() {
     const stats = moallemStats[m.id] || { hajji: 0, received: 0, due: 0 };
     return [
       { label: "দেখুন", icon: <Eye className="h-3.5 w-3.5" />, onClick: () => navigate(`/admin/moallems/${m.id}`) },
-      { label: "PDF", icon: <FileDown className="h-3.5 w-3.5" />, onClick: () => exportPDF({ title: `Moallem - ${m.name}`, columns: ["Name", "Phone", "Pilgrim Count", "Contract Amount", "Total Paid", "Total Due"], rows: [[m.name, m.phone || "—", m.contracted_hajji || 0, m.contracted_amount || 0, stats.received, stats.due]], summary: [`Total Paid: ৳${stats.received.toLocaleString()}`, `Total Due: ৳${stats.due.toLocaleString()}`] }) },
+      { label: "PDF", icon: <FileDown className="h-3.5 w-3.5" />, onClick: () => exportPDF({ title: `Moallem - ${m.name}`, columns: ["Name", "Phone", "Pilgrim Count", "Contract Amount", "Total Paid", "Total Due"], rows: [[m.name, m.phone || "—", m.contracted_hajji || 0, m.contracted_amount || 0, stats.received, stats.due]], summary: [`Total Paid: BDT ${stats.received.toLocaleString("en-IN")}`, `Total Due: BDT ${stats.due.toLocaleString("en-IN")}`] }) },
       { label: "সম্পাদনা", icon: <Pencil className="h-3.5 w-3.5" />, onClick: () => startEdit(m), variant: "warning", hidden: isViewer },
       { label: "মুছুন", icon: <Trash2 className="h-3.5 w-3.5" />, onClick: () => setDeleteId(m.id), variant: "destructive", hidden: isViewer, separator: true },
     ];
@@ -148,7 +148,7 @@ export default function AdminMoallemsPage() {
           <p className="text-muted-foreground text-sm">মোট {moallems.length} জন মোয়াল্লেম</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => { const rows = filtered.map(m => { const s = moallemStats[m.id] || { hajji: 0, received: 0, due: 0 }; return [m.name, m.phone || "—", m.contracted_hajji || 0, m.contracted_amount || 0, s.received, s.due]; }); exportPDF({ title: "Moallems Report", columns: ["Name", "Phone", "Pilgrim Count", "Contract Amount", "Total Paid", "Total Due"], rows, summary: [`Total Paid: ৳${totals.received.toLocaleString()}`, `Total Due: ৳${totals.due.toLocaleString()}`] }); }}><FileDown className="h-4 w-4 mr-1" />PDF</Button>
+          <Button variant="outline" size="sm" onClick={() => { const rows = filtered.map(m => { const s = moallemStats[m.id] || { hajji: 0, received: 0, due: 0 }; return [m.name, m.phone || "—", m.contracted_hajji || 0, m.contracted_amount || 0, s.received, s.due]; }); exportPDF({ title: "Moallems Report", columns: ["Name", "Phone", "Pilgrim Count", "Contract Amount", "Total Paid", "Total Due"], rows, summary: [`Total Paid: BDT ${totals.received.toLocaleString("en-IN")}`, `Total Due: BDT ${totals.due.toLocaleString("en-IN")}`] }); }}><FileDown className="h-4 w-4 mr-1" />PDF</Button>
           <Button variant="outline" size="sm" onClick={() => { const rows = filtered.map(m => { const s = moallemStats[m.id] || { hajji: 0, received: 0, due: 0 }; return [m.name, m.phone || "—", m.contracted_hajji || 0, m.contracted_amount || 0, s.received, s.due]; }); exportExcel({ title: "Moallems Report", columns: ["Name", "Phone", "Pilgrim Count", "Contract Amount", "Total Paid", "Total Due"], rows, summary: [`Total Paid: ৳${totals.received.toLocaleString()}`, `Total Due: ৳${totals.due.toLocaleString()}`] }); }}><FileSpreadsheet className="h-4 w-4 mr-1" />Excel</Button>
           {!isViewer && (
             <Button onClick={() => { setForm(emptyForm); setEditId(null); setShowForm(true); }}>

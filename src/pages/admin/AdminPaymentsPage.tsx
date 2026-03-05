@@ -460,7 +460,7 @@ export default function AdminPaymentsPage() {
                 <div className="flex items-center gap-4">
                   <span className="font-heading font-bold text-primary">{fmt(group.totalPaid)}</span>
                   <button
-                    onClick={(e) => { e.stopPropagation(); exportPDF({ title: `Moallem Payment History - ${group.name}`, columns: ["#", "Booking", "Amount", "Method", "Date", "Notes"], rows: group.payments.map((p: any, i: number) => [i + 1, p.bookings?.tracking_id || "—", Number(p.amount), p.payment_method || "—", p.date ? new Date(p.date).toLocaleDateString() : "—", p.notes || "—"]), summary: [`Total Paid: ৳${group.totalPaid.toLocaleString()}`] }); }}
+                    onClick={(e) => { e.stopPropagation(); exportPDF({ title: `Moallem Payment History - ${group.name}`, columns: ["#", "Booking", "Amount", "Method", "Date", "Notes"], rows: group.payments.map((p: any, i: number) => [i + 1, p.bookings?.tracking_id || "—", Number(p.amount), p.payment_method || "—", p.date ? new Date(p.date).toLocaleDateString() : "—", p.notes || "—"]), summary: [`Total Paid: BDT ${group.totalPaid.toLocaleString("en-IN")}`] }); }}
                     className="inline-flex items-center gap-1 text-xs bg-primary/10 text-primary px-3 py-1.5 rounded-md hover:bg-primary/20 transition-colors"
                   >
                     <FileDown className="h-3.5 w-3.5" /> PDF
@@ -528,7 +528,7 @@ export default function AdminPaymentsPage() {
                 <div className="flex items-center gap-4">
                   <span className="font-heading font-bold text-destructive">{fmt(group.totalPaid)}</span>
                   <button
-                    onClick={(e) => { e.stopPropagation(); exportPDF({ title: `Supplier Payment History - ${group.name}`, columns: ["#", "Booking", "Amount", "Method", "Date", "Notes"], rows: group.payments.map((p: any, i: number) => [i + 1, p.bookings?.tracking_id || "—", Number(p.amount), p.payment_method || "—", p.date ? new Date(p.date).toLocaleDateString() : "—", p.notes || "—"]), summary: [`Total Paid: ৳${group.totalPaid.toLocaleString()}`] }); }}
+                    onClick={(e) => { e.stopPropagation(); exportPDF({ title: `Supplier Payment History - ${group.name}`, columns: ["#", "Booking", "Amount", "Method", "Date", "Notes"], rows: group.payments.map((p: any, i: number) => [i + 1, p.bookings?.tracking_id || "—", Number(p.amount), p.payment_method || "—", p.date ? new Date(p.date).toLocaleDateString() : "—", p.notes || "—"]), summary: [`Total Paid: BDT ${group.totalPaid.toLocaleString("en-IN")}`] }); }}
                     className="inline-flex items-center gap-1 text-xs bg-primary/10 text-primary px-3 py-1.5 rounded-md hover:bg-primary/20 transition-colors"
                   >
                     <FileDown className="h-3.5 w-3.5" /> PDF

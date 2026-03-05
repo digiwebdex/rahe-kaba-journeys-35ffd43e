@@ -1,7 +1,8 @@
 import { useEffect, useState, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Plus, X, Edit2, Trash2, Save, Filter, TrendingUp, TrendingDown, BarChart3, Search } from "lucide-react";
+import { Plus, X, Edit2, Trash2, Save, Filter, TrendingUp, TrendingDown, BarChart3, Search, FileDown, FileSpreadsheet } from "lucide-react";
+import { exportPDF, exportExcel } from "@/lib/reportExport";
 import { useIsViewer, useCanModifyFinancials } from "@/components/admin/AdminLayout";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
@@ -215,11 +216,25 @@ export default function AdminAccountingPage() {
     <div>
       <div className="flex flex-wrap justify-between items-center gap-3 mb-4">
         <h2 className="font-heading text-xl font-bold">হিসাব ও মুনাফা</h2>
-        {canModify && tab === "expenses" && (
-          <button onClick={() => setShowForm(true)} className="inline-flex items-center gap-1.5 text-sm bg-gradient-gold text-primary-foreground font-semibold px-4 py-2 rounded-md hover:opacity-90 transition-opacity shadow-gold">
-            <Plus className="h-4 w-4" /> নতুন খরচ
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          {canModify && tab === "expenses" && (
+            <button onClick={() => setShowForm(true)} className="inline-flex items-center gap-1.5 text-sm bg-gradient-gold text-primary-foreground font-semibold px-4 py-2 rounded-md hover:opacity-90 transition-opacity shadow-gold">
+              <Plus className="h-4 w-4" /> নতুন খরচ
+            </button>
+          )}
+          <button onClick={() => {
+            if (tab === "expenses") exportPDF({ title: "Expenses Report", columns: ["Title", "Type", "Category", "Amount", "Date"], rows: filtered.map(e => [e.title, e.expense_type, e.category, Number(e.amount), new Date(e.date).toLocaleDateString()]) });
+            else if (tab === "booking") exportPDF({ title: "Booking Profit Report", columns: ["Tracking ID", "Customer", "Package", "Revenue", "Expenses", "Profit"], rows: bookingProfit.map((b: any) => [b.tracking_id || "—", b.guest_name || "—", b.package_name || "—", Number(b.total_payments || 0), Number(b.total_expenses || 0), Number(b.profit_amount || 0)]) });
+            else if (tab === "package") exportPDF({ title: "Package Profit Report", columns: ["Package", "Type", "Bookings", "Revenue", "Expenses", "Profit"], rows: packageProfit.map((p: any) => [p.package_name || "—", p.package_type || "—", Number(p.total_bookings || 0), Number(p.total_revenue || 0), Number(p.total_expenses || 0), Number(p.profit || 0)]) });
+            else if (tab === "customer") exportPDF({ title: "Customer Profit Report", columns: ["Customer", "Phone", "Bookings", "Payments", "Expenses", "Profit"], rows: customerProfit.map((c: any) => [c.full_name || "—", c.phone || "—", Number(c.total_bookings || 0), Number(c.total_payments || 0), Number(c.total_expenses || 0), Number(c.profit || 0)]) });
+          }} className="inline-flex items-center gap-1 text-xs bg-secondary px-3 py-1.5 rounded-md hover:bg-muted transition-colors"><FileDown className="h-3.5 w-3.5" />PDF</button>
+          <button onClick={() => {
+            if (tab === "expenses") exportExcel({ title: "Expenses Report", columns: ["Title", "Type", "Category", "Amount", "Date"], rows: filtered.map(e => [e.title, e.expense_type, e.category, Number(e.amount), new Date(e.date).toLocaleDateString()]) });
+            else if (tab === "booking") exportExcel({ title: "Booking Profit Report", columns: ["Tracking ID", "Customer", "Package", "Revenue", "Expenses", "Profit"], rows: bookingProfit.map((b: any) => [b.tracking_id || "—", b.guest_name || "—", b.package_name || "—", Number(b.total_payments || 0), Number(b.total_expenses || 0), Number(b.profit_amount || 0)]) });
+            else if (tab === "package") exportExcel({ title: "Package Profit Report", columns: ["Package", "Type", "Bookings", "Revenue", "Expenses", "Profit"], rows: packageProfit.map((p: any) => [p.package_name || "—", p.package_type || "—", Number(p.total_bookings || 0), Number(p.total_revenue || 0), Number(p.total_expenses || 0), Number(p.profit || 0)]) });
+            else if (tab === "customer") exportExcel({ title: "Customer Profit Report", columns: ["Customer", "Phone", "Bookings", "Payments", "Expenses", "Profit"], rows: customerProfit.map((c: any) => [c.full_name || "—", c.phone || "—", Number(c.total_bookings || 0), Number(c.total_payments || 0), Number(c.total_expenses || 0), Number(c.profit || 0)]) });
+          }} className="inline-flex items-center gap-1 text-xs bg-secondary px-3 py-1.5 rounded-md hover:bg-muted transition-colors"><FileSpreadsheet className="h-3.5 w-3.5" />Excel</button>
+        </div>
       </div>
 
       {/* Summary Cards */}

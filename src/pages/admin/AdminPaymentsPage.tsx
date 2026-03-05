@@ -1,7 +1,8 @@
 import { useEffect, useState, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Download, Edit2, Trash2, Save, X, Plus, Wallet, Search, CheckCircle, XCircle, Upload, FileText, Loader2 } from "lucide-react";
+import { Download, Edit2, Trash2, Save, X, Plus, Wallet, Search, CheckCircle, XCircle, Upload, FileText, Loader2, FileDown, FileSpreadsheet } from "lucide-react";
+import { exportPDF, exportExcel } from "@/lib/reportExport";
 import { generateReceipt, CompanyInfo, InvoicePayment } from "@/lib/invoiceGenerator";
 import { getCompanyInfoForPdf } from "@/lib/entityPdfGenerator";
 import { useIsViewer, useCanModifyFinancials } from "@/components/admin/AdminLayout";
@@ -357,6 +358,15 @@ export default function AdminPaymentsPage() {
 
   return (
     <div>
+      {/* Export Buttons */}
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+        <h2 className="font-heading text-xl font-bold">পেমেন্ট ম্যানেজমেন্ট</h2>
+        <div className="flex items-center gap-2">
+          <button onClick={() => exportPDF({ title: "Payments Report", columns: ["Type", "Name", "Tracking ID", "Amount", "Method", "Date"], rows: allCombined.map(p => [p._type, p._displayName, p._trackingId, p._amount, p.payment_method || "—", p._sortDate ? new Date(p._sortDate).toLocaleDateString() : "—"]) })} className="inline-flex items-center gap-1 text-xs bg-secondary px-3 py-1.5 rounded-md hover:bg-muted transition-colors"><FileDown className="h-3.5 w-3.5" />PDF</button>
+          <button onClick={() => exportExcel({ title: "Payments Report", columns: ["Type", "Name", "Tracking ID", "Amount", "Method", "Date"], rows: allCombined.map(p => [p._type, p._displayName, p._trackingId, p._amount, p.payment_method || "—", p._sortDate ? new Date(p._sortDate).toLocaleDateString() : "—"]) })} className="inline-flex items-center gap-1 text-xs bg-secondary px-3 py-1.5 rounded-md hover:bg-muted transition-colors"><FileSpreadsheet className="h-3.5 w-3.5" />Excel</button>
+        </div>
+      </div>
+
       {walletAccounts.length > 0 && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
           {walletAccounts.map((w) => (

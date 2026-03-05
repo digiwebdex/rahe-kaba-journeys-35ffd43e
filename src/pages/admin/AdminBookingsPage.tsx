@@ -5,12 +5,14 @@ import { toast } from "sonner";
 import {
   Download, Edit2, Trash2, Save, X, Search, ChevronDown, ChevronUp,
   TrendingUp, TrendingDown, Plus, Eye, Copy, CreditCard, Receipt,
-  FileText, RefreshCw, Upload as UploadIcon, User
+  FileText, RefreshCw, Upload as UploadIcon, User, FileDown, FileSpreadsheet
 } from "lucide-react";
+import { exportPDF, exportExcel } from "@/lib/reportExport";
 import { generateInvoice, CompanyInfo, InvoicePayment } from "@/lib/invoiceGenerator";
 import { getCompanyInfoForPdf } from "@/lib/entityPdfGenerator";
 import { useIsViewer } from "@/components/admin/AdminLayout";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import AdminActionMenu, { ActionItem } from "@/components/admin/AdminActionMenu";
 import { handlePhoneChange } from "@/lib/phoneValidation";
@@ -324,6 +326,8 @@ export default function AdminBookingsPage() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <h2 className="font-heading text-xl font-bold">All Bookings</h2>
         <div className="flex items-center gap-3 w-full sm:w-auto">
+          <Button variant="outline" size="sm" onClick={() => exportPDF({ title: "Bookings Report", columns: ["Tracking ID", "Customer", "Package", "Travelers", "Total", "Paid", "Due", "Status"], rows: filtered.map(b => [b.tracking_id, b.guest_name || "—", b.packages?.name || "—", b.num_travelers, Number(b.total_amount), Number(b.paid_amount), Number(b.due_amount ?? 0), b.status]) })}><FileDown className="h-4 w-4 mr-1" />PDF</Button>
+          <Button variant="outline" size="sm" onClick={() => exportExcel({ title: "Bookings Report", columns: ["Tracking ID", "Customer", "Package", "Travelers", "Total", "Paid", "Due", "Status"], rows: filtered.map(b => [b.tracking_id, b.guest_name || "—", b.packages?.name || "—", b.num_travelers, Number(b.total_amount), Number(b.paid_amount), Number(b.due_amount ?? 0), b.status]) })}><FileSpreadsheet className="h-4 w-4 mr-1" />Excel</Button>
           {!isViewer && (
             <button onClick={() => navigate("/admin/bookings/create")}
               className="inline-flex items-center gap-1.5 text-sm bg-gradient-gold text-primary-foreground font-semibold px-4 py-2 rounded-md hover:opacity-90 transition-opacity shadow-gold">

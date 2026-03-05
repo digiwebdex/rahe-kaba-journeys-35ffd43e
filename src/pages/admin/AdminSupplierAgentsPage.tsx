@@ -17,7 +17,8 @@ import {
 } from "@/components/ui/table";
 import AdminActionMenu, { ActionItem } from "@/components/admin/AdminActionMenu";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Pencil, Trash2, Eye, Search, Truck, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, Pencil, Trash2, Eye, Search, Truck, ChevronLeft, ChevronRight, FileDown, FileSpreadsheet } from "lucide-react";
+import { exportPDF, exportExcel } from "@/lib/reportExport";
 import { normalizePhone, getPhoneError, handlePhoneChange } from "@/lib/phoneValidation";
 
 const fmt = (n: number) => `৳${n.toLocaleString()}`;
@@ -137,11 +138,15 @@ export default function AdminSupplierAgentsPage() {
           </h1>
           <p className="text-muted-foreground text-sm">মোট {agents.length} জন সাপ্লায়ার</p>
         </div>
-        {!isViewer && (
-          <Button onClick={() => { setForm(emptyForm); setEditId(null); setShowForm(true); }}>
-            <Plus className="h-4 w-4 mr-1" /> নতুন এজেন্ট
-          </Button>
-        )}
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => exportPDF({ title: "Supplier Agents Report", columns: ["Name", "Company", "Phone", "Bookings", "Total Cost", "Paid", "Due"], rows: filtered.map(a => { const s = supplierStats[a.id] || { bookingCount: 0, totalCost: 0, totalPaid: 0, totalDue: 0 }; return [a.agent_name, a.company_name || "—", a.phone || "—", s.bookingCount, s.totalCost, s.totalPaid, s.totalDue]; }) })}><FileDown className="h-4 w-4 mr-1" />PDF</Button>
+          <Button variant="outline" size="sm" onClick={() => exportExcel({ title: "Supplier Agents Report", columns: ["Name", "Company", "Phone", "Bookings", "Total Cost", "Paid", "Due"], rows: filtered.map(a => { const s = supplierStats[a.id] || { bookingCount: 0, totalCost: 0, totalPaid: 0, totalDue: 0 }; return [a.agent_name, a.company_name || "—", a.phone || "—", s.bookingCount, s.totalCost, s.totalPaid, s.totalDue]; }) })}><FileSpreadsheet className="h-4 w-4 mr-1" />Excel</Button>
+          {!isViewer && (
+            <Button onClick={() => { setForm(emptyForm); setEditId(null); setShowForm(true); }}>
+              <Plus className="h-4 w-4 mr-1" /> নতুন এজেন্ট
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* KPI Summary */}

@@ -6,10 +6,10 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { FileDown, Search, AlertTriangle, DollarSign, TrendingDown, CheckCircle, Clock } from "lucide-react";
+import { FileDown, FileSpreadsheet, Search, AlertTriangle, DollarSign, TrendingDown, CheckCircle, Clock } from "lucide-react";
 import { differenceInDays, format, parseISO } from "date-fns";
 import { cn } from "@/lib/utils";
-import { exportPDF } from "@/lib/reportExport";
+import { exportPDF, exportExcel } from "@/lib/reportExport";
 
 const fmt = (n: number) => `৳${Number(n || 0).toLocaleString()}`;
 
@@ -148,9 +148,14 @@ export default function AdminReceivablesPage() {
         <h2 className="font-heading text-xl font-bold flex items-center gap-2">
           <DollarSign className="h-5 w-5 text-primary" /> Accounts Receivable
         </h2>
-        <Button size="sm" variant="outline" onClick={handleExportPDF}>
-          <FileDown className="h-4 w-4 mr-1" /> Export PDF
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button size="sm" variant="outline" onClick={handleExportPDF}>
+            <FileDown className="h-4 w-4 mr-1" /> PDF
+          </Button>
+          <Button size="sm" variant="outline" onClick={() => exportExcel({ title: "Accounts Receivable Report", columns: ["Tracking ID", "Customer", "Package", "Total", "Paid", "Due", "Status"], rows: filtered.map(b => [b.tracking_id, getCustomerName(b), b.package_name, b.total_amount, b.paid_amount, b.due_amount, b.status]) })}>
+            <FileSpreadsheet className="h-4 w-4 mr-1" /> Excel
+          </Button>
+        </div>
       </div>
 
       {/* Summary Cards */}

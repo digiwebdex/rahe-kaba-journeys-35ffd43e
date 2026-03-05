@@ -3,8 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
-  Users, Edit2, Save, X, Search, Plus, Trash2, Eye, ChevronLeft, ChevronRight, Pencil, Loader2
+  Users, Edit2, Save, X, Search, Plus, Trash2, Eye, ChevronLeft, ChevronRight, Pencil, Loader2, FileDown, FileSpreadsheet
 } from "lucide-react";
+import { exportPDF, exportExcel } from "@/lib/reportExport";
 import { useIsViewer } from "@/components/admin/AdminLayout";
 import CustomerFinancialReport from "@/components/admin/CustomerFinancialReport";
 import { Badge } from "@/components/ui/badge";
@@ -192,11 +193,15 @@ export default function AdminCustomersPage() {
           </h1>
           <p className="text-muted-foreground text-sm">মোট {customers.length} জন কাস্টমার</p>
         </div>
-        {!isViewer && (
-          <Button onClick={() => setShowAddModal(true)}>
-            <Plus className="h-4 w-4 mr-1" /> নতুন কাস্টমার
-          </Button>
-        )}
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => exportPDF({ title: "Customers Report", columns: ["Name", "Phone", "Passport", "Total Amount", "Total Paid", "Total Due"], rows: filtered.map(c => { const s = customerStats[c.user_id] || { totalAmount: 0, totalPaid: 0, totalDue: 0 }; return [c.full_name || "—", c.phone || "—", c.passport_number || "—", s.totalAmount, s.totalPaid, s.totalDue]; }) })}><FileDown className="h-4 w-4 mr-1" />PDF</Button>
+          <Button variant="outline" size="sm" onClick={() => exportExcel({ title: "Customers Report", columns: ["Name", "Phone", "Passport", "Total Amount", "Total Paid", "Total Due"], rows: filtered.map(c => { const s = customerStats[c.user_id] || { totalAmount: 0, totalPaid: 0, totalDue: 0 }; return [c.full_name || "—", c.phone || "—", c.passport_number || "—", s.totalAmount, s.totalPaid, s.totalDue]; }) })}><FileSpreadsheet className="h-4 w-4 mr-1" />Excel</Button>
+          {!isViewer && (
+            <Button onClick={() => setShowAddModal(true)}>
+              <Plus className="h-4 w-4 mr-1" /> নতুন কাস্টমার
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* KPI Summary */}

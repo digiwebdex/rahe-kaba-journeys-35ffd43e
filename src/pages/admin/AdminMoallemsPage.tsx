@@ -17,7 +17,8 @@ import {
 } from "@/components/ui/table";
 import AdminActionMenu, { ActionItem } from "@/components/admin/AdminActionMenu";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Pencil, Trash2, Eye, Search, Users, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, Pencil, Trash2, Eye, Search, Users, ChevronLeft, ChevronRight, FileDown, FileSpreadsheet } from "lucide-react";
+import { exportPDF, exportExcel } from "@/lib/reportExport";
 import { normalizePhone, getPhoneError, handlePhoneChange } from "@/lib/phoneValidation";
 
 const fmt = (n: number) => `৳${n.toLocaleString()}`;
@@ -142,11 +143,15 @@ export default function AdminMoallemsPage() {
           </h1>
           <p className="text-muted-foreground text-sm">মোট {moallems.length} জন মোয়াল্লেম</p>
         </div>
-        {!isViewer && (
-          <Button onClick={() => { setForm(emptyForm); setEditId(null); setShowForm(true); }}>
-            <Plus className="h-4 w-4 mr-1" /> নতুন মোয়াল্লেম
-          </Button>
-        )}
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => exportPDF({ title: "Moallems Report", columns: ["Name", "Phone", "Contracted Hajji", "Contracted Amount", "Received", "Due", "Status"], rows: filtered.map(m => { const s = moallemStats[m.id] || { hajji: 0, received: 0, due: 0 }; return [m.name, m.phone || "—", m.contracted_hajji || 0, m.contracted_amount || 0, s.received, s.due, m.status]; }) })}><FileDown className="h-4 w-4 mr-1" />PDF</Button>
+          <Button variant="outline" size="sm" onClick={() => exportExcel({ title: "Moallems Report", columns: ["Name", "Phone", "Contracted Hajji", "Contracted Amount", "Received", "Due", "Status"], rows: filtered.map(m => { const s = moallemStats[m.id] || { hajji: 0, received: 0, due: 0 }; return [m.name, m.phone || "—", m.contracted_hajji || 0, m.contracted_amount || 0, s.received, s.due, m.status]; }) })}><FileSpreadsheet className="h-4 w-4 mr-1" />Excel</Button>
+          {!isViewer && (
+            <Button onClick={() => { setForm(emptyForm); setEditId(null); setShowForm(true); }}>
+              <Plus className="h-4 w-4 mr-1" /> নতুন মোয়াল্লেম
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* KPI Summary */}

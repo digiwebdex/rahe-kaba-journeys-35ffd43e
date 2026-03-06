@@ -727,7 +727,8 @@ export async function generateReceipt(
   const pageWidth = doc.internal.pageSize.getWidth();
   let y = addHeader(doc, company, logoBase64);
 
-  addQrToDoc(doc, qrDataUrl, { size: 26, trackingId: booking.tracking_id, position: "bottom" });
+
+  addQrToDoc(doc, qrDataUrl, { size: 16, trackingId: booking.tracking_id, position: "left" });
   addPaymentWatermark(doc, "paid");
 
   // Receipt title

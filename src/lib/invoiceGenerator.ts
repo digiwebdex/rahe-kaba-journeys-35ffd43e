@@ -423,7 +423,6 @@ function addPaymentHistoryTable(doc: jsPDF, y: number, payments: InvoicePayment[
       }
     },
     margin: { left: 14, right: 14 },
-    tableWidth: 110,
   });
 
   return ((doc as any).lastAutoTable?.finalY || y + 20) + 6;

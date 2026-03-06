@@ -518,7 +518,7 @@ async function generateIndividualInvoice(
   qrDataUrl: string, moallemName: string | null
 ) {
   const pageWidth = doc.internal.pageSize.getWidth();
-  let y = addHeader(doc, { name: "RAHE KABA", phone: "+880 1601-505050", email: "rahekaba.info@gmail.com", address: "Dailorbagh Palli Bidyut Adjacent, Sonargaon Thana Road, Narayanganj-Dhaka" } as CompanyInfo, logoBase64);
+  let y = addHeader(doc, { name: "RAHE KABA Tours & Travels", phone: "+880 1601-505050", email: "rahekaba.info@gmail.com", address: "Dailorbagh Palli Bidyut Adjacent, Sonargaon Thana Road, Narayanganj-Dhaka" } as CompanyInfo, logoBase64);
 
 
   // QR verification stamp (small, right side)

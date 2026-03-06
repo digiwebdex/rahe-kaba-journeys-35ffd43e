@@ -269,7 +269,7 @@ export async function generateSupplierPdf(data: SupplierPdfData, company: Compan
   doc.setTextColor(255);
   doc.setFontSize(9);
   doc.setFont("helvetica", "bold");
-  doc.text(`Booking Hajji: ${data.summary.totalTravelers} | Contracted Hajji: ${data.summary.contractedHajji} | Paid: ${fmt(data.summary.totalPaid)} | Due: ${fmt(data.summary.totalDue)}`, 18, y + 8);
+  doc.text(`Contracted Hajji: ${data.summary.contractedHajji} | Paid: ${fmt(data.summary.totalPaid)} | Due: ${fmt(data.summary.totalDue)}`, 18, y + 8);
   doc.setTextColor(0);
   y += 18;
 

@@ -62,48 +62,8 @@ export function addQrToDoc(
   }
 
   try {
-    // For left position, show minimal QR code without decorations
-    if (position === "left") {
-      doc.addImage(qrDataUrl, "PNG", x, y, size, size);
-    } else {
-      // Draw stamp border (rounded rect) for other positions
-      const stampPadding = 4;
-      const stampW = size + stampPadding * 2;
-      const stampH = size + 28;
-      const stampX = x - stampPadding;
-      const stampY = y - stampPadding;
-
-      doc.setDrawColor(40, 46, 56);
-      doc.setLineWidth(0.5);
-      doc.roundedRect(stampX, stampY, stampW, stampH, 3, 3, "S");
-
-      // "Verified Booking" header with checkmark
-      doc.setFontSize(7);
-      doc.setFont("helvetica", "bold");
-      doc.setTextColor(34, 120, 60);
-      const headerX = x + size / 2;
-      doc.text("✓ Verified Booking", headerX, y + 1, { align: "center" });
-
-      // QR image
-      doc.addImage(qrDataUrl, "PNG", x, y + 4, size, size);
-
-      // Verification ID
-      if (options?.trackingId) {
-        const verId = generateVerificationId(options.trackingId);
-        doc.setFontSize(6);
-        doc.setFont("helvetica", "bold");
-        doc.setTextColor(40, 46, 56);
-        doc.text(verId, headerX, y + size + 8, { align: "center" });
-      }
-
-      // "Scan to Verify" footer
-      doc.setFontSize(5.5);
-      doc.setFont("helvetica", "normal");
-      doc.setTextColor(100);
-      doc.text("Scan to verify booking authenticity", headerX, y + size + 13, { align: "center" });
-
-      doc.setTextColor(0);
-    }
+    // Plain QR code only, no border or decorations
+    doc.addImage(qrDataUrl, "PNG", x, y, size, size);
   } catch {
     /* QR generation failed silently */
   }

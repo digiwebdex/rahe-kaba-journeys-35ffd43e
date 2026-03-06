@@ -825,7 +825,8 @@ export async function generateCommissionReceipt(
   const pageWidth = doc.internal.pageSize.getWidth();
   let y = addHeader(doc, company, logoBase64);
 
-  addQrToDoc(doc, qrDataUrl, { size: 26, trackingId: data.bookingTrackingId, position: "bottom" });
+
+  addQrToDoc(doc, qrDataUrl, { size: 16, trackingId: data.bookingTrackingId, position: "left" });
   addPaymentWatermark(doc, getWatermarkStatus(data.commissionPaid, data.commissionDue));
 
   doc.setFillColor(DARK.r, DARK.g, DARK.b);

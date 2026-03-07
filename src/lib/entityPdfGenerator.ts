@@ -144,18 +144,13 @@ export interface MoallemPdfData {
 
 export async function generateMoallemPdf(data: MoallemPdfData, company: CompanyInfo) {
   const doc = new jsPDF();
-  // Use first booking tracking_id for QR if available
-  const firstTrackingId = data.bookings[0]?.tracking_id;
-  const [logoBase64, sig, qrDataUrl] = await Promise.all([
+  const [logoBase64, sig, companyQr] = await Promise.all([
     loadLogoBase64(),
     getSignatureData(),
-    firstTrackingId ? generateTrackingQr(firstTrackingId) : Promise.resolve(""),
+    generateCompanyQr(),
   ]);
-  let y = addHeader(doc, company, logoBase64);
+  let y = addHeader(doc, company, logoBase64, companyQr);
   const pw = doc.internal.pageSize.getWidth();
-
-
-  if (qrDataUrl) addQrToDoc(doc, qrDataUrl, { size: 16, trackingId: firstTrackingId, position: "top" });
 
   // Watermark based on moallem summary
   addPaymentWatermark(doc, getWatermarkStatus(data.summary.totalPaid, data.summary.totalDue));

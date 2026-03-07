@@ -1,0 +1,214 @@
+const express = require('express');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const { v4: uuidv4 } = require('uuid');
+const { query } = require('../config/database');
+const { authenticate, requireRole } = require('../middleware/auth');
+
+const router = express.Router();
+
+const generateTokens = (user) => {
+  const accessToken = jwt.sign(
+    { userId: user.id, email: user.email },
+    process.env.JWT_SECRET,
+    { expiresIn: process.env.JWT_EXPIRES_IN || '1h' }
+  );
+  const refreshToken = jwt.sign(
+    { userId: user.id },
+    process.env.JWT_REFRESH_SECRET,
+    { expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d' }
+  );
+  return { accessToken, refreshToken };
+};
+
+// Login
+router.post('/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
+
+    const result = await query('SELECT * FROM users WHERE email = $1', [email.trim().toLowerCase()]);
+    const user = result.rows[0];
+    if (!user) return res.status(401).json({ error: 'Invalid credentials' });
+    if (user.is_banned) return res.status(403).json({ error: 'Account is suspended' });
+
+    const valid = await bcrypt.compare(password, user.password_hash);
+    if (!valid) return res.status(401).json({ error: 'Invalid credentials' });
+
+    const tokens = generateTokens(user);
+
+    // Store refresh token
+    await query(
+      'INSERT INTO sessions (user_id, refresh_token, expires_at) VALUES ($1, $2, now() + interval \'7 days\')',
+      [user.id, tokens.refreshToken]
+    );
+
+    // Get roles
+    const roleResult = await query('SELECT role FROM user_roles WHERE user_id = $1', [user.id]);
+    const roles = roleResult.rows.map(r => r.role);
+
+    res.json({
+      user: { id: user.id, email: user.email, full_name: user.full_name },
+      roles,
+      access_token: tokens.accessToken,
+      refresh_token: tokens.refreshToken,
+    });
+  } catch (err) {
+    console.error('Login error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Register
+router.post('/register', async (req, res) => {
+  try {
+    const { email, password, full_name, phone } = req.body;
+    if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
+    if (password.length < 8) return res.status(400).json({ error: 'Password must be at least 8 characters' });
+
+    const existing = await query('SELECT id FROM users WHERE email = $1', [email.trim().toLowerCase()]);
+    if (existing.rows.length > 0) return res.status(409).json({ error: 'Email already registered' });
+
+    const passwordHash = await bcrypt.hash(password, 10);
+    const userId = uuidv4();
+
+    await query(
+      'INSERT INTO users (id, email, password_hash, full_name, phone) VALUES ($1, $2, $3, $4, $5)',
+      [userId, email.trim().toLowerCase(), passwordHash, full_name || null, phone || null]
+    );
+
+    // Create profile
+    await query(
+      'INSERT INTO profiles (user_id, full_name, email, phone) VALUES ($1, $2, $3, $4)',
+      [userId, full_name || null, email.trim().toLowerCase(), phone || null]
+    );
+
+    // Assign default role
+    await query('INSERT INTO user_roles (user_id, role) VALUES ($1, $2)', [userId, 'user']);
+
+    res.status(201).json({ message: 'Account created successfully' });
+  } catch (err) {
+    console.error('Register error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Refresh token
+router.post('/refresh', async (req, res) => {
+  try {
+    const { refresh_token } = req.body;
+    if (!refresh_token) return res.status(400).json({ error: 'Refresh token required' });
+
+    const decoded = jwt.verify(refresh_token, process.env.JWT_REFRESH_SECRET);
+    
+    const sessionResult = await query(
+      'SELECT * FROM sessions WHERE user_id = $1 AND refresh_token = $2 AND expires_at > now()',
+      [decoded.userId, refresh_token]
+    );
+    if (!sessionResult.rows[0]) return res.status(401).json({ error: 'Invalid session' });
+
+    const userResult = await query('SELECT * FROM users WHERE id = $1', [decoded.userId]);
+    if (!userResult.rows[0]) return res.status(401).json({ error: 'User not found' });
+
+    // Delete old session and create new
+    await query('DELETE FROM sessions WHERE id = $1', [sessionResult.rows[0].id]);
+    const tokens = generateTokens(userResult.rows[0]);
+    await query(
+      'INSERT INTO sessions (user_id, refresh_token, expires_at) VALUES ($1, $2, now() + interval \'7 days\')',
+      [decoded.userId, tokens.refreshToken]
+    );
+
+    res.json({ access_token: tokens.accessToken, refresh_token: tokens.refreshToken });
+  } catch (err) {
+    res.status(401).json({ error: 'Invalid refresh token' });
+  }
+});
+
+// Logout
+router.post('/logout', authenticate, async (req, res) => {
+  await query('DELETE FROM sessions WHERE user_id = $1', [req.user.id]);
+  res.json({ message: 'Logged out' });
+});
+
+// Get current user
+router.get('/me', authenticate, async (req, res) => {
+  const roleResult = await query('SELECT role FROM user_roles WHERE user_id = $1', [req.user.id]);
+  res.json({
+    user: { id: req.user.id, email: req.user.email, full_name: req.user.full_name },
+    roles: roleResult.rows.map(r => r.role),
+  });
+});
+
+// Reset password request (simplified - sends email with token)
+router.post('/forgot-password', async (req, res) => {
+  try {
+    const { email } = req.body;
+    const result = await query('SELECT id FROM users WHERE email = $1', [email.trim().toLowerCase()]);
+    // Always return success to prevent email enumeration
+    if (result.rows[0]) {
+      const resetToken = jwt.sign({ userId: result.rows[0].id, type: 'reset' }, process.env.JWT_SECRET, { expiresIn: '1h' });
+      // TODO: Send email with reset link containing token
+      console.log('Reset token for', email, ':', resetToken);
+    }
+    res.json({ message: 'If the email exists, a reset link has been sent' });
+  } catch (err) {
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Reset password with token
+router.post('/reset-password', async (req, res) => {
+  try {
+    const { token, password } = req.body;
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    if (decoded.type !== 'reset') return res.status(400).json({ error: 'Invalid token' });
+
+    const passwordHash = await bcrypt.hash(password, 10);
+    await query('UPDATE users SET password_hash = $1, updated_at = now() WHERE id = $2', [passwordHash, decoded.userId]);
+    await query('DELETE FROM sessions WHERE user_id = $1', [decoded.userId]);
+
+    res.json({ message: 'Password updated' });
+  } catch (err) {
+    res.status(400).json({ error: 'Invalid or expired token' });
+  }
+});
+
+// Admin: Create user
+router.post('/admin/create-user', authenticate, requireRole('admin'), async (req, res) => {
+  try {
+    const { email, password, full_name, phone, role } = req.body;
+    const passwordHash = await bcrypt.hash(password, 10);
+    const userId = uuidv4();
+
+    await query(
+      'INSERT INTO users (id, email, password_hash, full_name, phone, email_verified) VALUES ($1, $2, $3, $4, $5, true)',
+      [userId, email.trim().toLowerCase(), passwordHash, full_name, phone]
+    );
+    await query('INSERT INTO profiles (user_id, full_name, email, phone) VALUES ($1, $2, $3, $4)',
+      [userId, full_name, email.trim().toLowerCase(), phone]);
+    await query('INSERT INTO user_roles (user_id, role) VALUES ($1, $2)', [userId, role || 'user']);
+
+    res.status(201).json({ id: userId, email, full_name, role: role || 'user' });
+  } catch (err) {
+    if (err.code === '23505') return res.status(409).json({ error: 'Email already exists' });
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Admin: Ban/unban user
+router.post('/admin/manage-user', authenticate, requireRole('admin'), async (req, res) => {
+  try {
+    const { user_id, action } = req.body;
+    if (action === 'ban') {
+      await query('UPDATE users SET is_banned = true WHERE id = $1', [user_id]);
+      await query('DELETE FROM sessions WHERE user_id = $1', [user_id]);
+    } else if (action === 'unban') {
+      await query('UPDATE users SET is_banned = false WHERE id = $1', [user_id]);
+    }
+    res.json({ message: `User ${action}ned successfully` });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+module.exports = router;

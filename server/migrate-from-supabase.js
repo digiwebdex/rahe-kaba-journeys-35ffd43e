@@ -24,7 +24,7 @@ async function migrate() {
       'supplier_agent_payments', 'supplier_contract_payments', 'expenses', 'packages', 'user_roles',
       'accounts', 'profiles', 'moallems', 'supplier_agents', 'hotels'];
     for (const t of triggerTables) {
-      await client.query(`ALTER TABLE ${t} DISABLE TRIGGER ALL`);
+      await client.query(`ALTER TABLE ${t} DISABLE TRIGGER USER`);
     }
     
     // =============================================
@@ -429,7 +429,7 @@ async function migrate() {
       'supplier_agent_payments', 'supplier_contract_payments', 'expenses', 'packages', 'user_roles',
       'accounts', 'profiles', 'moallems', 'supplier_agents', 'hotels'];
     for (const t of triggerTables2) {
-      await client.query(`ALTER TABLE ${t} ENABLE TRIGGER ALL`);
+      await client.query(`ALTER TABLE ${t} ENABLE TRIGGER USER`);
     }
     
     await client.query('COMMIT');

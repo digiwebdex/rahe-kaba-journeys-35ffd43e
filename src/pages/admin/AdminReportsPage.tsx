@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   CalendarIcon, FileDown, FileSpreadsheet, ChevronDown, ChevronUp, Users,
   TrendingUp, TrendingDown, DollarSign, Filter, Search, Package, Building2,
-  BarChart3, Briefcase
+  BarChart3, Briefcase, ClipboardList
 } from "lucide-react";
 import {
   format, parseISO, isSameDay, getYear, getMonth, isWithinInterval,
@@ -360,6 +360,44 @@ export default function AdminReportsPage() {
   }, [supplierContracts, supplierContractPayments, supplierMap, searchQuery]);
 
   // ══════════════════════════════════════════════
+  //  DAILY BOOKING REPORT
+  // ══════════════════════════════════════════════
+  const dailyBookingRows = useMemo(() => {
+    const map: Record<string, any> = {};
+    filteredBookings.forEach(b => {
+      const dateKey = format(parseISO(b.created_at), "yyyy-MM-dd");
+      if (!map[dateKey]) {
+        map[dateKey] = {
+          date: dateKey,
+          dateFormatted: format(parseISO(b.created_at), "dd MMM yyyy"),
+          bookings: [],
+          totalAmount: 0,
+          totalPaid: 0,
+          totalDue: 0,
+          travelers: 0,
+          count: 0,
+        };
+      }
+      map[dateKey].count++;
+      map[dateKey].totalAmount += Number(b.total_amount || 0);
+      map[dateKey].totalPaid += Number(b.paid_amount || 0);
+      map[dateKey].totalDue += Number(b.due_amount || 0);
+      map[dateKey].travelers += Number(b.num_travelers || 0);
+      map[dateKey].bookings.push({
+        trackingId: b.tracking_id,
+        guestName: b.guest_name || profileMap[b.user_id]?.full_name || "-",
+        packageName: b.packages?.name || "-",
+        travelers: b.num_travelers,
+        totalAmount: Number(b.total_amount || 0),
+        paidAmount: Number(b.paid_amount || 0),
+        dueAmount: Number(b.due_amount || 0),
+        status: b.status,
+      });
+    });
+    return Object.values(map).sort((a: any, b: any) => b.date.localeCompare(a.date));
+  }, [filteredBookings, profileMap]);
+
+  // ══════════════════════════════════════════════
   //  EXPORT HANDLERS
   // ══════════════════════════════════════════════
   const handleExport = (type: "pdf" | "excel") => {
@@ -402,6 +440,13 @@ export default function AdminReportsPage() {
         data = { title: "Supplier Contract Report", columns: ["Name", "Phone", "Pilgrim Count", "Contract Amount", "Total Paid", "Total Due"], rows: supplierContractRows.map((r: any) => [r.name, "-", r.pilgrimCount, r.contractAmount, r.totalPaid, r.totalDue]), summary: makeSummary(totalPaid, totalDue) };
         break;
       }
+      case "daily": {
+        const totalPaid = dailyBookingRows.reduce((s: number, r: any) => s + r.totalPaid, 0);
+        const totalDue = dailyBookingRows.reduce((s: number, r: any) => s + r.totalDue, 0);
+        const totalAmount = dailyBookingRows.reduce((s: number, r: any) => s + r.totalAmount, 0);
+        data = { title: "Daily Booking Report", columns: ["Date", "Bookings", "Travelers", "Total Amount", "Total Paid", "Total Due"], rows: dailyBookingRows.map((r: any) => [r.dateFormatted, r.count, r.travelers, r.totalAmount, r.totalPaid, r.totalDue]), summary: [`Total Amount: ৳${totalAmount.toLocaleString()}`, ...makeSummary(totalPaid, totalDue)] };
+        break;
+      }
       default:
         data = { title: "Report", columns: [], rows: [] };
     }
@@ -414,6 +459,7 @@ export default function AdminReportsPage() {
   // ══════════════════════════════════════════════
   const tabItems = [
     { value: "financial", label: "Financial Summary", icon: BarChart3 },
+    { value: "daily", label: "Daily Booking", icon: ClipboardList },
     { value: "customer", label: "Customer Wise", icon: Users },
     { value: "package", label: "Package Wise", icon: Package },
     { value: "moallem", label: "Moallem Wise", icon: Briefcase },
@@ -452,7 +498,7 @@ export default function AdminReportsPage() {
         {/* ── Global Filters ── */}
         <div className="flex items-center gap-2 py-3 flex-wrap">
           <Filter className="h-3.5 w-3.5 text-muted-foreground" />
-          {activeTab !== "financial" && (
+          {activeTab !== "financial" && activeTab !== "daily" && (
             <div className="relative w-[200px]">
               <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
               <Input placeholder="Search..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="pl-8 h-9 text-sm" />
@@ -493,7 +539,7 @@ export default function AdminReportsPage() {
               </div>
             </>
           )}
-          {(activeTab === "customer" || activeTab === "moallem" || activeTab === "supplier") && (
+          {(activeTab === "customer" || activeTab === "moallem" || activeTab === "supplier" || activeTab === "daily") && (
             <>
               <Select value={filterPackage} onValueChange={setFilterPackage}>
                 <SelectTrigger className="w-[150px] h-9 text-xs"><SelectValue placeholder="All Packages" /></SelectTrigger>
@@ -625,6 +671,72 @@ export default function AdminReportsPage() {
         </TabsContent>
 
         {/* ═══════════════════════════════════════
+            DAILY BOOKING TAB
+        ═══════════════════════════════════════ */}
+        <TabsContent value="daily">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
+            <SummaryCard label="Total Days" value={dailyBookingRows.length} icon={CalendarIcon} color="text-foreground" />
+            <SummaryCard label="Total Bookings" value={dailyBookingRows.reduce((s: number, r: any) => s + r.count, 0)} icon={ClipboardList} color="text-foreground" />
+            <SummaryCard label="Total Paid" value={fmt(dailyBookingRows.reduce((s: number, r: any) => s + r.totalPaid, 0))} icon={TrendingUp} color="text-primary" />
+            <SummaryCard label="Total Due" value={fmt(dailyBookingRows.reduce((s: number, r: any) => s + r.totalDue, 0))} icon={TrendingDown} color="text-destructive" />
+          </div>
+          <ExpandableReportTable
+            rows={dailyBookingRows}
+            headers={["", "Date", "Bookings", "Travelers", "Total Amount", "Total Paid", "Total Due"]}
+            renderRow={(r: any) => (
+              <>
+                <TableCell className="font-medium">{r.dateFormatted}</TableCell>
+                <TableCell className="text-right">{r.count}</TableCell>
+                <TableCell className="text-right">{r.travelers}</TableCell>
+                <TableCell className="text-right font-medium">{fmt(r.totalAmount)}</TableCell>
+                <TableCell className="text-right text-primary">{fmt(r.totalPaid)}</TableCell>
+                <TableCell className="text-right text-destructive">{fmt(r.totalDue)}</TableCell>
+              </>
+            )}
+            renderExpanded={(r: any) => (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Tracking ID</TableHead>
+                    <TableHead>Guest</TableHead>
+                    <TableHead>Package</TableHead>
+                    <TableHead className="text-right">Travelers</TableHead>
+                    <TableHead className="text-right">Amount</TableHead>
+                    <TableHead className="text-right">Paid</TableHead>
+                    <TableHead className="text-right">Due</TableHead>
+                    <TableHead>Status</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {r.bookings.map((b: any, i: number) => (
+                    <TableRow key={i}>
+                      <TableCell className="font-mono text-xs">{b.trackingId}</TableCell>
+                      <TableCell>{b.guestName}</TableCell>
+                      <TableCell>{b.packageName}</TableCell>
+                      <TableCell className="text-right">{b.travelers}</TableCell>
+                      <TableCell className="text-right">{fmt(b.totalAmount)}</TableCell>
+                      <TableCell className="text-right text-primary">{fmt(b.paidAmount)}</TableCell>
+                      <TableCell className="text-right text-destructive">{fmt(b.dueAmount)}</TableCell>
+                      <TableCell><StatusBadge status={b.status} /></TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+            totalRow={
+              <>
+                <TableCell className="font-bold">Total</TableCell>
+                <TableCell className="text-right font-bold">{dailyBookingRows.reduce((s: number, r: any) => s + r.count, 0)}</TableCell>
+                <TableCell className="text-right font-bold">{dailyBookingRows.reduce((s: number, r: any) => s + r.travelers, 0)}</TableCell>
+                <TableCell className="text-right font-bold">{fmt(dailyBookingRows.reduce((s: number, r: any) => s + r.totalAmount, 0))}</TableCell>
+                <TableCell className="text-right font-bold text-primary">{fmt(dailyBookingRows.reduce((s: number, r: any) => s + r.totalPaid, 0))}</TableCell>
+                <TableCell className="text-right font-bold text-destructive">{fmt(dailyBookingRows.reduce((s: number, r: any) => s + r.totalDue, 0))}</TableCell>
+              </>
+            }
+          />
+        </TabsContent>
+
+        {/*
             CUSTOMER WISE TAB
         ═══════════════════════════════════════ */}
         <TabsContent value="customer">

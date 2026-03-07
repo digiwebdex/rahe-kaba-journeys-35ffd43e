@@ -2,6 +2,25 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import * as XLSX from "xlsx";
 import logoImg from "@/assets/logo-nobg.png";
+import QRCode from "qrcode";
+
+const COMPANY_URL = "https://rahe-kaba-journeys.lovable.app";
+
+async function generateCompanyQr(): Promise<string> {
+  try {
+    return await QRCode.toDataURL(COMPANY_URL, {
+      width: 200, margin: 1,
+      color: { dark: "#282E38", light: "#FFFFFF" },
+      errorCorrectionLevel: "M",
+    });
+  } catch { return ""; }
+}
+
+function addQrToReport(doc: jsPDF, qrDataUrl: string) {
+  if (!qrDataUrl) return;
+  const pw = doc.internal.pageSize.getWidth();
+  try { doc.addImage(qrDataUrl, "PNG", pw - 30, 6, 16, 16); } catch { /* skip */ }
+}
 
 interface ReportData {
   title: string;

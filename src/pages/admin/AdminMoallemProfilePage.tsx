@@ -239,7 +239,16 @@ export default function AdminMoallemProfilePage() {
           <p className="text-sm text-muted-foreground">মোয়াল্লেম প্রোফাইল</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          <Button variant="outline" size="sm" onClick={handleDownloadStatement}><Download className="h-4 w-4 mr-1" /> স্টেটমেন্ট PDF</Button>
+          <div className="flex items-center gap-1">
+            <Select value={pdfBookingFilter} onValueChange={(v: "due" | "all") => setPdfBookingFilter(v)}>
+              <SelectTrigger className="h-8 w-[120px] text-xs"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="due">শুধু বকেয়া</SelectItem>
+                <SelectItem value="all">সব বুকিং</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button variant="outline" size="sm" onClick={handleDownloadStatement}><Download className="h-4 w-4 mr-1" /> PDF</Button>
+          </div>
           {!isViewer && (
             <>
               <Button variant="outline" size="sm" onClick={() => setShowCommissionForm(true)}><Plus className="h-4 w-4 mr-1" /> কমিশন</Button>

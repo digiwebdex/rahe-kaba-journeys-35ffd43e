@@ -93,7 +93,7 @@ export interface HajjiReportData {
 }
 
 export async function exportPDF({ title, columns, rows, summary }: ReportData) {
-  const logoBase64 = await loadLogoBase64();
+  const [logoBase64, qrDataUrl] = await Promise.all([loadLogoBase64(), generateCompanyQr()]);
   const doc = new jsPDF();
   doc.setFontSize(16);
   doc.setFont("helvetica", "bold");
@@ -101,6 +101,8 @@ export async function exportPDF({ title, columns, rows, summary }: ReportData) {
   doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
   doc.text(`Generated: ${new Date().toLocaleDateString()}`, 14, 25);
+
+  addQrToReport(doc, qrDataUrl);
 
   const fmtCell = (val: string | number) =>
     typeof val === "number" ? `BDT ${val.toLocaleString("en-IN")}` : val;

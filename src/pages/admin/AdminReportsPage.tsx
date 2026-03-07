@@ -440,6 +440,13 @@ export default function AdminReportsPage() {
         data = { title: "Supplier Contract Report", columns: ["Name", "Phone", "Pilgrim Count", "Contract Amount", "Total Paid", "Total Due"], rows: supplierContractRows.map((r: any) => [r.name, "-", r.pilgrimCount, r.contractAmount, r.totalPaid, r.totalDue]), summary: makeSummary(totalPaid, totalDue) };
         break;
       }
+      case "daily": {
+        const totalPaid = dailyBookingRows.reduce((s: number, r: any) => s + r.totalPaid, 0);
+        const totalDue = dailyBookingRows.reduce((s: number, r: any) => s + r.totalDue, 0);
+        const totalAmount = dailyBookingRows.reduce((s: number, r: any) => s + r.totalAmount, 0);
+        data = { title: "Daily Booking Report", columns: ["Date", "Bookings", "Travelers", "Total Amount", "Total Paid", "Total Due"], rows: dailyBookingRows.map((r: any) => [r.dateFormatted, r.count, r.travelers, r.totalAmount, r.totalPaid, r.totalDue]), summary: [`Total Amount: ৳${totalAmount.toLocaleString()}`, ...makeSummary(totalPaid, totalDue)] };
+        break;
+      }
       default:
         data = { title: "Report", columns: [], rows: [] };
     }

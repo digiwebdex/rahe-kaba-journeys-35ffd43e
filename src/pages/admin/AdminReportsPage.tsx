@@ -539,7 +539,7 @@ export default function AdminReportsPage() {
               </div>
             </>
           )}
-          {(activeTab === "customer" || activeTab === "moallem" || activeTab === "supplier") && (
+          {(activeTab === "customer" || activeTab === "moallem" || activeTab === "supplier" || activeTab === "daily") && (
             <>
               <Select value={filterPackage} onValueChange={setFilterPackage}>
                 <SelectTrigger className="w-[150px] h-9 text-xs"><SelectValue placeholder="All Packages" /></SelectTrigger>

@@ -379,7 +379,7 @@ export default function AdminAccountingPage() {
       </div>
 
       {/* ============ DAILY CASHBOOK TAB ============ */}
-      {tab === "cashbook" && <DailyCashbook />}
+      {tab === "cashbook" && <DailyCashbook onEntriesChanged={fetchData} />}
 
       {/* ============ EXPENSES TAB ============ */}
       {tab === "expenses" && (

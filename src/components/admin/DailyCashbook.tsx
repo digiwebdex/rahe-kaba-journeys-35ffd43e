@@ -51,7 +51,11 @@ const EMPTY_FORM = {
   date: new Date().toISOString().split("T")[0],
 };
 
-export default function DailyCashbook() {
+interface DailyCashbookProps {
+  onEntriesChanged?: () => void | Promise<void>;
+}
+
+export default function DailyCashbook({ onEntriesChanged }: DailyCashbookProps = {}) {
   const canModify = useCanModifyFinancials();
   const [entries, setEntries] = useState<any[]>([]);
   const [walletAccounts, setWalletAccounts] = useState<any[]>([]);

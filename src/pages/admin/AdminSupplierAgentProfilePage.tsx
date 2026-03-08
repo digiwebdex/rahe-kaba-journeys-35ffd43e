@@ -228,17 +228,23 @@ export default function AdminSupplierAgentProfilePage() {
         onRefresh={loadData}
       />
 
-      {/* Date Filter */}
-      <div className="flex items-center gap-3 flex-wrap">
-        <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="w-40" />
-        <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="w-40" />
-        {(dateFrom || dateTo) && <Button variant="outline" size="sm" onClick={() => { setDateFrom(""); setDateTo(""); }}>রিসেট</Button>}
-      </div>
-
       {/* Payment History */}
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2"><Wallet className="h-4 w-4 text-primary" /> পেমেন্ট হিস্ট্রি ({filteredPayments.length})</CardTitle>
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <CardTitle className="text-base flex items-center gap-2"><Wallet className="h-4 w-4 text-primary" /> পেমেন্ট হিস্ট্রি ({filteredPayments.length})</CardTitle>
+            <div className="flex items-center gap-2 flex-wrap">
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs text-muted-foreground">থেকে:</span>
+                <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="w-36 h-8 text-xs" />
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs text-muted-foreground">পর্যন্ত:</span>
+                <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="w-36 h-8 text-xs" />
+              </div>
+              {(dateFrom || dateTo) && <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => { setDateFrom(""); setDateTo(""); }}>রিসেট</Button>}
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           {filteredPayments.length === 0 ? (

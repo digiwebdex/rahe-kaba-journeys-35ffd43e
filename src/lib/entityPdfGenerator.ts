@@ -483,7 +483,7 @@ export async function generateCustomerPdf(data: CustomerPdfData, company: Compan
       startY: y,
       head: [["#", "Booking", "Amount", "Date", "Method", "Status"]],
       body: data.payments.map(p => [p.installment || "—", p.tracking_id, fmt(p.amount), fmtDate(p.date), p.method || "—", p.status]),
-      styles: { fontSize: 7 },
+      styles: { fontSize: 7, font: "NotoSansBengali" },
       headStyles: { fillColor: [60, 70, 85] },
       margin: { left: 14, right: 14 },
     });

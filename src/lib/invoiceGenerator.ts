@@ -634,7 +634,7 @@ async function generateFamilyInvoice(
       totalDiscount.toLocaleString(),
       totalFinal.toLocaleString(),
     ]],
-    styles: { fontSize: 7.5, cellPadding: 2.5 },
+    styles: { fontSize: 7.5, cellPadding: 2.5, font: "NotoSansBengali" },
     headStyles: {
       fillColor: [DARK.r, DARK.g, DARK.b],
       textColor: [255, 255, 255],

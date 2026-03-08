@@ -146,6 +146,17 @@ export default function AdminSupplierAgentProfilePage() {
         supplier_due: Number(b.supplier_due || 0), status: b.status,
       })),
       agentPayments: filteredPayments.map(p => ({ amount: Number(p.amount), date: p.date, method: p.payment_method || "cash", notes: p.notes })),
+      contracts: contracts.map((c: any) => ({
+        contract_amount: Number(c.contract_amount || 0),
+        pilgrim_count: Number(c.pilgrim_count || 0),
+        total_paid: Number(c.total_paid || 0),
+        total_due: Number(c.total_due || 0),
+        created_at: c.created_at,
+      })),
+      contractPayments: contractPayments.map((p: any) => ({
+        amount: Number(p.amount), payment_date: p.payment_date,
+        payment_method: p.payment_method || "cash", note: p.note,
+      })),
       summary: {
         totalBookings: bookings.length,
         totalTravelers: bookings.reduce((s, b) => s + Number(b.num_travelers || 0), 0),
@@ -169,7 +180,7 @@ export default function AdminSupplierAgentProfilePage() {
           <p className="text-sm text-muted-foreground">সাপ্লায়ার এজেন্ট প্রোফাইল</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          <Button variant="outline" size="sm" onClick={handleDownloadStatement}><Download className="h-4 w-4 mr-1" /> স্টেটমেন্ট PDF</Button>
+          <Button variant="outline" size="sm" onClick={handleDownloadStatement}><Download className="h-4 w-4 mr-1" /> সম্পূর্ণ সারসংক্ষেপ PDF</Button>
           {!isViewer && <Button size="sm" onClick={() => setShowPaymentForm(true)}><Plus className="h-4 w-4 mr-1" /> পেমেন্ট</Button>}
           <Badge variant={agent.status === "active" ? "default" : "secondary"}>{agent.status === "active" ? "সক্রিয়" : "নিষ্ক্রিয়"}</Badge>
         </div>

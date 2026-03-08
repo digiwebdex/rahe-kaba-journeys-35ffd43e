@@ -53,6 +53,7 @@ const TABS = [
 ];
 
 const fmt = (n: number) => `৳${Number(n || 0).toLocaleString()}`;
+const normalizeDate = (d: string) => (d ? d.substring(0, 10) : "");
 
 export default function AdminAccountingPage() {
   const isViewer = useIsViewer();

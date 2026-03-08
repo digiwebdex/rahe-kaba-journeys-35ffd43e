@@ -400,6 +400,56 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_cashbook: {
+        Row: {
+          amount: number
+          category: string
+          created_at: string
+          created_by: string | null
+          date: string
+          description: string
+          id: string
+          notes: string | null
+          payment_method: string | null
+          type: string
+          wallet_account_id: string | null
+        }
+        Insert: {
+          amount: number
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          date?: string
+          description: string
+          id?: string
+          notes?: string | null
+          payment_method?: string | null
+          type: string
+          wallet_account_id?: string | null
+        }
+        Update: {
+          amount?: number
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          date?: string
+          description?: string
+          id?: string
+          notes?: string | null
+          payment_method?: string | null
+          type?: string
+          wallet_account_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_cashbook_wallet_account_id_fkey"
+            columns: ["wallet_account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       expenses: {
         Row: {
           amount: number

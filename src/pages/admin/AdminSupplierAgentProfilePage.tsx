@@ -146,6 +146,17 @@ export default function AdminSupplierAgentProfilePage() {
         supplier_due: Number(b.supplier_due || 0), status: b.status,
       })),
       agentPayments: filteredPayments.map(p => ({ amount: Number(p.amount), date: p.date, method: p.payment_method || "cash", notes: p.notes })),
+      contracts: contracts.map((c: any) => ({
+        contract_amount: Number(c.contract_amount || 0),
+        pilgrim_count: Number(c.pilgrim_count || 0),
+        total_paid: Number(c.total_paid || 0),
+        total_due: Number(c.total_due || 0),
+        created_at: c.created_at,
+      })),
+      contractPayments: contractPayments.map((p: any) => ({
+        amount: Number(p.amount), payment_date: p.payment_date,
+        payment_method: p.payment_method || "cash", note: p.note,
+      })),
       summary: {
         totalBookings: bookings.length,
         totalTravelers: bookings.reduce((s, b) => s + Number(b.num_travelers || 0), 0),

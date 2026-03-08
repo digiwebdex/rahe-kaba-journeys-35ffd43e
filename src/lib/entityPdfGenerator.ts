@@ -355,6 +355,42 @@ export async function generateSupplierPdf(data: SupplierPdfData, company: Compan
       headStyles: { fillColor: [60, 70, 85] },
       margin: { left: 14, right: 14 },
     });
+    y = (doc as any).lastAutoTable?.finalY + 8 || y + 20;
+  }
+
+  // Contracts
+  if (data.contracts && data.contracts.length > 0) {
+    if (y > 240) { doc.addPage(); y = 20; }
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "bold");
+    doc.text("CONTRACTS", 14, y);
+    y += 4;
+    autoTable(doc, {
+      startY: y,
+      head: [["Date", "Pilgrim Count", "Contract Amount", "Paid", "Due"]],
+      body: data.contracts.map(c => [fmtDate(c.created_at), String(c.pilgrim_count), fmt(c.contract_amount), fmt(c.total_paid), fmt(c.total_due)]),
+      styles: { fontSize: 7 },
+      headStyles: { fillColor: [40, 46, 56] },
+      margin: { left: 14, right: 14 },
+    });
+    y = (doc as any).lastAutoTable?.finalY + 8 || y + 20;
+  }
+
+  // Contract Payments
+  if (data.contractPayments && data.contractPayments.length > 0) {
+    if (y > 240) { doc.addPage(); y = 20; }
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "bold");
+    doc.text("CONTRACT PAYMENTS", 14, y);
+    y += 4;
+    autoTable(doc, {
+      startY: y,
+      head: [["Amount", "Date", "Method", "Note"]],
+      body: data.contractPayments.map(p => [fmt(p.amount), fmtDate(p.payment_date), p.payment_method || "cash", p.note || "—"]),
+      styles: { fontSize: 7 },
+      headStyles: { fillColor: [60, 70, 85] },
+      margin: { left: 14, right: 14 },
+    });
   }
 
   addSignatureAndFooter(doc, sig);

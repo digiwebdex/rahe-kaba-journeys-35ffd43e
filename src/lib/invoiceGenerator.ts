@@ -4,7 +4,7 @@ import logoImg from "@/assets/logo-nobg.png";
 import { getSignatureData, SignatureData } from "./pdfSignature";
 import { generateTrackingQr, addQrToDoc, addPaymentWatermark, getWatermarkStatus } from "./pdfQrCode";
 import { supabase } from "@/integrations/supabase/client";
-import { registerBengaliFont } from "./pdfFontLoader";
+import { registerBengaliFont, addBengaliText, hasBengali } from "./pdfFontLoader";
 
 export interface CompanyInfo {
   name?: string;

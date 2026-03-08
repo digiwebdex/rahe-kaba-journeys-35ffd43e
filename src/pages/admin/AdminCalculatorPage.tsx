@@ -191,9 +191,9 @@ export default function AdminCalculatorPage() {
         </div>
 
         {totalProfit > 0 && (
-          <div className="mt-4 bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-3 text-center">
-            <p className="text-xs text-emerald-600">আলহামদুলিল্লাহ — মোট মুনাফা</p>
-            <p className="text-2xl font-bold text-emerald-500">{fmt(totalProfit)}</p>
+          <div className="mt-4 bg-green-500/10 border border-green-500/20 rounded-lg p-3 text-center">
+            <p className="text-xs text-green-600">আলহামদুলিল্লাহ — মোট মুনাফা</p>
+            <p className="text-2xl font-bold text-green-500">{fmt(totalProfit)}</p>
           </div>
         )}
 

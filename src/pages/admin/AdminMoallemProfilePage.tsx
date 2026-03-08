@@ -306,13 +306,20 @@ export default function AdminMoallemProfilePage() {
         </div>
       </CardContent></Card>
 
-      {/* KPIs - Clean 3 cards */}
-      <div className="grid grid-cols-3 gap-3">
+      {/* KPIs - 4 cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <Card><CardContent className="pt-4 pb-4 text-center">
           <CreditCard className="h-5 w-5 text-primary mx-auto mb-1" />
           <p className="text-lg font-bold">{fmt(totalSelling)}</p>
           <p className="text-[10px] text-muted-foreground uppercase">চুক্তিকৃত টাকা</p>
         </CardContent></Card>
+        {totalItemsBilled > 0 && (
+          <Card><CardContent className="pt-4 pb-4 text-center">
+            <Package className="h-5 w-5 text-primary mx-auto mb-1" />
+            <p className="text-lg font-bold">{fmt(totalItemsBilled)}</p>
+            <p className="text-[10px] text-muted-foreground uppercase">সার্ভিস আইটেম মোট</p>
+          </CardContent></Card>
+        )}
         <Card><CardContent className="pt-4 pb-4 text-center">
           <Wallet className="h-5 w-5 text-emerald-500 mx-auto mb-1" />
           <p className="text-lg font-bold text-emerald-500">{fmt(totalPaid)}</p>
@@ -324,6 +331,56 @@ export default function AdminMoallemProfilePage() {
           <p className="text-[10px] text-muted-foreground uppercase">মোট বকেয়া</p>
         </CardContent></Card>
       </div>
+
+      {/* Service Items */}
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-base flex items-center gap-2"><Package className="h-4 w-4 text-primary" /> সার্ভিস আইটেম ({moallemItems.length})</CardTitle>
+            {!isViewer && (
+              <Button size="sm" variant="outline" onClick={() => setShowItemForm(true)}><Plus className="h-4 w-4 mr-1" /> আইটেম যোগ</Button>
+            )}
+          </div>
+        </CardHeader>
+        <CardContent>
+          {moallemItems.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-6">কোনো সার্ভিস আইটেম নেই</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead><tr className="border-b border-border text-left text-muted-foreground text-xs">
+                  <th className="pb-2 pr-3">বিবরণ</th><th className="pb-2 pr-3 text-right">পরিমাণ</th><th className="pb-2 pr-3 text-right">একক মূল্য</th><th className="pb-2 pr-3 text-right">মোট</th>
+                  {!isViewer && <th className="pb-2 w-10"></th>}
+                </tr></thead>
+                <tbody>
+                  {moallemItems.map((item: any) => (
+                    <tr key={item.id} className="border-b border-border/30">
+                      <td className="py-2 pr-3">{item.description}</td>
+                      <td className="py-2 pr-3 text-right">{Number(item.quantity)}</td>
+                      <td className="py-2 pr-3 text-right">{fmt(Number(item.unit_price))}</td>
+                      <td className="py-2 pr-3 text-right font-bold">{fmt(Number(item.total_amount))}</td>
+                      {!isViewer && (
+                        <td className="py-2">
+                          <button onClick={() => handleDeleteItem(item.id)} className="text-destructive hover:text-destructive/80 p-1">
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </td>
+                      )}
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot>
+                  <tr className="border-t border-border">
+                    <td colSpan={3} className="py-2 pr-3 text-right font-semibold text-xs text-muted-foreground uppercase">মোট</td>
+                    <td className="py-2 pr-3 text-right font-bold text-foreground">{fmt(totalItemsBilled)}</td>
+                    {!isViewer && <td></td>}
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Date Filter */}
       <div className="flex items-center gap-3 flex-wrap">

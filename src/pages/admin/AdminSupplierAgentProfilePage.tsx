@@ -24,6 +24,22 @@ import SupplierItemsManager from "@/components/admin/SupplierItemsManager";
 
 const fmt = (n: number) => `৳${Number(n || 0).toLocaleString()}`;
 const PAYMENT_METHODS = ["cash", "bkash", "nagad", "bank", "other"];
+const SERVICE_TYPES = [
+  { value: "", label: "-- সার্ভিস নির্বাচন করুন --" },
+  { value: "visa", label: "ভিসা" },
+  { value: "ticket", label: "টিকেট" },
+  { value: "hajj", label: "হজ্জ" },
+  { value: "umrah", label: "উমরাহ" },
+  { value: "hotel", label: "হোটেল" },
+  { value: "transport", label: "পরিবহন" },
+  { value: "food", label: "খাবার" },
+  { value: "guide", label: "গাইড" },
+  { value: "ziyarah", label: "জিয়ারত" },
+  { value: "insurance", label: "বীমা" },
+  { value: "advance", label: "অগ্রিম" },
+  { value: "refund", label: "ফেরত" },
+  { value: "other", label: "অন্যান্য" },
+];
 
 export default function AdminSupplierAgentProfilePage() {
   const { id } = useParams<{ id: string }>();
@@ -49,6 +65,7 @@ export default function AdminSupplierAgentProfilePage() {
     amount: "", payment_method: "cash",
     date: new Date().toISOString().split("T")[0],
     notes: "", wallet_account_id: "", booking_id: "",
+    service_type: "",
   };
   const [paymentForm, setPaymentForm] = useState(emptyForm);
 
@@ -83,11 +100,13 @@ export default function AdminSupplierAgentProfilePage() {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
+      const serviceLabel = SERVICE_TYPES.find(s => s.value === paymentForm.service_type)?.label || "";
+      const combinedNotes = [serviceLabel, paymentForm.notes.trim()].filter(Boolean).join(" — ");
       const { error: apErr } = await supabase.from("supplier_agent_payments").insert({
         supplier_agent_id: id, amount,
         payment_method: paymentForm.payment_method,
         date: paymentForm.date,
-        notes: paymentForm.notes.trim() || null,
+        notes: combinedNotes || null,
         wallet_account_id: paymentForm.wallet_account_id || null,
         booking_id: paymentForm.booking_id || null,
         recorded_by: session.user.id,
@@ -322,6 +341,11 @@ export default function AdminSupplierAgentProfilePage() {
         <DialogContent>
           <DialogHeader><DialogTitle>সাপ্লায়ার পেমেন্ট রেকর্ড</DialogTitle><DialogDescription>পেমেন্ট তথ্য দিন</DialogDescription></DialogHeader>
           <div className="space-y-3">
+            <div><label className="text-xs text-muted-foreground block mb-1">সার্ভিস ধরন</label>
+              <Select value={paymentForm.service_type || ""} onValueChange={(v) => setPaymentForm({ ...paymentForm, service_type: v })}>
+                <SelectTrigger><SelectValue placeholder="-- সার্ভিস নির্বাচন করুন --" /></SelectTrigger>
+                <SelectContent>{SERVICE_TYPES.filter(s => s.value).map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}</SelectContent>
+              </Select></div>
             <div><label className="text-xs text-muted-foreground block mb-1">পরিমাণ (৳) *</label>
               <Input type="number" min={0} value={paymentForm.amount} onChange={(e) => setPaymentForm({ ...paymentForm, amount: e.target.value })} /></div>
             <div><label className="text-xs text-muted-foreground block mb-1">পদ্ধতি</label>

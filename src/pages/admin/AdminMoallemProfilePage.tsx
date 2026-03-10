@@ -58,6 +58,15 @@ export default function AdminMoallemProfilePage() {
   const [showItemForm, setShowItemForm] = useState(false);
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [itemForm, setItemForm] = useState({ description: "", quantity: "1", unit_price: "0" });
+  const [editItemId, setEditItemId] = useState<string | null>(null);
+
+  // Edit/Delete payment state
+  const [editPaymentId, setEditPaymentId] = useState<string | null>(null);
+  const [editPaymentType, setEditPaymentType] = useState<"payment" | "commission">("payment");
+  const [editPaymentForm, setEditPaymentForm] = useState({ amount: "", payment_method: "cash", date: "", notes: "" });
+  const [showEditPaymentModal, setShowEditPaymentModal] = useState(false);
+  const [deletePaymentId, setDeletePaymentId] = useState<string | null>(null);
+  const [deletePaymentType, setDeletePaymentType] = useState<"payment" | "commission">("payment");
 
   // Date filter
   const [dateFrom, setDateFrom] = useState("");

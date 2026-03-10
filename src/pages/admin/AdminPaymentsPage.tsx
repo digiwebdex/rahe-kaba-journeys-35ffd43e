@@ -280,19 +280,39 @@ export default function AdminPaymentsPage() {
 
   const startEdit = (p: any) => {
     setEditingId(p.id);
-    setEditForm({ amount: p.amount, due_date: p.due_date || "", status: p.status, payment_method: p.payment_method || "manual", notes: p.notes || "", transaction_id: p.transaction_id || "" });
+    setEditType(p._type || "customer");
+    setEditForm({ amount: p.amount, due_date: p.due_date || "", status: p.status || "completed", payment_method: p.payment_method || "manual", notes: p.notes || "", transaction_id: p.transaction_id || "", date: p.date || "" });
+    if (p._type === "moallem" || p._type === "supplier") {
+      setShowEditModal(true);
+    }
   };
 
   const saveEdit = async () => {
     if (!editingId) return;
-    const { error } = await supabase.from("payments").update({
-      amount: parseFloat(editForm.amount), due_date: editForm.due_date || null,
-      status: editForm.status, payment_method: editForm.payment_method,
-      notes: editForm.notes || null, transaction_id: editForm.transaction_id || null,
-      ...(editForm.status === "completed" && !payments.find(p => p.id === editingId)?.paid_at ? { paid_at: new Date().toISOString() } : {}),
-    }).eq("id", editingId);
-    if (error) { toast.error(error.message); return; }
-    toast.success("Payment updated"); setEditingId(null); fetchPayments();
+    if (editType === "moallem") {
+      const { error } = await supabase.from("moallem_payments").update({
+        amount: parseFloat(editForm.amount), payment_method: editForm.payment_method,
+        notes: editForm.notes || null, date: editForm.date || undefined,
+      }).eq("id", editingId);
+      if (error) { toast.error(error.message); return; }
+      toast.success("Moallem payment updated"); setEditingId(null); setShowEditModal(false); fetchPayments();
+    } else if (editType === "supplier") {
+      const { error } = await supabase.from("supplier_agent_payments").update({
+        amount: parseFloat(editForm.amount), payment_method: editForm.payment_method,
+        notes: editForm.notes || null, date: editForm.date || undefined,
+      }).eq("id", editingId);
+      if (error) { toast.error(error.message); return; }
+      toast.success("Supplier payment updated"); setEditingId(null); setShowEditModal(false); fetchPayments();
+    } else {
+      const { error } = await supabase.from("payments").update({
+        amount: parseFloat(editForm.amount), due_date: editForm.due_date || null,
+        status: editForm.status, payment_method: editForm.payment_method,
+        notes: editForm.notes || null, transaction_id: editForm.transaction_id || null,
+        ...(editForm.status === "completed" && !payments.find(p => p.id === editingId)?.paid_at ? { paid_at: new Date().toISOString() } : {}),
+      }).eq("id", editingId);
+      if (error) { toast.error(error.message); return; }
+      toast.success("Payment updated"); setEditingId(null); fetchPayments();
+    }
   };
 
   const confirmDelete = async () => {

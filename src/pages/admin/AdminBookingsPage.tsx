@@ -401,11 +401,14 @@ export default function AdminBookingsPage() {
               <Calendar mode="single" selected={dateTo} onSelect={setDateTo} initialFocus className={cn("p-3 pointer-events-auto")} />
             </PopoverContent>
           </Popover>
-          {(dateFrom || dateTo) && (
-            <Button variant="ghost" size="sm" onClick={() => { setDateFrom(undefined); setDateTo(undefined); }}>
+          {(dateFrom || dateTo || search) && (
+            <Button variant="ghost" size="sm" onClick={() => { setDateFrom(undefined); setDateTo(undefined); setSearch(""); }}>
               <X className="h-3.5 w-3.5 mr-1" /> Clear
             </Button>
           )}
+          <Button variant="outline" size="sm" onClick={() => { setDateFrom(undefined); setDateTo(undefined); setSearch(""); window.scrollTo({ top: 0, behavior: "smooth" }); }}>
+            <ChevronUp className="h-3.5 w-3.5 mr-1" /> Latest Booking
+          </Button>
           <span className="text-xs text-muted-foreground ml-auto">{filtered.length} bookings</span>
         </div>
       </div>

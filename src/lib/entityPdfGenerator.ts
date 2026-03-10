@@ -253,7 +253,7 @@ export interface SupplierPdfData {
   notes?: string | null;
   items?: { description: string; quantity: number; unit_price: number; total_amount: number }[];
   bookings: { tracking_id: string; guest_name: string; package_name: string; total: number; cost: number; paid_to_supplier: number; supplier_due: number; status: string }[];
-  agentPayments: { amount: number; date: string; method: string; notes?: string | null }[];
+  agentPayments: { amount: number; date: string; method: string; notes?: string | null; category?: string }[];
   contracts?: { contract_amount: number; pilgrim_count: number; total_paid: number; total_due: number; created_at: string }[];
   contractPayments?: { amount: number; payment_date: string; payment_method: string; note?: string | null }[];
   summary: { totalBookings: number; totalTravelers: number; contractedHajji: number; totalPaid: number; totalDue: number; totalBilled: number };

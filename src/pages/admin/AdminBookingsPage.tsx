@@ -331,8 +331,18 @@ export default function AdminBookingsPage() {
     const q = search.toLowerCase();
     const matchesSearch = !search || (b.tracking_id?.toLowerCase().includes(q) || b.guest_name?.toLowerCase()?.includes(q) || b.guest_passport?.toLowerCase()?.includes(q) || b.packages?.name?.toLowerCase().includes(q) || b.status?.toLowerCase().includes(q));
     const bookingDate = new Date(b.created_at);
-    const matchesFrom = !dateFrom || bookingDate >= new Date(dateFrom.setHours(0, 0, 0, 0));
-    const matchesTo = !dateTo || bookingDate <= new Date(new Date(dateTo).setHours(23, 59, 59, 999));
+    let matchesFrom = true;
+    if (dateFrom) {
+      const from = new Date(dateFrom);
+      from.setHours(0, 0, 0, 0);
+      matchesFrom = bookingDate >= from;
+    }
+    let matchesTo = true;
+    if (dateTo) {
+      const to = new Date(dateTo);
+      to.setHours(23, 59, 59, 999);
+      matchesTo = bookingDate <= to;
+    }
     return matchesSearch && matchesFrom && matchesTo;
   }), [bookings, search, dateFrom, dateTo]);
 

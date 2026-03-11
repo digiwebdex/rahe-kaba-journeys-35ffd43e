@@ -112,7 +112,7 @@ export default function CustomerSearchSelect({ onSelect, selectedId }: Props) {
           value={query}
           onChange={(e) => handleInputChange(e.target.value)}
           onFocus={() => { if (query.trim()) setOpen(true); }}
-          placeholder="নাম, ফোন, ইমেইল বা পাসপোর্ট দিয়ে সার্চ করুন..."
+          placeholder="Search by name, phone, email or passport..."
         />
       </div>
 

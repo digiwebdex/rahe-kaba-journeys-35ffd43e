@@ -440,10 +440,10 @@ export default function AdminPaymentsPage() {
     <div>
       {/* Export Buttons */}
       <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-        <h2 className="font-heading text-xl font-bold">পেমেন্ট ম্যানেজমেন্ট</h2>
+        <h2 className="font-heading text-xl font-bold">Payment Management</h2>
         <div className="flex items-center gap-2">
-          <button onClick={() => { const totalAmt = allCombined.reduce((s, p) => s + p._amount, 0); exportPDF({ title: "Payments Report", columns: ["Type", "Name", "Tracking ID", "Amount", "Method", "Date"], rows: allCombined.map(p => [p._type, p._displayName, p._trackingId, p._amount, p.payment_method || "—", p._sortDate ? new Date(p._sortDate).toLocaleDateString() : "—"]), summary: [`Total Paid: ৳${totalAmt.toLocaleString()}`] }); }} className="inline-flex items-center gap-1 text-xs bg-secondary px-3 py-1.5 rounded-md hover:bg-muted transition-colors"><FileDown className="h-3.5 w-3.5" />PDF</button>
-          <button onClick={() => { const totalAmt = allCombined.reduce((s, p) => s + p._amount, 0); exportExcel({ title: "Payments Report", columns: ["Type", "Name", "Tracking ID", "Amount", "Method", "Date"], rows: allCombined.map(p => [p._type, p._displayName, p._trackingId, p._amount, p.payment_method || "—", p._sortDate ? new Date(p._sortDate).toLocaleDateString() : "—"]), summary: [`Total Paid: ৳${totalAmt.toLocaleString()}`] }); }} className="inline-flex items-center gap-1 text-xs bg-secondary px-3 py-1.5 rounded-md hover:bg-muted transition-colors"><FileSpreadsheet className="h-3.5 w-3.5" />Excel</button>
+          <button onClick={() => { const totalAmt = allCombined.reduce((s, p) => s + p._amount, 0); exportPDF({ title: "Payments Report", columns: ["Type", "Name", "Tracking ID", "Amount", "Method", "Date"], rows: allCombined.map(p => [p._type, p._displayName, p._trackingId, p._amount, p.payment_method || "—", p._sortDate ? new Date(p._sortDate).toLocaleDateString() : "—"]), summary: [`Total Paid: BDT ${totalAmt.toLocaleString()}`] }); }} className="inline-flex items-center gap-1 text-xs bg-secondary px-3 py-1.5 rounded-md hover:bg-muted transition-colors"><FileDown className="h-3.5 w-3.5" />PDF</button>
+          <button onClick={() => { const totalAmt = allCombined.reduce((s, p) => s + p._amount, 0); exportExcel({ title: "Payments Report", columns: ["Type", "Name", "Tracking ID", "Amount", "Method", "Date"], rows: allCombined.map(p => [p._type, p._displayName, p._trackingId, p._amount, p.payment_method || "—", p._sortDate ? new Date(p._sortDate).toLocaleDateString() : "—"]), summary: [`Total Paid: BDT ${totalAmt.toLocaleString()}`] }); }} className="inline-flex items-center gap-1 text-xs bg-secondary px-3 py-1.5 rounded-md hover:bg-muted transition-colors"><FileSpreadsheet className="h-3.5 w-3.5" />Excel</button>
         </div>
       </div>
 
@@ -726,7 +726,7 @@ export default function AdminPaymentsPage() {
                     <td className="py-3" onClick={(e) => e.stopPropagation()}>
                       {(p._type === "moallem" || p._type === "supplier") ? (
                         <AdminActionMenu inlineCount={1} actions={[
-                          { label: "PDF", icon: <FileDown className="h-3.5 w-3.5" />, onClick: () => exportPDF({ title: `Payment - ${p._displayName}`, columns: ["Type", "Tracking ID", "Name", "Amount", "Method", "Date"], rows: [[badge.label, p._trackingId, p._displayName, p._amount, p.payment_method || "—", p.date ? new Date(p.date).toLocaleDateString() : "—"]], summary: [`Total Amount: ৳${p._amount.toLocaleString()}`] }) },
+                          { label: "PDF", icon: <FileDown className="h-3.5 w-3.5" />, onClick: () => exportPDF({ title: `Payment - ${p._displayName}`, columns: ["Type", "Tracking ID", "Name", "Amount", "Method", "Date"], rows: [[badge.label, p._trackingId, p._displayName, p._amount, p.payment_method || "—", p.date ? new Date(p.date).toLocaleDateString() : "—"]], summary: [`Total Amount: BDT ${p._amount.toLocaleString()}`] }) },
                           { label: "Edit", icon: <Edit2 className="h-3.5 w-3.5" />, onClick: () => startEdit(p), variant: "warning", hidden: !canModify },
                           { label: "Delete", icon: <Trash2 className="h-3.5 w-3.5" />, onClick: () => { setDeleteId(p.id); setDeleteType(p._type); }, variant: "destructive", hidden: !canModify },
                         ]} />
@@ -743,7 +743,7 @@ export default function AdminPaymentsPage() {
                         <AdminActionMenu
                           inlineCount={2}
                           actions={[
-                            { label: "PDF", icon: <FileDown className="h-3.5 w-3.5" />, onClick: () => exportPDF({ title: `Payment - ${p._displayName}`, columns: ["Type", "Tracking ID", "Name", "Amount", "Method", "Date", "Status"], rows: [[badge.label, p._trackingId, p._displayName, p._amount, p.payment_method || "—", p.paid_at ? new Date(p.paid_at).toLocaleDateString() : p.due_date ? new Date(p.due_date).toLocaleDateString() : "—", p.status]], summary: [`Total Amount: ৳${p._amount.toLocaleString()}`] }) },
+                            { label: "PDF", icon: <FileDown className="h-3.5 w-3.5" />, onClick: () => exportPDF({ title: `Payment - ${p._displayName}`, columns: ["Type", "Tracking ID", "Name", "Amount", "Method", "Date", "Status"], rows: [[badge.label, p._trackingId, p._displayName, p._amount, p.payment_method || "—", p.paid_at ? new Date(p.paid_at).toLocaleDateString() : p.due_date ? new Date(p.due_date).toLocaleDateString() : "—", p.status]], summary: [`Total Amount: BDT ${p._amount.toLocaleString()}`] }) },
                             { label: "Edit", icon: <Edit2 className="h-3.5 w-3.5" />, onClick: () => startEdit(p), variant: "warning", hidden: !canModify },
                             { label: "Delete", icon: <Trash2 className="h-3.5 w-3.5" />, onClick: () => { setDeleteId(p.id); setDeleteType("customer"); }, variant: "destructive", hidden: !canModify, separator: true },
                             { label: "Approve", icon: <CheckCircle className="h-3.5 w-3.5" />, onClick: () => { setMarkPaidId(p.id); setMarkPaidWallet(""); }, variant: "success", hidden: !canModify || p.status !== "pending" },
@@ -796,7 +796,7 @@ export default function AdminPaymentsPage() {
             {/* Customer selection (optional for customer type) */}
             {paymentType === "customer" && (
               <div>
-                <label className="text-xs text-muted-foreground block mb-1">কাস্টমার নির্বাচন (ঐচ্ছিক)</label>
+                <label className="text-xs text-muted-foreground block mb-1">Select Customer (Optional)</label>
                 <CustomerSearchSelect
                   selectedId={addForm.customer_id || null}
                   onSelect={(c) => {
@@ -811,11 +811,11 @@ export default function AdminPaymentsPage() {
             {/* Moallem selection */}
             {paymentType === "moallem" && (
               <div>
-                <label className="text-xs text-muted-foreground block mb-1">মোয়াল্লেম নির্বাচন *</label>
+                <label className="text-xs text-muted-foreground block mb-1">Select Moallem *</label>
                 <select className={inputClass} value={addForm.moallem_id} onChange={(e) => handleMoallemChange(e.target.value)}>
-                  <option value="">-- মোয়াল্লেম বাছাই করুন --</option>
+                  <option value="">-- Select Moallem --</option>
                   {moallems.map((m) => (
-                    <option key={m.id} value={m.id}>{m.name}{m.phone ? ` (${m.phone})` : ""} — বকেয়া: {fmt(Number(m.total_due || 0))}</option>
+                    <option key={m.id} value={m.id}>{m.name}{m.phone ? ` (${m.phone})` : ""} — Due: {fmt(Number(m.total_due || 0))}</option>
                   ))}
                 </select>
               </div>
@@ -824,9 +824,9 @@ export default function AdminPaymentsPage() {
             {/* Supplier selection */}
             {paymentType === "supplier" && (
               <div>
-                <label className="text-xs text-muted-foreground block mb-1">সাপ্লায়ার এজেন্ট নির্বাচন *</label>
+                <label className="text-xs text-muted-foreground block mb-1">Select Supplier Agent *</label>
                 <select className={inputClass} value={addForm.supplier_id} onChange={(e) => handleSupplierChange(e.target.value)}>
-                  <option value="">-- সাপ্লায়ার বাছাই করুন --</option>
+                  <option value="">-- Select Supplier --</option>
                   {suppliers.map((s) => (
                     <option key={s.id} value={s.id}>{s.agent_name}{s.company_name ? ` (${s.company_name})` : ""}</option>
                   ))}
@@ -837,27 +837,27 @@ export default function AdminPaymentsPage() {
             {/* Booking selection - searchable, always enabled */}
             <div>
               <label className="text-xs text-muted-foreground block mb-1">
-                বুকিং নির্বাচন {paymentType === "customer" ? "*" : "(ঐচ্ছিক)"}
+                Select Booking {paymentType === "customer" ? "*" : "(Optional)"}
               </label>
               <div className="relative mb-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
                 <input
                   className={inputClass + " pl-9 !text-xs"}
-                  placeholder="ট্র্যাকিং ID, নাম, ফোন দিয়ে বুকিং খুঁজুন..."
+                  placeholder="Search by tracking ID, name, phone..."
                   value={bookingSearch}
                   onChange={(e) => setBookingSearch(e.target.value)}
                 />
               </div>
               <select className={inputClass} value={addForm.booking_id} onChange={(e) => handleBookingChange(e.target.value)}>
-                <option value="">-- বুকিং বাছাই করুন ({filteredBookings.length}টি) --</option>
+                <option value="">-- Select Booking ({filteredBookings.length}) --</option>
                 {filteredBookings.map((b) => (
                   <option key={b.id} value={b.id}>
-                    {b.tracking_id} — {b.guest_name || "N/A"} ({paymentType === "supplier" ? `সাপ্লায়ার বকেয়া: ${fmt(Number(b.supplier_due || 0))}` : paymentType === "moallem" ? `মোয়াল্লেম বকেয়া: ${fmt(Number(b.moallem_due || 0))}` : `বকেয়া: ${fmt(Number(b.due_amount || 0))}`})
+                    {b.tracking_id} — {b.guest_name || "N/A"} ({paymentType === "supplier" ? `Supplier Due: ${fmt(Number(b.supplier_due || 0))}` : paymentType === "moallem" ? `Moallem Due: ${fmt(Number(b.moallem_due || 0))}` : `Due: ${fmt(Number(b.due_amount || 0))}`})
                   </option>
                 ))}
               </select>
               {filteredBookings.length === 0 && bookingSearch && (
-                <p className="text-xs text-muted-foreground mt-1">কোনো বুকিং পাওয়া যায়নি।</p>
+                <p className="text-xs text-muted-foreground mt-1">No bookings found.</p>
               )}
             </div>
 
@@ -865,21 +865,21 @@ export default function AdminPaymentsPage() {
               <div className="bg-secondary/50 rounded-lg p-3 grid grid-cols-3 gap-2 text-xs">
                 {paymentType === "customer" ? (
                   <>
-                    <div><span className="text-muted-foreground block">মোট</span><span className="font-bold">{fmt(Number(selectedBookingInfo.total_amount))}</span></div>
-                    <div><span className="text-muted-foreground block">পরিশোধিত</span><span className="font-bold text-emerald">{fmt(Number(selectedBookingInfo.paid_amount))}</span></div>
-                    <div><span className="text-muted-foreground block">বকেয়া</span><span className="font-bold text-destructive">{fmt(Number(selectedBookingInfo.due_amount || 0))}</span></div>
+                    <div><span className="text-muted-foreground block">Total</span><span className="font-bold">{fmt(Number(selectedBookingInfo.total_amount))}</span></div>
+                    <div><span className="text-muted-foreground block">Paid</span><span className="font-bold text-emerald">{fmt(Number(selectedBookingInfo.paid_amount))}</span></div>
+                    <div><span className="text-muted-foreground block">Due</span><span className="font-bold text-destructive">{fmt(Number(selectedBookingInfo.due_amount || 0))}</span></div>
                   </>
                 ) : paymentType === "moallem" ? (
                   <>
-                    <div><span className="text-muted-foreground block">মোট</span><span className="font-bold">{fmt(Number(selectedBookingInfo.total_amount))}</span></div>
-                    <div><span className="text-muted-foreground block">মোয়াল্লেম পরিশোধিত</span><span className="font-bold text-emerald">{fmt(Number(selectedBookingInfo.paid_by_moallem || 0))}</span></div>
-                    <div><span className="text-muted-foreground block">মোয়াল্লেম বকেয়া</span><span className="font-bold text-destructive">{fmt(Number(selectedBookingInfo.moallem_due || 0))}</span></div>
+                    <div><span className="text-muted-foreground block">Total</span><span className="font-bold">{fmt(Number(selectedBookingInfo.total_amount))}</span></div>
+                    <div><span className="text-muted-foreground block">Moallem Paid</span><span className="font-bold text-emerald">{fmt(Number(selectedBookingInfo.paid_by_moallem || 0))}</span></div>
+                    <div><span className="text-muted-foreground block">Moallem Due</span><span className="font-bold text-destructive">{fmt(Number(selectedBookingInfo.moallem_due || 0))}</span></div>
                   </>
                 ) : (
                   <>
-                    <div><span className="text-muted-foreground block">মোট খরচ</span><span className="font-bold">{fmt(Number(selectedBookingInfo.total_cost || 0))}</span></div>
-                    <div><span className="text-muted-foreground block">সাপ্লায়ার পেইড</span><span className="font-bold text-emerald">{fmt(Number(selectedBookingInfo.paid_to_supplier || 0))}</span></div>
-                    <div><span className="text-muted-foreground block">সাপ্লায়ার বকেয়া</span><span className="font-bold text-destructive">{fmt(Number(selectedBookingInfo.supplier_due || 0))}</span></div>
+                    <div><span className="text-muted-foreground block">Total Cost</span><span className="font-bold">{fmt(Number(selectedBookingInfo.total_cost || 0))}</span></div>
+                    <div><span className="text-muted-foreground block">Supplier Paid</span><span className="font-bold text-emerald">{fmt(Number(selectedBookingInfo.paid_to_supplier || 0))}</span></div>
+                    <div><span className="text-muted-foreground block">Supplier Due</span><span className="font-bold text-destructive">{fmt(Number(selectedBookingInfo.supplier_due || 0))}</span></div>
                   </>
                 )}
               </div>
@@ -887,7 +887,7 @@ export default function AdminPaymentsPage() {
 
             {/* Service Type Selection */}
             <div>
-              <label className="text-xs text-muted-foreground block mb-1">সার্ভিস ধরন (ঐচ্ছিক)</label>
+              <label className="text-xs text-muted-foreground block mb-1">Service Type (Optional)</label>
               <select className={inputClass} value={addForm.service_type} onChange={(e) => setAddForm({ ...addForm, service_type: e.target.value })}>
                 {SERVICE_TYPES.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
               </select>
@@ -895,11 +895,11 @@ export default function AdminPaymentsPage() {
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-xs text-muted-foreground block mb-1">পরিমাণ (৳) *</label>
+                <label className="text-xs text-muted-foreground block mb-1">Amount (BDT) *</label>
                 <input className={inputClass} type="number" min={1} value={addForm.amount} onChange={(e) => setAddForm({ ...addForm, amount: e.target.value })} placeholder="0" />
               </div>
               <div>
-                <label className="text-xs text-muted-foreground block mb-1">পদ্ধতি *</label>
+                <label className="text-xs text-muted-foreground block mb-1">Method *</label>
                 <select className={inputClass} value={addForm.payment_method} onChange={(e) => setAddForm({ ...addForm, payment_method: e.target.value })}>
                   {PAYMENT_METHODS.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
                 </select>
@@ -907,25 +907,25 @@ export default function AdminPaymentsPage() {
               {paymentType === "customer" && (
                 <div>
                   <label className="text-xs text-muted-foreground block mb-1">Transaction ID</label>
-                  <input className={inputClass} value={addForm.transaction_id} onChange={(e) => setAddForm({ ...addForm, transaction_id: e.target.value })} placeholder="ঐচ্ছিক" maxLength={50} />
+                  <input className={inputClass} value={addForm.transaction_id} onChange={(e) => setAddForm({ ...addForm, transaction_id: e.target.value })} placeholder="Optional" maxLength={50} />
                 </div>
               )}
               <div>
-                <label className="text-xs text-muted-foreground block mb-1">তারিখ *</label>
+                <label className="text-xs text-muted-foreground block mb-1">Date *</label>
                 <input className={inputClass} type="date" value={addForm.paid_date} onChange={(e) => setAddForm({ ...addForm, paid_date: e.target.value })} />
               </div>
             </div>
             {walletAccounts.length > 0 && (
               <div>
-                <label className="text-xs text-muted-foreground block mb-1">ওয়ালেট অ্যাকাউন্ট</label>
+                <label className="text-xs text-muted-foreground block mb-1">Wallet Account</label>
                 <select className={inputClass} value={addForm.wallet_account_id} onChange={(e) => setAddForm({ ...addForm, wallet_account_id: e.target.value })}>
-                  <option value="">-- ঐচ্ছিক --</option>
+                  <option value="">-- Optional --</option>
                   {walletAccounts.map((w) => <option key={w.id} value={w.id}>{w.name} — {fmt(w.balance)}</option>)}
                 </select>
               </div>
             )}
             <div>
-              <label className="text-xs text-muted-foreground block mb-1">রিসিট ফাইল (ঐচ্ছিক)</label>
+              <label className="text-xs text-muted-foreground block mb-1">Receipt File (Optional)</label>
               {receiptFile ? (
                 <div className="flex items-center gap-2 bg-secondary/50 rounded-lg p-2.5 border border-border">
                   <FileText className="h-4 w-4 text-primary flex-shrink-0" />
@@ -937,10 +937,10 @@ export default function AdminPaymentsPage() {
               ) : (
                 <label className="flex items-center gap-2 cursor-pointer w-full border-2 border-dashed border-border rounded-lg p-3 text-muted-foreground hover:border-primary/50 hover:text-primary transition-colors">
                   <Upload className="h-4 w-4" />
-                  <span className="text-xs">রিসিট আপলোড করুন (ছবি/PDF, সর্বোচ্চ 5MB)</span>
+                  <span className="text-xs">Upload receipt (Image/PDF, max 5MB)</span>
                   <input type="file" accept="image/*,.pdf" className="hidden" onChange={(e) => {
                     const f = e.target.files?.[0];
-                    if (f && f.size > 5 * 1024 * 1024) { toast.error("ফাইল 5MB এর কম হতে হবে"); return; }
+                    if (f && f.size > 5 * 1024 * 1024) { toast.error("File must be less than 5MB"); return; }
                     if (f) setReceiptFile(f);
                     e.target.value = "";
                   }} />
@@ -948,15 +948,15 @@ export default function AdminPaymentsPage() {
               )}
             </div>
             <div>
-              <label className="text-xs text-muted-foreground block mb-1">নোট</label>
-              <textarea className={inputClass + " resize-none"} rows={2} value={addForm.notes} onChange={(e) => setAddForm({ ...addForm, notes: e.target.value })} placeholder="অতিরিক্ত তথ্য..." maxLength={500} />
+              <label className="text-xs text-muted-foreground block mb-1">Notes</label>
+              <textarea className={inputClass + " resize-none"} rows={2} value={addForm.notes} onChange={(e) => setAddForm({ ...addForm, notes: e.target.value })} placeholder="Additional info..." maxLength={500} />
             </div>
             <div className="flex justify-end gap-3 pt-2">
-              <button onClick={() => setShowAddModal(false)} className="text-sm px-4 py-2 rounded-md bg-secondary">বাতিল</button>
+              <button onClick={() => setShowAddModal(false)} className="text-sm px-4 py-2 rounded-md bg-secondary">Cancel</button>
               <button onClick={handleAddPayment} disabled={addLoading}
                 className="text-sm px-4 py-2 rounded-md bg-gradient-gold text-primary-foreground font-semibold hover:opacity-90 transition-opacity shadow-gold disabled:opacity-50 flex items-center gap-2">
                 <Save className="h-4 w-4" />
-                {addLoading ? "যোগ হচ্ছে..." : "পেমেন্ট যোগ করুন"}
+                {addLoading ? "Adding..." : "Add Payment"}
               </button>
             </div>
           </div>
@@ -967,7 +967,7 @@ export default function AdminPaymentsPage() {
       <Dialog open={!!viewPayment} onOpenChange={(o) => { if (!o) setViewPayment(null); }}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle className="font-heading">পেমেন্ট বিবরণ</DialogTitle>
+            <DialogTitle className="font-heading">Payment Details</DialogTitle>
           </DialogHeader>
           {viewPayment && (() => {
             const vBadge = getTypeBadge(viewPayment._type);
@@ -975,26 +975,26 @@ export default function AdminPaymentsPage() {
             <div className="space-y-4 text-sm">
               <div className="mb-2">
                 <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${vBadge.cls}`}>
-                  {viewPayment._type === "moallem" ? "মোয়াল্লেম পেমেন্ট" : viewPayment._type === "supplier" ? "সাপ্লায়ার পেমেন্ট" : "কাস্টমার পেমেন্ট"}
+                  {viewPayment._type === "moallem" ? "Moallem Payment" : viewPayment._type === "supplier" ? "Supplier Payment" : "Customer Payment"}
                 </span>
               </div>
               <div className="grid grid-cols-2 gap-3">
-                <div><span className="text-muted-foreground text-xs block">বুকিং</span><span className="font-mono font-medium">{viewPayment._trackingId}</span></div>
-                <div><span className="text-muted-foreground text-xs block">নাম</span><span className="font-medium">{viewPayment._displayName}</span></div>
-                <div><span className="text-muted-foreground text-xs block">পরিমাণ</span><span className="font-bold text-primary">{fmt(viewPayment._amount)}</span></div>
-                <div><span className="text-muted-foreground text-xs block">পদ্ধতি</span><span className="font-medium capitalize">{viewPayment.payment_method || "—"}</span></div>
+                <div><span className="text-muted-foreground text-xs block">Booking</span><span className="font-mono font-medium">{viewPayment._trackingId}</span></div>
+                <div><span className="text-muted-foreground text-xs block">Name</span><span className="font-medium">{viewPayment._displayName}</span></div>
+                <div><span className="text-muted-foreground text-xs block">Amount</span><span className="font-bold text-primary">{fmt(viewPayment._amount)}</span></div>
+                <div><span className="text-muted-foreground text-xs block">Method</span><span className="font-medium capitalize">{viewPayment.payment_method || "—"}</span></div>
                 {viewPayment._type === "customer" && (
                   <>
-                    <div><span className="text-muted-foreground text-xs block">কিস্তি নং</span><span className="font-medium">{viewPayment.installment_number || "—"}</span></div>
+                    <div><span className="text-muted-foreground text-xs block">Installment No.</span><span className="font-medium">{viewPayment.installment_number || "—"}</span></div>
                     <div>
-                      <span className="text-muted-foreground text-xs block">স্ট্যাটাস</span>
+                      <span className="text-muted-foreground text-xs block">Status</span>
                       <span className={`text-xs font-semibold px-2 py-0.5 rounded-full capitalize ${viewPayment.status === "completed" ? "text-emerald bg-emerald/10" : viewPayment.status === "pending" ? "text-primary bg-primary/10" : "text-destructive bg-destructive/10"}`}>
                         {viewPayment.status}
                       </span>
                     </div>
                   </>
                 )}
-                <div><span className="text-muted-foreground text-xs block">তারিখ</span><span className="font-medium">
+                <div><span className="text-muted-foreground text-xs block">Date</span><span className="font-medium">
                   {viewPayment._type === "customer"
                     ? (viewPayment.paid_at ? new Date(viewPayment.paid_at).toLocaleDateString() : viewPayment.due_date ? new Date(viewPayment.due_date).toLocaleDateString() : "—")
                     : (viewPayment.date ? new Date(viewPayment.date).toLocaleDateString() : "—")
@@ -1006,52 +1006,52 @@ export default function AdminPaymentsPage() {
               </div>
               {viewPayment._type === "customer" && viewPayment.bookings && (
                 <div className="border-t border-border/50 pt-3">
-                  <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">বুকিং তথ্য</h4>
+                  <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Booking Info</h4>
                   <div className="grid grid-cols-3 gap-3 bg-secondary/50 rounded-lg p-3">
-                    <div><span className="text-muted-foreground text-xs block">মোট</span><span className="font-bold">{fmt(Number(viewPayment.bookings.total_amount))}</span></div>
-                    <div><span className="text-muted-foreground text-xs block">পরিশোধিত</span><span className="font-bold text-emerald">{fmt(Number(viewPayment.bookings.paid_amount))}</span></div>
-                    <div><span className="text-muted-foreground text-xs block">বকেয়া</span><span className="font-bold text-destructive">{fmt(Number(viewPayment.bookings.due_amount || 0))}</span></div>
+                    <div><span className="text-muted-foreground text-xs block">Total</span><span className="font-bold">{fmt(Number(viewPayment.bookings.total_amount))}</span></div>
+                    <div><span className="text-muted-foreground text-xs block">Paid</span><span className="font-bold text-emerald">{fmt(Number(viewPayment.bookings.paid_amount))}</span></div>
+                    <div><span className="text-muted-foreground text-xs block">Due</span><span className="font-bold text-destructive">{fmt(Number(viewPayment.bookings.due_amount || 0))}</span></div>
                   </div>
                 </div>
               )}
               {viewPayment._type === "moallem" && viewPayment.bookings && (
                 <div className="border-t border-border/50 pt-3">
-                  <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">বুকিং তথ্য</h4>
+                  <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Booking Info</h4>
                   <div className="grid grid-cols-3 gap-3 bg-secondary/50 rounded-lg p-3">
-                    <div><span className="text-muted-foreground text-xs block">মোট</span><span className="font-bold">{fmt(Number(viewPayment.bookings.total_amount))}</span></div>
-                    <div><span className="text-muted-foreground text-xs block">মোয়াল্লেম পেইড</span><span className="font-bold text-emerald">{fmt(Number(viewPayment.bookings.paid_by_moallem || 0))}</span></div>
-                    <div><span className="text-muted-foreground text-xs block">মোয়াল্লেম বকেয়া</span><span className="font-bold text-destructive">{fmt(Number(viewPayment.bookings.moallem_due || 0))}</span></div>
+                    <div><span className="text-muted-foreground text-xs block">Total</span><span className="font-bold">{fmt(Number(viewPayment.bookings.total_amount))}</span></div>
+                    <div><span className="text-muted-foreground text-xs block">Moallem Paid</span><span className="font-bold text-emerald">{fmt(Number(viewPayment.bookings.paid_by_moallem || 0))}</span></div>
+                    <div><span className="text-muted-foreground text-xs block">Moallem Due</span><span className="font-bold text-destructive">{fmt(Number(viewPayment.bookings.moallem_due || 0))}</span></div>
                   </div>
                 </div>
               )}
               {viewPayment._type === "supplier" && viewPayment.bookings && (
                 <div className="border-t border-border/50 pt-3">
-                  <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">বুকিং তথ্য</h4>
+                  <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Booking Info</h4>
                   <div className="grid grid-cols-3 gap-3 bg-secondary/50 rounded-lg p-3">
-                    <div><span className="text-muted-foreground text-xs block">মোট খরচ</span><span className="font-bold">{fmt(Number(viewPayment.bookings.total_cost || 0))}</span></div>
-                    <div><span className="text-muted-foreground text-xs block">সাপ্লায়ার পেইড</span><span className="font-bold text-emerald">{fmt(Number(viewPayment.bookings.paid_to_supplier || 0))}</span></div>
-                    <div><span className="text-muted-foreground text-xs block">সাপ্লায়ার বকেয়া</span><span className="font-bold text-destructive">{fmt(Number(viewPayment.bookings.supplier_due || 0))}</span></div>
+                    <div><span className="text-muted-foreground text-xs block">Total Cost</span><span className="font-bold">{fmt(Number(viewPayment.bookings.total_cost || 0))}</span></div>
+                    <div><span className="text-muted-foreground text-xs block">Supplier Paid</span><span className="font-bold text-emerald">{fmt(Number(viewPayment.bookings.paid_to_supplier || 0))}</span></div>
+                    <div><span className="text-muted-foreground text-xs block">Supplier Due</span><span className="font-bold text-destructive">{fmt(Number(viewPayment.bookings.supplier_due || 0))}</span></div>
                   </div>
                 </div>
               )}
               {viewPayment.receipt_file_path && (
                 <div className="border-t border-border/50 pt-3">
-                  <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">রিসিট ফাইল</h4>
+                  <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Receipt File</h4>
                   <button
                     onClick={async () => {
                       const { data } = await supabase.storage.from("payment-receipts").createSignedUrl(viewPayment.receipt_file_path, 300);
                       if (data?.signedUrl) window.open(data.signedUrl, "_blank");
-                      else toast.error("ফাইল লোড করা যায়নি");
+                      else toast.error("Failed to load file");
                     }}
                     className="flex items-center gap-2 text-xs text-primary hover:underline"
                   >
                     <FileText className="h-3.5 w-3.5" />
-                    রিসিট দেখুন / ডাউনলোড
+                    View / Download Receipt
                   </button>
                 </div>
               )}
               {viewPayment.notes && (
-                <div><span className="text-muted-foreground text-xs block">নোট</span><p>{viewPayment.notes}</p></div>
+                <div><span className="text-muted-foreground text-xs block">Notes</span><p>{viewPayment.notes}</p></div>
               )}
             </div>
             );
@@ -1062,11 +1062,11 @@ export default function AdminPaymentsPage() {
       {deleteId && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50" onClick={() => setDeleteId(null)}>
           <div className="bg-card border border-border rounded-xl p-6 max-w-sm mx-4" onClick={(e) => e.stopPropagation()}>
-            <h3 className="font-heading font-bold text-lg mb-2">পেমেন্ট মুছবেন?</h3>
-            <p className="text-sm text-muted-foreground mb-4">এই কাজটি পূর্বাবস্থায় ফেরানো যাবে না।</p>
+            <h3 className="font-heading font-bold text-lg mb-2">Delete Payment?</h3>
+            <p className="text-sm text-muted-foreground mb-4">This action cannot be undone.</p>
             <div className="flex gap-3 justify-end">
-              <button onClick={() => setDeleteId(null)} className="text-sm px-4 py-2 rounded-md bg-secondary">বাতিল</button>
-              <button onClick={confirmDelete} className="text-sm px-4 py-2 rounded-md bg-destructive text-destructive-foreground">মুছুন</button>
+              <button onClick={() => setDeleteId(null)} className="text-sm px-4 py-2 rounded-md bg-secondary">Cancel</button>
+              <button onClick={confirmDelete} className="text-sm px-4 py-2 rounded-md bg-destructive text-destructive-foreground">Delete</button>
             </div>
           </div>
         </div>
@@ -1076,37 +1076,37 @@ export default function AdminPaymentsPage() {
       <Dialog open={showEditModal} onOpenChange={(o) => { if (!o) { setShowEditModal(false); setEditingId(null); } }}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle className="font-heading">{editType === "moallem" ? "মোয়াল্লেম পেমেন্ট সম্পাদনা" : "সাপ্লায়ার পেমেন্ট সম্পাদনা"}</DialogTitle>
+            <DialogTitle className="font-heading">{editType === "moallem" ? "Edit Moallem Payment" : "Edit Supplier Payment"}</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
             <div>
-              <label className="text-xs text-muted-foreground block mb-1">পরিমাণ (৳) *</label>
+              <label className="text-xs text-muted-foreground block mb-1">Amount (BDT) *</label>
               <input className={inputClass} type="number" min={1} value={editForm.amount || ""} onChange={(e) => setEditForm({ ...editForm, amount: e.target.value })} />
             </div>
             <div>
-              <label className="text-xs text-muted-foreground block mb-1">পদ্ধতি</label>
+              <label className="text-xs text-muted-foreground block mb-1">Method</label>
               <select className={inputClass} value={editForm.payment_method || "cash"} onChange={(e) => setEditForm({ ...editForm, payment_method: e.target.value })}>
                 {PAYMENT_METHODS.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
               </select>
             </div>
             <div>
-              <label className="text-xs text-muted-foreground block mb-1">সার্ভিস ধরন</label>
+              <label className="text-xs text-muted-foreground block mb-1">Service Type</label>
               <select className={inputClass} value={editForm.service_type || ""} onChange={(e) => setEditForm({ ...editForm, service_type: e.target.value })}>
                 {SERVICE_TYPES.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
               </select>
             </div>
             <div>
-              <label className="text-xs text-muted-foreground block mb-1">তারিখ</label>
+              <label className="text-xs text-muted-foreground block mb-1">Date</label>
               <input className={inputClass} type="date" value={editForm.date || ""} onChange={(e) => setEditForm({ ...editForm, date: e.target.value })} />
             </div>
             <div>
-              <label className="text-xs text-muted-foreground block mb-1">নোট</label>
+              <label className="text-xs text-muted-foreground block mb-1">Notes</label>
               <textarea className={inputClass + " resize-none"} rows={2} value={editForm.notes || ""} onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })} />
             </div>
           </div>
           <div className="flex justify-end gap-3 pt-2">
-            <button onClick={() => { setShowEditModal(false); setEditingId(null); }} className="text-sm px-4 py-2 rounded-md bg-secondary">বাতিল</button>
-            <button onClick={saveEdit} className="text-sm px-4 py-2 rounded-md bg-primary text-primary-foreground font-semibold flex items-center gap-2"><Save className="h-4 w-4" /> সেভ</button>
+            <button onClick={() => { setShowEditModal(false); setEditingId(null); }} className="text-sm px-4 py-2 rounded-md bg-secondary">Cancel</button>
+            <button onClick={saveEdit} className="text-sm px-4 py-2 rounded-md bg-primary text-primary-foreground font-semibold flex items-center gap-2"><Save className="h-4 w-4" /> Save</button>
           </div>
         </DialogContent>
       </Dialog>

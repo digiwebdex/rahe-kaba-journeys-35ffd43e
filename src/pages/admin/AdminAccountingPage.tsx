@@ -584,34 +584,34 @@ export default function AdminAccountingPage() {
           <form onSubmit={handleCreate} className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="sm:col-span-2">
-                <label className="text-xs text-muted-foreground block mb-1">শিরোনাম *</label>
-                <input className={inputClass} placeholder="খরচের শিরোনাম" required value={form.title}
+                <label className="text-xs text-muted-foreground block mb-1">Title *</label>
+                <input className={inputClass} placeholder="Expense title" required value={form.title}
                   onChange={(e) => setForm({ ...form, title: e.target.value })} maxLength={200} />
               </div>
               <div>
-                <label className="text-xs text-muted-foreground block mb-1">পরিমাণ (৳) *</label>
+                <label className="text-xs text-muted-foreground block mb-1">Amount (BDT) *</label>
                 <input className={inputClass} placeholder="0" type="number" step="0.01" min="1" required value={form.amount}
                   onChange={(e) => setForm({ ...form, amount: e.target.value })} />
               </div>
               <div>
-                <label className="text-xs text-muted-foreground block mb-1">খরচের ধরন *</label>
+                <label className="text-xs text-muted-foreground block mb-1">Expense Type *</label>
                 <select className={inputClass} value={form.expense_type} onChange={(e) => setForm({ ...form, expense_type: e.target.value })}>
                   {EXPENSE_TYPES.map(({ value, label }) => <option key={value} value={value}>{label}</option>)}
                 </select>
               </div>
               <div>
-                <label className="text-xs text-muted-foreground block mb-1">পেমেন্ট পদ্ধতি</label>
+                <label className="text-xs text-muted-foreground block mb-1">Payment Method</label>
                 <select className={inputClass} value={form.payment_method} onChange={(e) => setForm({ ...form, payment_method: e.target.value })}>
                   {PAYMENT_METHODS.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
                 </select>
               </div>
               <div>
-                <label className="text-xs text-muted-foreground block mb-1">তারিখ *</label>
+                <label className="text-xs text-muted-foreground block mb-1">Date *</label>
                 <input className={inputClass} type="date" required value={form.date}
                   onChange={(e) => setForm({ ...form, date: e.target.value })} />
               </div>
               <div>
-                <label className="text-xs text-muted-foreground block mb-1">অ্যাসাইন করুন</label>
+                <label className="text-xs text-muted-foreground block mb-1">Assign To</label>
                 <select className={inputClass} value={form.category}
                   onChange={(e) => setForm({ ...form, category: e.target.value, booking_id: "", customer_id: "", package_id: "" })}>
                   {ASSIGN_TO.map(({ value, label }) => <option key={value} value={value}>{label}</option>)}
@@ -624,25 +624,25 @@ export default function AdminAccountingPage() {
 
             {walletAccounts.length > 0 && (
               <div>
-                <label className="text-xs text-muted-foreground block mb-1">ওয়ালেট অ্যাকাউন্ট</label>
+                <label className="text-xs text-muted-foreground block mb-1">Wallet Account</label>
                 <select className={inputClass} value={form.wallet_account_id} onChange={(e) => setForm({ ...form, wallet_account_id: e.target.value })}>
-                  <option value="">-- ঐচ্ছিক --</option>
+                  <option value="">-- Optional --</option>
                   {walletAccounts.map((w) => <option key={w.id} value={w.id}>{w.name} — {fmt(w.balance)}</option>)}
                 </select>
               </div>
             )}
 
             <div>
-              <label className="text-xs text-muted-foreground block mb-1">নোট</label>
+              <label className="text-xs text-muted-foreground block mb-1">Notes</label>
               <textarea className={inputClass + " resize-none"} rows={2} value={form.note}
-                onChange={(e) => setForm({ ...form, note: e.target.value })} placeholder="অতিরিক্ত তথ্য..." maxLength={500} />
+                onChange={(e) => setForm({ ...form, note: e.target.value })} placeholder="Additional info..." maxLength={500} />
             </div>
 
             <div className="flex justify-end gap-3 pt-2">
-              <button type="button" onClick={() => setShowForm(false)} className="text-sm px-4 py-2 rounded-md bg-secondary">বাতিল</button>
+              <button type="button" onClick={() => setShowForm(false)} className="text-sm px-4 py-2 rounded-md bg-secondary">Cancel</button>
               <button type="submit"
                 className="text-sm px-4 py-2 rounded-md bg-gradient-gold text-primary-foreground font-semibold hover:opacity-90 transition-opacity shadow-gold flex items-center gap-2">
-                <Save className="h-4 w-4" /> খরচ রেকর্ড করুন
+                <Save className="h-4 w-4" /> Record Expense
               </button>
             </div>
           </form>
@@ -653,31 +653,31 @@ export default function AdminAccountingPage() {
       <Dialog open={!!viewExpense} onOpenChange={(o) => { if (!o) setViewExpense(null); }}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle className="font-heading">খরচের বিবরণ</DialogTitle>
+            <DialogTitle className="font-heading">Expense Details</DialogTitle>
           </DialogHeader>
           {viewExpense && (
             <div className="space-y-4 text-sm">
               <div className="grid grid-cols-2 gap-3">
-                <div className="col-span-2"><span className="text-muted-foreground text-xs block">শিরোনাম</span><span className="font-medium text-base">{viewExpense.title}</span></div>
-                <div><span className="text-muted-foreground text-xs block">পরিমাণ</span><span className="font-bold text-destructive text-lg">{fmt(viewExpense.amount)}</span></div>
-                <div><span className="text-muted-foreground text-xs block">তারিখ</span><span className="font-medium">{new Date(viewExpense.date).toLocaleDateString()}</span></div>
-                <div><span className="text-muted-foreground text-xs block">ধরন</span><span className="font-medium capitalize">{EXPENSE_TYPES.find(t => t.value === viewExpense.expense_type)?.label || viewExpense.expense_type}</span></div>
-                <div><span className="text-muted-foreground text-xs block">অ্যাসাইনমেন্ট</span><span className="font-medium capitalize">{ASSIGN_TO.find(a => a.value === viewExpense.category)?.label || viewExpense.category || "সাধারণ"}</span></div>
+                <div className="col-span-2"><span className="text-muted-foreground text-xs block">Title</span><span className="font-medium text-base">{viewExpense.title}</span></div>
+                <div><span className="text-muted-foreground text-xs block">Amount</span><span className="font-bold text-destructive text-lg">{fmt(viewExpense.amount)}</span></div>
+                <div><span className="text-muted-foreground text-xs block">Date</span><span className="font-medium">{new Date(viewExpense.date).toLocaleDateString()}</span></div>
+                <div><span className="text-muted-foreground text-xs block">Type</span><span className="font-medium capitalize">{EXPENSE_TYPES.find(t => t.value === viewExpense.expense_type)?.label || viewExpense.expense_type}</span></div>
+                <div><span className="text-muted-foreground text-xs block">Assignment</span><span className="font-medium capitalize">{ASSIGN_TO.find(a => a.value === viewExpense.category)?.label || viewExpense.category || "General"}</span></div>
                 {viewExpense.booking_id && (
-                  <div className="col-span-2"><span className="text-muted-foreground text-xs block">বুকিং</span><span className="font-medium">📋 {getBookingLabel(viewExpense.booking_id)}</span></div>
+                  <div className="col-span-2"><span className="text-muted-foreground text-xs block">Booking</span><span className="font-medium">📋 {getBookingLabel(viewExpense.booking_id)}</span></div>
                 )}
                 {viewExpense.customer_id && (
-                  <div className="col-span-2"><span className="text-muted-foreground text-xs block">কাস্টমার</span><span className="font-medium">👤 {getCustomerLabel(viewExpense.customer_id)}</span></div>
+                  <div className="col-span-2"><span className="text-muted-foreground text-xs block">Customer</span><span className="font-medium">👤 {getCustomerLabel(viewExpense.customer_id)}</span></div>
                 )}
                 {viewExpense.package_id && (
-                  <div className="col-span-2"><span className="text-muted-foreground text-xs block">প্যাকেজ</span><span className="font-medium">📦 {getPackageLabel(viewExpense.package_id)}</span></div>
+                  <div className="col-span-2"><span className="text-muted-foreground text-xs block">Package</span><span className="font-medium">📦 {getPackageLabel(viewExpense.package_id)}</span></div>
                 )}
                 {viewExpense.wallet_account_id && (
-                  <div className="col-span-2"><span className="text-muted-foreground text-xs block">ওয়ালেট</span><span className="font-medium">{walletAccounts.find(w => w.id === viewExpense.wallet_account_id)?.name || "—"}</span></div>
+                  <div className="col-span-2"><span className="text-muted-foreground text-xs block">Wallet</span><span className="font-medium">{walletAccounts.find(w => w.id === viewExpense.wallet_account_id)?.name || "—"}</span></div>
                 )}
               </div>
               {viewExpense.note && (
-                <div><span className="text-muted-foreground text-xs block">নোট</span><p>{viewExpense.note}</p></div>
+                <div><span className="text-muted-foreground text-xs block">Notes</span><p>{viewExpense.note}</p></div>
               )}
             </div>
           )}
@@ -688,11 +688,11 @@ export default function AdminAccountingPage() {
       {deleteId && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50" onClick={() => setDeleteId(null)}>
           <div className="bg-card border border-border rounded-xl p-6 max-w-sm mx-4" onClick={(e) => e.stopPropagation()}>
-            <h3 className="font-heading font-bold text-lg mb-2">খরচ মুছবেন?</h3>
-            <p className="text-sm text-muted-foreground mb-4">এই কাজটি পূর্বাবস্থায় ফেরানো যাবে না।</p>
+            <h3 className="font-heading font-bold text-lg mb-2">Delete Expense?</h3>
+            <p className="text-sm text-muted-foreground mb-4">This action cannot be undone.</p>
             <div className="flex gap-3 justify-end">
-              <button onClick={() => setDeleteId(null)} className="text-sm px-4 py-2 rounded-md bg-secondary">বাতিল</button>
-              <button onClick={confirmDelete} className="text-sm px-4 py-2 rounded-md bg-destructive text-destructive-foreground">মুছুন</button>
+              <button onClick={() => setDeleteId(null)} className="text-sm px-4 py-2 rounded-md bg-secondary">Cancel</button>
+              <button onClick={confirmDelete} className="text-sm px-4 py-2 rounded-md bg-destructive text-destructive-foreground">Delete</button>
             </div>
           </div>
         </div>

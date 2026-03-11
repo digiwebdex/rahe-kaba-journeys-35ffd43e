@@ -122,7 +122,7 @@ export default function AdminCustomersPage() {
       notes: editForm.notes || null,
     }).eq("id", editId);
     if (error) { toast.error(error.message); return; }
-    toast.success("কাস্টমার আপডেট হয়েছে");
+    toast.success("Customer updated successfully");
     setEditId(null); setEditForm({ ...emptyForm }); fetchData();
   };
 
@@ -130,7 +130,7 @@ export default function AdminCustomersPage() {
     if (!deleteId) return;
     const { error } = await supabase.from("profiles").delete().eq("id", deleteId);
     if (error) { toast.error(error.message); return; }
-    toast.success("কাস্টমার মুছে ফেলা হয়েছে");
+    toast.success("Customer deleted successfully");
     setDeleteId(null); fetchData();
   };
 
@@ -145,7 +145,7 @@ export default function AdminCustomersPage() {
       if (!session) { toast.error("Not authenticated"); return; }
       const cleanPhone = addForm.phone.trim().replace(/[^\d+]/g, "");
       const { data: existing } = await supabase.from("profiles").select("id").eq("phone", cleanPhone).maybeSingle();
-      if (existing) { toast.error("এই ফোন নম্বরে কাস্টমার আছে"); setAddLoading(false); return; }
+      if (existing) { toast.error("A customer with this phone number already exists"); setAddLoading(false); return; }
       const newUserId = crypto.randomUUID();
       const { error } = await supabase.from("profiles").insert({
         user_id: newUserId, full_name: addForm.full_name.trim(), phone: cleanPhone,
@@ -155,7 +155,7 @@ export default function AdminCustomersPage() {
         notes: addForm.notes.trim() || null,
       });
       if (error) throw error;
-      toast.success("কাস্টমার যোগ হয়েছে");
+      toast.success("Customer added successfully");
       setShowAddModal(false); setAddForm({ ...emptyForm }); fetchData();
     } catch (err: any) {
       toast.error(err.message);
@@ -182,10 +182,10 @@ export default function AdminCustomersPage() {
   const getActions = (c: any): ActionItem[] => {
     const s = customerStats[c.user_id] || { totalAmount: 0, totalPaid: 0, totalDue: 0, travelers: 0 };
     return [
-      { label: "দেখুন", icon: <Eye className="h-3.5 w-3.5" />, onClick: () => setSelectedCustomer(c) },
-      { label: "PDF", icon: <FileDown className="h-3.5 w-3.5" />, onClick: () => exportPDF({ title: `Customer - ${c.full_name || "Unknown"}`, columns: ["Name", "Phone", "Pilgrim Count", "Contract Amount", "Total Paid", "Total Due"], rows: [[c.full_name || "—", c.phone || "—", s.travelers, s.totalAmount, s.totalPaid, s.totalDue]], summary: [`Total Paid: ৳${s.totalPaid.toLocaleString()}`, `Total Due: ৳${s.totalDue.toLocaleString()}`] }) },
-      { label: "সম্পাদনা", icon: <Pencil className="h-3.5 w-3.5" />, onClick: () => startEdit(c), variant: "warning", hidden: isViewer },
-      { label: "মুছুন", icon: <Trash2 className="h-3.5 w-3.5" />, onClick: () => setDeleteId(c.id), variant: "destructive", hidden: isViewer, separator: true },
+      { label: "View", icon: <Eye className="h-3.5 w-3.5" />, onClick: () => setSelectedCustomer(c) },
+      { label: "PDF", icon: <FileDown className="h-3.5 w-3.5" />, onClick: () => exportPDF({ title: `Customer - ${c.full_name || "Unknown"}`, columns: ["Name", "Phone", "Pilgrim Count", "Contract Amount", "Total Paid", "Total Due"], rows: [[c.full_name || "—", c.phone || "—", s.travelers, s.totalAmount, s.totalPaid, s.totalDue]], summary: [`Total Paid: BDT ${s.totalPaid.toLocaleString()}`, `Total Due: BDT ${s.totalDue.toLocaleString()}`] }) },
+      { label: "Edit", icon: <Pencil className="h-3.5 w-3.5" />, onClick: () => startEdit(c), variant: "warning", hidden: isViewer },
+      { label: "Delete", icon: <Trash2 className="h-3.5 w-3.5" />, onClick: () => setDeleteId(c.id), variant: "destructive", hidden: isViewer, separator: true },
     ];
   };
 
@@ -195,16 +195,16 @@ export default function AdminCustomersPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-            <Users className="h-6 w-6 text-primary" /> কাস্টমার ব্যবস্থাপনা
+            <Users className="h-6 w-6 text-primary" /> Customer Management
           </h1>
-          <p className="text-muted-foreground text-sm">মোট {customers.length} জন কাস্টমার</p>
+          <p className="text-muted-foreground text-sm">Total {customers.length} customers</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => { const rows = filtered.map(c => { const s = customerStats[c.user_id] || { totalAmount: 0, totalPaid: 0, totalDue: 0, travelers: 0 }; return [c.full_name || "—", c.phone || "—", s.travelers, s.totalAmount, s.totalPaid, s.totalDue]; }); const sumPaid = rows.reduce((a, r) => a + Number(r[4]), 0); const sumDue = rows.reduce((a, r) => a + Number(r[5]), 0); exportPDF({ title: "Customers Report", columns: ["Name", "Phone", "Pilgrim Count", "Contract Amount", "Total Paid", "Total Due"], rows, summary: [`Total Paid: ৳${sumPaid.toLocaleString()}`, `Total Due: ৳${sumDue.toLocaleString()}`] }); }}><FileDown className="h-4 w-4 mr-1" />PDF</Button>
-          <Button variant="outline" size="sm" onClick={() => { const rows = filtered.map(c => { const s = customerStats[c.user_id] || { totalAmount: 0, totalPaid: 0, totalDue: 0, travelers: 0 }; return [c.full_name || "—", c.phone || "—", s.travelers, s.totalAmount, s.totalPaid, s.totalDue]; }); const sumPaid = rows.reduce((a, r) => a + Number(r[4]), 0); const sumDue = rows.reduce((a, r) => a + Number(r[5]), 0); exportExcel({ title: "Customers Report", columns: ["Name", "Phone", "Pilgrim Count", "Contract Amount", "Total Paid", "Total Due"], rows, summary: [`Total Paid: ৳${sumPaid.toLocaleString()}`, `Total Due: ৳${sumDue.toLocaleString()}`] }); }}><FileSpreadsheet className="h-4 w-4 mr-1" />Excel</Button>
+          <Button variant="outline" size="sm" onClick={() => { const rows = filtered.map(c => { const s = customerStats[c.user_id] || { totalAmount: 0, totalPaid: 0, totalDue: 0, travelers: 0 }; return [c.full_name || "—", c.phone || "—", s.travelers, s.totalAmount, s.totalPaid, s.totalDue]; }); const sumPaid = rows.reduce((a, r) => a + Number(r[4]), 0); const sumDue = rows.reduce((a, r) => a + Number(r[5]), 0); exportPDF({ title: "Customers Report", columns: ["Name", "Phone", "Pilgrim Count", "Contract Amount", "Total Paid", "Total Due"], rows, summary: [`Total Paid: BDT ${sumPaid.toLocaleString()}`, `Total Due: BDT ${sumDue.toLocaleString()}`] }); }}><FileDown className="h-4 w-4 mr-1" />PDF</Button>
+          <Button variant="outline" size="sm" onClick={() => { const rows = filtered.map(c => { const s = customerStats[c.user_id] || { totalAmount: 0, totalPaid: 0, totalDue: 0, travelers: 0 }; return [c.full_name || "—", c.phone || "—", s.travelers, s.totalAmount, s.totalPaid, s.totalDue]; }); const sumPaid = rows.reduce((a, r) => a + Number(r[4]), 0); const sumDue = rows.reduce((a, r) => a + Number(r[5]), 0); exportExcel({ title: "Customers Report", columns: ["Name", "Phone", "Pilgrim Count", "Contract Amount", "Total Paid", "Total Due"], rows, summary: [`Total Paid: BDT ${sumPaid.toLocaleString()}`, `Total Due: BDT ${sumDue.toLocaleString()}`] }); }}><FileSpreadsheet className="h-4 w-4 mr-1" />Excel</Button>
           {!isViewer && (
             <Button onClick={() => setShowAddModal(true)}>
-              <Plus className="h-4 w-4 mr-1" /> নতুন কাস্টমার
+              <Plus className="h-4 w-4 mr-1" /> New Customer
             </Button>
           )}
         </div>
@@ -213,23 +213,23 @@ export default function AdminCustomersPage() {
       {/* KPI Summary */}
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
         <div className="bg-card border border-border rounded-xl p-4">
-          <p className="text-[11px] text-muted-foreground uppercase tracking-wider">মোট কাস্টমার</p>
+          <p className="text-[11px] text-muted-foreground uppercase tracking-wider">Total Customers</p>
           <p className="text-lg font-bold text-foreground">{customers.length}</p>
         </div>
         <div className="bg-card border border-border rounded-xl p-4">
-          <p className="text-[11px] text-muted-foreground uppercase tracking-wider">চুক্তিকৃত হাজী</p>
+          <p className="text-[11px] text-muted-foreground uppercase tracking-wider">Contracted Pilgrims</p>
           <p className="text-lg font-bold text-foreground">{totals.totalTravelers}</p>
         </div>
         <div className="bg-card border border-border rounded-xl p-4">
-          <p className="text-[11px] text-muted-foreground uppercase tracking-wider">চুক্তিকৃত টাকা</p>
+          <p className="text-[11px] text-muted-foreground uppercase tracking-wider">Contract Amount</p>
           <p className="text-lg font-bold text-foreground">{fmt(totals.totalAmount)}</p>
         </div>
         <div className="bg-card border border-border rounded-xl p-4">
-          <p className="text-[11px] text-muted-foreground uppercase tracking-wider">মোট প্রাপ্ত</p>
+          <p className="text-[11px] text-muted-foreground uppercase tracking-wider">Total Received</p>
           <p className="text-lg font-bold text-emerald-600">{fmt(totals.totalPaid)}</p>
         </div>
         <div className="bg-card border border-border rounded-xl p-4">
-          <p className="text-[11px] text-muted-foreground uppercase tracking-wider">মোট বকেয়া</p>
+          <p className="text-[11px] text-muted-foreground uppercase tracking-wider">Total Due</p>
           <p className="text-lg font-bold text-destructive">{fmt(totals.totalDue)}</p>
         </div>
       </div>
@@ -237,14 +237,14 @@ export default function AdminCustomersPage() {
       {/* Search */}
       <div className="relative max-w-sm">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input placeholder="নাম, ফোন, পাসপোর্ট দিয়ে খুঁজুন..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
+        <Input placeholder="Search by name, phone, passport..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
       </div>
 
       {/* Table */}
       {loading ? (
         <div className="flex justify-center py-12"><div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>
       ) : filtered.length === 0 ? (
-        <p className="text-center text-muted-foreground py-12">কোনো কাস্টমার পাওয়া যায়নি</p>
+        <p className="text-center text-muted-foreground py-12">No customers found</p>
       ) : (
         <div className="bg-card border border-border rounded-xl overflow-hidden">
           <div className="overflow-x-auto">
@@ -252,13 +252,13 @@ export default function AdminCustomersPage() {
               <TableHeader>
                <TableRow className="bg-muted/40">
                   <TableHead className="w-12 text-center">SL</TableHead>
-                  <TableHead>নাম</TableHead>
-                  <TableHead>ফোন</TableHead>
-                  <TableHead className="text-right">চুক্তিকৃত হাজী</TableHead>
-                  <TableHead className="text-right">চুক্তিকৃত টাকা</TableHead>
-                  <TableHead className="text-right">মোট প্রাপ্ত</TableHead>
-                  <TableHead className="text-right">মোট বকেয়া</TableHead>
-                  <TableHead className="text-center w-24">অ্যাকশন</TableHead>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Phone</TableHead>
+                  <TableHead className="text-right">Contracted Pilgrims</TableHead>
+                  <TableHead className="text-right">Contract Amount</TableHead>
+                  <TableHead className="text-right">Total Received</TableHead>
+                  <TableHead className="text-right">Total Due</TableHead>
+                  <TableHead className="text-center w-24">Action</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -287,7 +287,7 @@ export default function AdminCustomersPage() {
           {totalPages > 1 && (
             <div className="flex items-center justify-between px-4 py-3 border-t border-border">
               <p className="text-xs text-muted-foreground">
-                দেখাচ্ছে {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filtered.length)} / {filtered.length}
+                Showing {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filtered.length)} of {filtered.length}
               </p>
               <div className="flex items-center gap-1">
                 <Button variant="ghost" size="sm" disabled={page <= 1} onClick={() => setPage(p => p - 1)}>
@@ -314,35 +314,35 @@ export default function AdminCustomersPage() {
       <Dialog open={!!editId} onOpenChange={o => { if (!o) { setEditId(null); setEditForm({ ...emptyForm }); } }}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>কাস্টমার সম্পাদনা</DialogTitle>
-            <DialogDescription>কাস্টমারের তথ্য আপডেট করুন</DialogDescription>
+            <DialogTitle>Edit Customer</DialogTitle>
+            <DialogDescription>Update customer information</DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div><label className="text-xs text-muted-foreground block mb-1">নাম *</label>
+              <div><label className="text-xs text-muted-foreground block mb-1">Name *</label>
                 <input className={inputClass} value={editForm.full_name} onChange={e => setEditForm({ ...editForm, full_name: e.target.value })} /></div>
-              <div><label className="text-xs text-muted-foreground block mb-1">ফোন</label>
+              <div><label className="text-xs text-muted-foreground block mb-1">Phone</label>
                 <input className={inputClass} value={editForm.phone} onChange={e => handlePhoneChange(e.target.value, v => setEditForm({ ...editForm, phone: v }))} placeholder="01XXXXXXXXX" maxLength={15} />
                 {editForm.phone?.trim() && getPhoneError(editForm.phone) && <p className="text-xs text-destructive mt-1">{getPhoneError(editForm.phone)}</p>}</div>
-              <div><label className="text-xs text-muted-foreground block mb-1">ইমেইল</label>
+              <div><label className="text-xs text-muted-foreground block mb-1">Email</label>
                 <input className={inputClass} type="email" value={editForm.email} onChange={e => setEditForm({ ...editForm, email: e.target.value })} /></div>
-              <div><label className="text-xs text-muted-foreground block mb-1">পাসপোর্ট নম্বর</label>
+              <div><label className="text-xs text-muted-foreground block mb-1">Passport No.</label>
                 <input className={inputClass} value={editForm.passport_number} onChange={e => setEditForm({ ...editForm, passport_number: e.target.value })} /></div>
-              <div><label className="text-xs text-muted-foreground block mb-1">NID নম্বর</label>
+              <div><label className="text-xs text-muted-foreground block mb-1">NID No.</label>
                 <input className={inputClass} value={editForm.nid_number} onChange={e => setEditForm({ ...editForm, nid_number: e.target.value })} /></div>
-              <div><label className="text-xs text-muted-foreground block mb-1">জন্ম তারিখ</label>
+              <div><label className="text-xs text-muted-foreground block mb-1">Date of Birth</label>
                 <input className={inputClass} type="date" value={editForm.date_of_birth} onChange={e => setEditForm({ ...editForm, date_of_birth: e.target.value })} /></div>
-              <div><label className="text-xs text-muted-foreground block mb-1">জরুরি যোগাযোগ</label>
+              <div><label className="text-xs text-muted-foreground block mb-1">Emergency Contact</label>
                 <input className={inputClass} value={editForm.emergency_contact} onChange={e => setEditForm({ ...editForm, emergency_contact: e.target.value })} /></div>
-              <div><label className="text-xs text-muted-foreground block mb-1">ঠিকানা</label>
+              <div><label className="text-xs text-muted-foreground block mb-1">Address</label>
                 <input className={inputClass} value={editForm.address} onChange={e => setEditForm({ ...editForm, address: e.target.value })} /></div>
             </div>
-            <div><label className="text-xs text-muted-foreground block mb-1">নোট</label>
+            <div><label className="text-xs text-muted-foreground block mb-1">Notes</label>
               <textarea className={inputClass + " resize-none"} rows={2} value={editForm.notes} onChange={e => setEditForm({ ...editForm, notes: e.target.value })} /></div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => { setEditId(null); setEditForm({ ...emptyForm }); }}>বাতিল</Button>
-            <Button onClick={saveEdit}>আপডেট</Button>
+            <Button variant="outline" onClick={() => { setEditId(null); setEditForm({ ...emptyForm }); }}>Cancel</Button>
+            <Button onClick={saveEdit}>Update</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -351,36 +351,36 @@ export default function AdminCustomersPage() {
       <Dialog open={showAddModal} onOpenChange={setShowAddModal}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>নতুন কাস্টমার যোগ করুন</DialogTitle>
-            <DialogDescription>কাস্টমারের তথ্য পূরণ করুন</DialogDescription>
+            <DialogTitle>Add New Customer</DialogTitle>
+            <DialogDescription>Fill in the customer details</DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div><label className="text-xs text-muted-foreground block mb-1">নাম *</label>
-                <input className={inputClass} value={addForm.full_name} onChange={e => setAddForm({ ...addForm, full_name: e.target.value })} placeholder="পূর্ণ নাম" /></div>
-              <div><label className="text-xs text-muted-foreground block mb-1">ফোন *</label>
+              <div><label className="text-xs text-muted-foreground block mb-1">Name *</label>
+                <input className={inputClass} value={addForm.full_name} onChange={e => setAddForm({ ...addForm, full_name: e.target.value })} placeholder="Full Name" /></div>
+              <div><label className="text-xs text-muted-foreground block mb-1">Phone *</label>
                 <input className={inputClass} value={addForm.phone} onChange={e => handlePhoneChange(e.target.value, v => setAddForm({ ...addForm, phone: v }))} placeholder="01XXXXXXXXX" maxLength={15} />
                 {addForm.phone?.trim() && getPhoneError(addForm.phone) && <p className="text-xs text-destructive mt-1">{getPhoneError(addForm.phone)}</p>}</div>
-              <div><label className="text-xs text-muted-foreground block mb-1">ইমেইল</label>
+              <div><label className="text-xs text-muted-foreground block mb-1">Email</label>
                 <input className={inputClass} type="email" value={addForm.email} onChange={e => setAddForm({ ...addForm, email: e.target.value })} placeholder="email@example.com" /></div>
-              <div><label className="text-xs text-muted-foreground block mb-1">পাসপোর্ট নম্বর</label>
+              <div><label className="text-xs text-muted-foreground block mb-1">Passport No.</label>
                 <input className={inputClass} value={addForm.passport_number} onChange={e => setAddForm({ ...addForm, passport_number: e.target.value })} /></div>
-              <div><label className="text-xs text-muted-foreground block mb-1">NID নম্বর</label>
+              <div><label className="text-xs text-muted-foreground block mb-1">NID No.</label>
                 <input className={inputClass} value={addForm.nid_number} onChange={e => setAddForm({ ...addForm, nid_number: e.target.value })} /></div>
-              <div><label className="text-xs text-muted-foreground block mb-1">জন্ম তারিখ</label>
+              <div><label className="text-xs text-muted-foreground block mb-1">Date of Birth</label>
                 <input className={inputClass} type="date" value={addForm.date_of_birth} onChange={e => setAddForm({ ...addForm, date_of_birth: e.target.value })} /></div>
-              <div><label className="text-xs text-muted-foreground block mb-1">জরুরি যোগাযোগ</label>
+              <div><label className="text-xs text-muted-foreground block mb-1">Emergency Contact</label>
                 <input className={inputClass} value={addForm.emergency_contact} onChange={e => setAddForm({ ...addForm, emergency_contact: e.target.value })} /></div>
-              <div><label className="text-xs text-muted-foreground block mb-1">ঠিকানা</label>
+              <div><label className="text-xs text-muted-foreground block mb-1">Address</label>
                 <input className={inputClass} value={addForm.address} onChange={e => setAddForm({ ...addForm, address: e.target.value })} /></div>
             </div>
-            <div><label className="text-xs text-muted-foreground block mb-1">নোট</label>
+            <div><label className="text-xs text-muted-foreground block mb-1">Notes</label>
               <textarea className={inputClass + " resize-none"} rows={2} value={addForm.notes} onChange={e => setAddForm({ ...addForm, notes: e.target.value })} /></div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowAddModal(false)}>বাতিল</Button>
+            <Button variant="outline" onClick={() => setShowAddModal(false)}>Cancel</Button>
             <Button onClick={handleAddCustomer} disabled={addLoading}>
-              {addLoading ? "যোগ হচ্ছে..." : "কাস্টমার যোগ করুন"}
+              {addLoading ? "Adding..." : "Add Customer"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -390,12 +390,12 @@ export default function AdminCustomersPage() {
       <Dialog open={!!deleteId} onOpenChange={o => { if (!o) setDeleteId(null); }}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>কাস্টমার মুছবেন?</DialogTitle>
-            <DialogDescription>এই কাজটি পূর্বাবস্থায় ফেরানো যাবে না।</DialogDescription>
+            <DialogTitle>Delete Customer?</DialogTitle>
+            <DialogDescription>This action cannot be undone.</DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteId(null)}>বাতিল</Button>
-            <Button variant="destructive" onClick={confirmDelete}>মুছুন</Button>
+            <Button variant="outline" onClick={() => setDeleteId(null)}>Cancel</Button>
+            <Button variant="destructive" onClick={confirmDelete}>Delete</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

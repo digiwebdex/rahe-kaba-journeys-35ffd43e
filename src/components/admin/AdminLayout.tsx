@@ -92,13 +92,13 @@ export default function AdminLayout() {
             {isReadOnly && (
               <div className="bg-amber-500/10 border-b border-amber-500/30 px-4 py-2 flex items-center gap-2 text-amber-700 text-sm">
                 <Eye className="h-4 w-4" />
-                <span className="font-medium">Read-Only Mode</span> — আপনি শুধুমাত্র দেখতে পারবেন, কোনো পরিবর্তন করতে পারবেন না।
+                <span className="font-medium">Read-Only Mode</span> — You can only view data, no changes can be made.
               </div>
             )}
             {isCmsOnly && (
               <div className="bg-blue-500/10 border-b border-blue-500/30 px-4 py-2 flex items-center gap-2 text-blue-700 text-sm">
                 <Eye className="h-4 w-4" />
-                <span className="font-medium">CMS Mode</span> — আপনি শুধুমাত্র কন্টেন্ট ম্যানেজমেন্ট অ্যাক্সেস করতে পারবেন।
+                <span className="font-medium">CMS Mode</span> — You can only access content management.
               </div>
             )}
             <div className="flex-1 p-6 overflow-auto">

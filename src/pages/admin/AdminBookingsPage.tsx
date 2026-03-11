@@ -89,7 +89,7 @@ function BookingDetail({ bookingId }: { bookingId: string }) {
         const completedPayments = payments.filter(p => p.status === "completed" && p.paid_at).sort((a, b) => new Date(a.paid_at).getTime() - new Date(b.paid_at).getTime());
         return completedPayments.length > 0 ? (
           <div>
-            <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">পেমেন্ট টাইমলাইন ({completedPayments.length})</h4>
+            <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Payment Timeline ({completedPayments.length})</h4>
             <div className="space-y-1.5">
               {completedPayments.map((p: any, i: number) => (
                 <div key={p.id} className="flex items-center gap-3 bg-emerald-500/5 border border-emerald-500/15 rounded-lg px-3 py-2">
@@ -469,17 +469,17 @@ export default function AdminBookingsPage() {
 
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <div>
-                  <label className="text-xs text-muted-foreground block mb-1">Selling Price/Person (৳)</label>
+                  <label className="text-xs text-muted-foreground block mb-1">Selling Price/Person (BDT)</label>
                   <input className={inputClass} type="number" min={0} value={editForm.selling_price_per_person}
                     onChange={(e) => setEditForm((f: any) => ({ ...f, selling_price_per_person: e.target.value }))} />
                 </div>
                 <div>
-                  <label className="text-xs text-muted-foreground block mb-1">Cost Price/Person (৳)</label>
+                  <label className="text-xs text-muted-foreground block mb-1">Cost Price/Person (BDT)</label>
                   <input className={inputClass} type="number" min={0} value={editForm.cost_price_per_person}
                     onChange={(e) => setEditForm((f: any) => ({ ...f, cost_price_per_person: e.target.value }))} />
                 </div>
                 <div>
-                  <label className="text-xs text-muted-foreground block mb-1">Extra Expense (৳)</label>
+                  <label className="text-xs text-muted-foreground block mb-1">Extra Expense (BDT)</label>
                   <input className={inputClass} type="number" min={0} value={editForm.extra_expense}
                     onChange={(e) => setEditForm((f: any) => ({ ...f, extra_expense: e.target.value }))} />
                 </div>
@@ -491,13 +491,13 @@ export default function AdminBookingsPage() {
               {editForm.moallem_id && (
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   <div>
-                    <label className="text-xs text-muted-foreground block mb-1">Commission/Person (৳)</label>
+                    <label className="text-xs text-muted-foreground block mb-1">Commission/Person (BDT)</label>
                     <input className={inputClass} type="number" min={0} value={editForm.commission_per_person}
                       onChange={(e) => setEditForm((f: any) => ({ ...f, commission_per_person: e.target.value }))} />
                   </div>
                   <div>
-                    <label className="text-xs text-muted-foreground block mb-1">Total Commission (৳)</label>
-                    <div className={`${inputClass} bg-muted/50 font-bold`}>৳{editTotalCommission.toLocaleString()}</div>
+                     <label className="text-xs text-muted-foreground block mb-1">Total Commission (BDT)</label>
+                    <div className={`${inputClass} bg-muted/50 font-bold`}>BDT {editTotalCommission.toLocaleString()}</div>
                   </div>
                 </div>
               )}
@@ -510,24 +510,24 @@ export default function AdminBookingsPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="text-xs text-muted-foreground block mb-1">Total Selling (৳)</label>
-                  <div className={`${inputClass} bg-muted/50 font-bold`}>৳{editTotalSelling.toLocaleString()}</div>
+                   <label className="text-xs text-muted-foreground block mb-1">Total Selling (BDT)</label>
+                  <div className={`${inputClass} bg-muted/50 font-bold`}>BDT {editTotalSelling.toLocaleString()}</div>
                 </div>
                 <div>
-                  <label className="text-xs text-muted-foreground block mb-1">Paid (৳)</label>
+                  <label className="text-xs text-muted-foreground block mb-1">Paid (BDT)</label>
                   <input className={inputClass} type="number" min={0} max={editTotalSelling} value={editForm.paid_amount}
                     onChange={(e) => setEditForm((f: any) => ({ ...f, paid_amount: Math.min(Math.max(0, parseFloat(e.target.value) || 0), editTotalSelling) }))} />
                 </div>
                 <div>
-                  <label className="text-xs text-muted-foreground block mb-1">Due (৳)</label>
+                   <label className="text-xs text-muted-foreground block mb-1">Due (BDT)</label>
                   <div className={`${inputClass} bg-muted/50 font-bold ${editDue > 0 ? "text-destructive" : "text-emerald"}`}>
-                    ৳{editDue.toLocaleString()}
+                    BDT {editDue.toLocaleString()}
                   </div>
                 </div>
                 <div>
-                  <label className="text-xs text-muted-foreground block mb-1">Profit (৳)</label>
+                   <label className="text-xs text-muted-foreground block mb-1">Profit (BDT)</label>
                   <div className={`${inputClass} bg-muted/50 font-bold ${editProfit >= 0 ? "text-emerald" : "text-destructive"}`}>
-                    ৳{editProfit.toLocaleString()}
+                    BDT {editProfit.toLocaleString()}
                   </div>
                 </div>
               </div>
@@ -573,7 +573,7 @@ export default function AdminBookingsPage() {
               {/* Payment History Chips */}
               {bookingPayments[b.id] && bookingPayments[b.id].length > 0 && (
                 <div className="mt-2 flex flex-wrap gap-1.5">
-                  <span className="text-[10px] text-muted-foreground uppercase tracking-wide self-center mr-1">পেমেন্ট:</span>
+                  <span className="text-[10px] text-muted-foreground uppercase tracking-wide self-center mr-1">Payments:</span>
                   {bookingPayments[b.id].map((p: any) => (
                     <span key={p.id} className="inline-flex items-center gap-1 text-[11px] bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 rounded-full px-2.5 py-0.5 font-medium">
                       {new Date(p.paid_at).toLocaleDateString("en-GB")}: {fmt(p.amount)}

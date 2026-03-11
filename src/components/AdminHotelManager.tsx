@@ -332,7 +332,7 @@ const AdminHotelManager = ({ hotels, onRefresh }: Props) => {
                                   {room.description && <p className="text-xs text-muted-foreground truncate">{room.description}</p>}
                                   <div className="flex flex-wrap items-center gap-2 mt-1">
                                     <span className="text-xs text-muted-foreground">👥 {room.capacity}</span>
-                                    <span className="text-xs font-semibold text-primary">৳{Number(room.price_per_night).toLocaleString()}/night</span>
+                                    <span className="text-xs font-semibold text-primary">BDT {Number(room.price_per_night).toLocaleString()}/night</span>
                                   </div>
                                   {roomAmenities.length > 0 && (
                                     <div className="flex flex-wrap gap-1 mt-1">
@@ -398,34 +398,34 @@ const AdminHotelManager = ({ hotels, onRefresh }: Props) => {
               )}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <span className="text-muted-foreground text-xs block">শহর</span>
+                  <span className="text-muted-foreground text-xs block">City</span>
                   <span className="font-medium flex items-center gap-1"><MapPin className="h-3 w-3" /> {viewHotel.city}</span>
                 </div>
                 <div>
-                  <span className="text-muted-foreground text-xs block">রেটিং</span>
+                  <span className="text-muted-foreground text-xs block">Rating</span>
                   <span className="font-medium flex items-center gap-1"><Star className="h-3 w-3 text-primary" /> {"★".repeat(viewHotel.star_rating || 0)}</span>
                 </div>
                 <div>
-                  <span className="text-muted-foreground text-xs block">অবস্থান</span>
+                  <span className="text-muted-foreground text-xs block">Location</span>
                   <span className="font-medium">{viewHotel.location}</span>
                 </div>
                 <div>
-                  <span className="text-muted-foreground text-xs block">হারাম থেকে দূরত্ব</span>
+                  <span className="text-muted-foreground text-xs block">Distance to Haram</span>
                   <span className="font-medium">{viewHotel.distance_to_haram || "—"}</span>
                 </div>
                 <div>
-                  <span className="text-muted-foreground text-xs block">স্ট্যাটাস</span>
+                   <span className="text-muted-foreground text-xs block">Status</span>
                   <span className={`font-medium ${viewHotel.is_active ? "text-emerald" : "text-destructive"}`}>
-                    {viewHotel.is_active ? "সক্রিয়" : "নিষ্ক্রিয়"}
+                    {viewHotel.is_active ? "Active" : "Inactive"}
                   </span>
                 </div>
               </div>
               {viewHotel.description && (
-                <div><span className="text-muted-foreground text-xs block">বিবরণ</span><p>{viewHotel.description}</p></div>
+                <div><span className="text-muted-foreground text-xs block">Description</span><p>{viewHotel.description}</p></div>
               )}
               {Array.isArray(viewHotel.amenities) && viewHotel.amenities.length > 0 && (
                 <div>
-                  <span className="text-muted-foreground text-xs block mb-1">সুবিধাসমূহ</span>
+                  <span className="text-muted-foreground text-xs block mb-1">Amenities</span>
                   <div className="flex flex-wrap gap-1">
                     {viewHotel.amenities.map((a: string, i: number) => (
                       <span key={i} className="text-xs bg-secondary px-2 py-0.5 rounded capitalize">{a}</span>
@@ -435,7 +435,7 @@ const AdminHotelManager = ({ hotels, onRefresh }: Props) => {
               )}
               {Array.isArray(viewHotel.gallery) && viewHotel.gallery.length > 0 && (
                 <div>
-                  <span className="text-muted-foreground text-xs block mb-1">গ্যালারি ({viewHotel.gallery.length})</span>
+                  <span className="text-muted-foreground text-xs block mb-1">Gallery ({viewHotel.gallery.length})</span>
                   <div className="grid grid-cols-3 gap-2">
                     {viewHotel.gallery.slice(0, 6).map((url: string, i: number) => (
                       <img key={i} src={url} alt="" className="w-full h-20 rounded object-cover border border-border" />
@@ -445,14 +445,14 @@ const AdminHotelManager = ({ hotels, onRefresh }: Props) => {
               )}
               {viewHotelRooms.length > 0 && (
                 <div>
-                  <span className="text-muted-foreground text-xs block mb-2">কক্ষসমূহ ({viewHotelRooms.length})</span>
+                  <span className="text-muted-foreground text-xs block mb-2">Rooms ({viewHotelRooms.length})</span>
                   <div className="space-y-2">
                     {viewHotelRooms.map((room: any) => (
                       <div key={room.id} className="bg-secondary/30 rounded-lg p-3 flex items-center gap-3">
                         {room.image_url && <img src={room.image_url} alt={room.name} className="w-14 h-14 rounded object-cover flex-shrink-0" />}
                         <div className="flex-1 min-w-0">
                           <p className="font-medium text-sm">{room.name}</p>
-                          <p className="text-xs text-muted-foreground">ধারণক্ষমতা: {room.capacity} জন • ৳{Number(room.price_per_night).toLocaleString()}/রাত</p>
+                          <p className="text-xs text-muted-foreground">Capacity: {room.capacity} guests • BDT {Number(room.price_per_night).toLocaleString()}/night</p>
                           {Array.isArray(room.amenities) && room.amenities.length > 0 && (
                             <div className="flex flex-wrap gap-1 mt-1">
                               {room.amenities.map((a: string, i: number) => <span key={i} className="text-[10px] bg-secondary px-1.5 py-0.5 rounded">{a}</span>)}

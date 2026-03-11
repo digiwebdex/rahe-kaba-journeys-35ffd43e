@@ -4,7 +4,7 @@ import logoImg from "@/assets/logo-nobg.png";
 import { getSignatureData, SignatureData } from "./pdfSignature";
 import { generateTrackingQr, addQrToDoc, addPaymentWatermark, getWatermarkStatus } from "./pdfQrCode";
 import { supabase } from "@/integrations/supabase/client";
-import { registerBengaliFont, addBengaliText, hasBengali } from "./pdfFontLoader";
+import { registerBengaliFont, addBengaliText, hasBengali, bengaliCellHook } from "./pdfFontLoader";
 
 export interface CompanyInfo {
   name?: string;
@@ -429,6 +429,7 @@ function addPaymentHistoryTable(doc: jsPDF, y: number, payments: InvoicePayment[
       }
     },
     margin: { left: 14, right: 14 },
+    didDrawCell: bengaliCellHook,
   });
 
   return ((doc as any).lastAutoTable?.finalY || y + 20) + 6;
@@ -575,6 +576,7 @@ async function generateIndividualInvoice(
       5: { halign: "right", fontStyle: "bold" },
     },
     margin: { left: 14, right: 14 },
+    didDrawCell: bengaliCellHook,
   });
 
   y = ((doc as any).lastAutoTable?.finalY || y + 20) + 6;
@@ -660,6 +662,7 @@ async function generateFamilyInvoice(
       6: { halign: "right", fontStyle: "bold" },
     },
     margin: { left: 14, right: 14 },
+    didDrawCell: bengaliCellHook,
   });
 
   y = ((doc as any).lastAutoTable?.finalY || y + 20) + 6;
@@ -780,6 +783,7 @@ export async function generateReceipt(
     columnStyles: { 0: { fontStyle: "bold", cellWidth: 50 } },
     margin: { left: 14, right: 14 },
     tableWidth: 120,
+    didDrawCell: bengaliCellHook,
   });
 
   y = ((doc as any).lastAutoTable?.finalY || y + 40) + 8;
@@ -892,6 +896,7 @@ export async function generateCommissionReceipt(
     columnStyles: { 0: { fontStyle: "bold", cellWidth: 55 } },
     margin: { left: 14, right: 14 },
     tableWidth: 130,
+    didDrawCell: bengaliCellHook,
   });
 
   y = ((doc as any).lastAutoTable?.finalY || y + 40) + 8;

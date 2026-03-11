@@ -4,7 +4,7 @@ import * as XLSX from "xlsx";
 import logoImg from "@/assets/logo-nobg.png";
 import QRCode from "qrcode";
 import { getSignatureData, SignatureData } from "./pdfSignature";
-import { registerBengaliFont } from "./pdfFontLoader";
+import { registerBengaliFont, bengaliCellHook } from "./pdfFontLoader";
 
 // ── Brand Constants ──
 const GOLD = { r: 198, g: 165, b: 92 };
@@ -238,6 +238,7 @@ export async function exportPDF({ title, columns, rows, summary }: ReportData) {
     headStyles: { fillColor: [DARK.r, DARK.g, DARK.b], font: "NotoSansBengali", fontStyle: "bold", fontSize: 7.5 },
     alternateRowStyles: { fillColor: [250, 249, 247] },
     margin: { left: 14, right: 14 },
+    didDrawCell: bengaliCellHook,
   });
 
   y = (doc as any).lastAutoTable?.finalY + 8 || 50;
@@ -314,6 +315,7 @@ export async function exportHajjiPDF({ title, customers }: HajjiReportData) {
         alternateRowStyles: { fillColor: [250, 249, 247] },
         margin: { left: 18, right: 18 },
         theme: "grid",
+        didDrawCell: bengaliCellHook,
       });
       y = (doc as any).lastAutoTable?.finalY + 10 || y + 30;
     } else {

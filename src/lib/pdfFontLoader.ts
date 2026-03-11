@@ -112,6 +112,72 @@ export async function addBengaliText(
   }
 }
 
+/**
+ * Renders Bengali text on a hidden canvas for use in autoTable cell overlay.
+ */
+function renderBengaliCellImage(
+  text: string,
+  fontSize: number,
+  fontWeight: "normal" | "bold" = "normal"
+): { dataUrl: string; width: number; height: number } {
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d")!;
+  const fontFamily = "'Noto Sans Bengali', 'Kalpurush', sans-serif";
+  const scale = 3;
+  const pxSize = fontSize * 1.33 * scale;
+
+  ctx.font = `${fontWeight} ${pxSize}px ${fontFamily}`;
+  const tw = ctx.measureText(text).width;
+  const th = pxSize * 1.3;
+
+  canvas.width = Math.ceil(tw + 4);
+  canvas.height = Math.ceil(th + 4);
+
+  ctx.font = `${fontWeight} ${pxSize}px ${fontFamily}`;
+  ctx.fillStyle = "#000000";
+  ctx.textBaseline = "top";
+  ctx.fillText(text, 0, 2);
+
+  return {
+    dataUrl: canvas.toDataURL("image/png"),
+    width: canvas.width / scale,
+    height: canvas.height / scale,
+  };
+}
+
+/**
+ * autoTable didDrawCell hook that re-renders Bengali text via canvas overlay.
+ * Use as: didDrawCell: bengaliCellHook
+ */
+export function bengaliCellHook(hookData: any) {
+  if (hookData.section !== "body") return;
+  const cellText = String(hookData.cell.raw ?? "");
+  if (!hasBengali(cellText)) return;
+
+  const doc = hookData.doc as jsPDF;
+  const { x, y, width, height } = hookData.cell;
+  const fontSize = hookData.cell.styles?.fontSize || 7;
+
+  const fillColor = hookData.cell.styles?.fillColor;
+  if (fillColor && Array.isArray(fillColor)) {
+    doc.setFillColor(fillColor[0], fillColor[1], fillColor[2]);
+  } else {
+    doc.setFillColor(255, 255, 255);
+  }
+  doc.rect(x + 0.5, y + 0.5, width - 1, height - 1, "F");
+
+  try {
+    const img = renderBengaliCellImage(cellText, fontSize);
+    const imgH = Math.min(img.height, height - 1);
+    const imgY = y + (height - imgH) / 2;
+    doc.addImage(img.dataUrl, "PNG", x + 1.5, imgY, img.width, imgH);
+  } catch {
+    doc.setFontSize(fontSize);
+    doc.setFont("helvetica", "normal");
+    doc.text(cellText, x + 2, y + height / 2 + 1);
+  }
+}
+
 // ── Legacy jsPDF font registration (still used for autoTable) ──
 import bengaliFontUrl from "@/assets/fonts/NotoSansBengali-Regular.ttf";
 

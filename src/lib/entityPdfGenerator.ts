@@ -5,7 +5,7 @@ import QRCode from "qrcode";
 import { CompanyInfo } from "./invoiceGenerator";
 import { getSignatureData, SignatureData } from "./pdfSignature";
 import { generateTrackingQr, addQrToDoc, addPaymentWatermark, getWatermarkStatus } from "./pdfQrCode";
-import { registerBengaliFont, addBengaliText } from "./pdfFontLoader";
+import { registerBengaliFont, addBengaliText, hasBengali, bengaliCellHook } from "./pdfFontLoader";
 
 const GOLD = { r: 198, g: 165, b: 92 };
 const DARK = { r: 40, g: 46, b: 56 };
@@ -202,6 +202,7 @@ export async function generateMoallemPdf(data: MoallemPdfData, company: CompanyI
       styles: { fontSize: 7, font: "NotoSansBengali" },
       headStyles: { fillColor: [40, 46, 56] },
       margin: { left: 14, right: 14 },
+      didDrawCell: bengaliCellHook,
     });
     y = (doc as any).lastAutoTable?.finalY + 8 || y + 20;
   }
@@ -219,6 +220,7 @@ export async function generateMoallemPdf(data: MoallemPdfData, company: CompanyI
       styles: { fontSize: 7, font: "NotoSansBengali" },
       headStyles: { fillColor: [60, 70, 85] },
       margin: { left: 14, right: 14 },
+      didDrawCell: bengaliCellHook,
     });
     y = (doc as any).lastAutoTable?.finalY + 8 || y + 20;
   }
@@ -236,6 +238,7 @@ export async function generateMoallemPdf(data: MoallemPdfData, company: CompanyI
       styles: { fontSize: 7, font: "NotoSansBengali" },
       headStyles: { fillColor: [60, 70, 85] },
       margin: { left: 14, right: 14 },
+      didDrawCell: bengaliCellHook,
     });
   }
 
@@ -322,6 +325,7 @@ export async function generateSupplierPdf(data: SupplierPdfData, company: Compan
           hookData.cell.styles.fillColor = [245, 245, 245];
         }
       },
+      didDrawCell: bengaliCellHook,
     });
     y = (doc as any).lastAutoTable?.finalY + 8 || y + 20;
   }
@@ -338,6 +342,7 @@ export async function generateSupplierPdf(data: SupplierPdfData, company: Compan
       styles: { fontSize: 7, font: "NotoSansBengali" },
       headStyles: { fillColor: [40, 46, 56] },
       margin: { left: 14, right: 14 },
+      didDrawCell: bengaliCellHook,
     });
     y = (doc as any).lastAutoTable?.finalY + 8 || y + 20;
   }
@@ -355,6 +360,7 @@ export async function generateSupplierPdf(data: SupplierPdfData, company: Compan
       styles: { fontSize: 7, font: "NotoSansBengali" },
       headStyles: { fillColor: [60, 70, 85] },
       margin: { left: 14, right: 14 },
+      didDrawCell: bengaliCellHook,
     });
     y = (doc as any).lastAutoTable?.finalY + 8 || y + 20;
   }
@@ -373,6 +379,7 @@ export async function generateSupplierPdf(data: SupplierPdfData, company: Compan
       styles: { fontSize: 7, font: "NotoSansBengali" },
       headStyles: { fillColor: [40, 46, 56] },
       margin: { left: 14, right: 14 },
+      didDrawCell: bengaliCellHook,
     });
     y = (doc as any).lastAutoTable?.finalY + 8 || y + 20;
   }
@@ -391,6 +398,7 @@ export async function generateSupplierPdf(data: SupplierPdfData, company: Compan
       styles: { fontSize: 7, font: "NotoSansBengali" },
       headStyles: { fillColor: [60, 70, 85] },
       margin: { left: 14, right: 14 },
+      didDrawCell: bengaliCellHook,
     });
   }
 
@@ -466,6 +474,7 @@ export async function generateCustomerPdf(data: CustomerPdfData, company: Compan
       styles: { fontSize: 7, font: "NotoSansBengali" },
       headStyles: { fillColor: [40, 46, 56] },
       margin: { left: 14, right: 14 },
+      didDrawCell: bengaliCellHook,
     });
     y = (doc as any).lastAutoTable?.finalY + 8 || y + 20;
   }
@@ -483,6 +492,7 @@ export async function generateCustomerPdf(data: CustomerPdfData, company: Compan
       styles: { fontSize: 7, font: "NotoSansBengali" },
       headStyles: { fillColor: [60, 70, 85] },
       margin: { left: 14, right: 14 },
+      didDrawCell: bengaliCellHook,
     });
   }
 

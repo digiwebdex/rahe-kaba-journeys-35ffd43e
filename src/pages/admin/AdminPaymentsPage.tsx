@@ -994,7 +994,7 @@ export default function AdminPaymentsPage() {
                     </div>
                   </>
                 )}
-                <div><span className="text-muted-foreground text-xs block">তারিখ</span><span className="font-medium">
+                <div><span className="text-muted-foreground text-xs block">Date</span><span className="font-medium">
                   {viewPayment._type === "customer"
                     ? (viewPayment.paid_at ? new Date(viewPayment.paid_at).toLocaleDateString() : viewPayment.due_date ? new Date(viewPayment.due_date).toLocaleDateString() : "—")
                     : (viewPayment.date ? new Date(viewPayment.date).toLocaleDateString() : "—")

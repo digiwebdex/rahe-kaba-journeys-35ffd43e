@@ -332,7 +332,7 @@ export default function AdminAccountingPage() {
         <div className="flex items-center gap-2">
           {canModify && tab === "expenses" && (
             <button onClick={() => setShowForm(true)} className="inline-flex items-center gap-1.5 text-sm bg-gradient-gold text-primary-foreground font-semibold px-4 py-2 rounded-md hover:opacity-90 transition-opacity shadow-gold">
-              <Plus className="h-4 w-4" /> নতুন খরচ
+              <Plus className="h-4 w-4" /> New Expense
             </button>
           )}
           <button onClick={handleTopExportPDF} className="inline-flex items-center gap-1 text-xs bg-secondary px-3 py-1.5 rounded-md hover:bg-muted transition-colors"><FileDown className="h-3.5 w-3.5" />PDF</button>

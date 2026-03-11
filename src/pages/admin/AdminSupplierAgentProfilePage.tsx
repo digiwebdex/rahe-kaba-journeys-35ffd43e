@@ -99,7 +99,7 @@ export default function AdminSupplierAgentProfilePage() {
 
   const handleRecordPayment = async () => {
     const amount = parseFloat(paymentForm.amount);
-    if (!amount || amount <= 0) { toast({ title: "সঠিক পরিমাণ দিন", variant: "destructive" }); return; }
+    if (!amount || amount <= 0) { toast({ title: "Please enter a valid amount", variant: "destructive" }); return; }
     setPaymentLoading(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -117,19 +117,19 @@ export default function AdminSupplierAgentProfilePage() {
       });
       if (apErr) throw apErr;
       const { error: expErr } = await supabase.from("expenses").insert({
-        title: `সাপ্লায়ার পেমেন্ট — ${agent?.agent_name || ""}`,
+        title: `Supplier Payment — ${agent?.agent_name || ""}`,
         amount, category: "supplier_payment", expense_type: "supplier",
         date: paymentForm.date,
         note: paymentForm.notes.trim() || `Payment to supplier: ${agent?.agent_name}`,
         wallet_account_id: paymentForm.wallet_account_id || null,
       });
       if (expErr) throw expErr;
-      toast({ title: "পেমেন্ট রেকর্ড হয়েছে" });
+      toast({ title: "Payment recorded successfully" });
       setShowPaymentForm(false);
       setPaymentForm(emptyForm);
       loadData();
     } catch (err: any) {
-      toast({ title: "ত্রুটি", description: err.message, variant: "destructive" });
+      toast({ title: "Error", description: err.message, variant: "destructive" });
     } finally { setPaymentLoading(false); }
   };
 
@@ -145,21 +145,21 @@ export default function AdminSupplierAgentProfilePage() {
       amount: parseFloat(editPaymentForm.amount), payment_method: editPaymentForm.payment_method,
       date: editPaymentForm.date || undefined, notes: editPaymentForm.notes || null,
     }).eq("id", editPaymentId);
-    if (error) { toast({ title: "আপডেট ব্যর্থ", description: error.message, variant: "destructive" }); return; }
-    toast({ title: "পেমেন্ট আপডেট হয়েছে" });
+    if (error) { toast({ title: "Update failed", description: error.message, variant: "destructive" }); return; }
+    toast({ title: "Payment updated successfully" });
     setEditPaymentId(null); setShowEditPaymentModal(false); loadData();
   };
 
   const confirmDeletePayment = async () => {
     if (!deletePaymentId) return;
     const { error } = await supabase.from("supplier_agent_payments").delete().eq("id", deletePaymentId);
-    if (error) { toast({ title: "মুছতে ব্যর্থ", description: error.message, variant: "destructive" }); return; }
-    toast({ title: "পেমেন্ট মুছে ফেলা হয়েছে" });
+    if (error) { toast({ title: "Failed to delete", description: error.message, variant: "destructive" }); return; }
+    toast({ title: "Payment deleted successfully" });
     setDeletePaymentId(null); loadData();
   };
 
   if (loading) return <div className="flex justify-center py-20"><div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>;
-  if (!agent) return <div className="text-center py-20 text-muted-foreground">সাপ্লায়ার এজেন্ট পাওয়া যায়নি</div>;
+  if (!agent) return <div className="text-center py-20 text-muted-foreground">Supplier agent not found</div>;
 
   const itemsTotal = supplierItems.reduce((s: number, i: any) => s + Number(i.total_amount || 0), 0);
   const totalCost = bookings.reduce((s, b) => s + Number(b.total_cost || 0), 0);
@@ -220,7 +220,7 @@ export default function AdminSupplierAgentProfilePage() {
       },
     };
     await generateSupplierPdf(pdfData, company);
-    toast({ title: "PDF ডাউনলোড হয়েছে" });
+    toast({ title: "PDF downloaded successfully" });
   };
 
   return (
@@ -230,12 +230,12 @@ export default function AdminSupplierAgentProfilePage() {
         <button onClick={() => navigate("/admin/supplier-agents")} className="text-muted-foreground hover:text-foreground"><ArrowLeft className="h-5 w-5" /></button>
         <div className="flex-1 min-w-0">
           <h1 className="text-xl font-bold text-foreground flex items-center gap-2"><Truck className="h-5 w-5 text-primary" />{agent.agent_name}</h1>
-          <p className="text-sm text-muted-foreground">সাপ্লায়ার এজেন্ট প্রোফাইল</p>
+          <p className="text-sm text-muted-foreground">Supplier Agent Profile</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          <Button variant="outline" size="sm" onClick={handleDownloadStatement}><Download className="h-4 w-4 mr-1" /> সম্পূর্ণ সারসংক্ষেপ PDF</Button>
-          {!isViewer && <Button size="sm" onClick={() => setShowPaymentForm(true)}><Plus className="h-4 w-4 mr-1" /> পেমেন্ট</Button>}
-          <Badge variant={agent.status === "active" ? "default" : "secondary"}>{agent.status === "active" ? "সক্রিয়" : "নিষ্ক্রিয়"}</Badge>
+          <Button variant="outline" size="sm" onClick={handleDownloadStatement}><Download className="h-4 w-4 mr-1" /> Full Statement PDF</Button>
+          {!isViewer && <Button size="sm" onClick={() => setShowPaymentForm(true)}><Plus className="h-4 w-4 mr-1" /> Payment</Button>}
+          <Badge variant={agent.status === "active" ? "default" : "secondary"}>{agent.status === "active" ? "Active" : "Inactive"}</Badge>
         </div>
       </div>
 
@@ -245,7 +245,7 @@ export default function AdminSupplierAgentProfilePage() {
           <div className="flex items-center gap-2"><Building2 className="h-4 w-4 text-muted-foreground" />{agent.company_name || "—"}</div>
           <div className="flex items-center gap-2"><Phone className="h-4 w-4 text-muted-foreground" />{agent.phone || "—"}</div>
           <div className="flex items-center gap-2"><MapPin className="h-4 w-4 text-muted-foreground" />{agent.address || "—"}</div>
-          <div className="flex items-center gap-2"><FileText className="h-4 w-4 text-muted-foreground" />তৈরি: {format(new Date(agent.created_at), "dd MMM yyyy")}</div>
+          <div className="flex items-center gap-2"><FileText className="h-4 w-4 text-muted-foreground" />Created: {format(new Date(agent.created_at), "dd MMM yyyy")}</div>
         </div>
       </CardContent></Card>
 
@@ -254,22 +254,22 @@ export default function AdminSupplierAgentProfilePage() {
         <Card><CardContent className="pt-4 pb-4 text-center">
           <Package className="h-5 w-5 text-primary mx-auto mb-1" />
           <p className="text-lg font-bold">{fmt(totalBilled)}</p>
-          <p className="text-[10px] text-muted-foreground uppercase">মোট বিল</p>
+          <p className="text-[10px] text-muted-foreground uppercase">Total Billed</p>
         </CardContent></Card>
         <Card><CardContent className="pt-4 pb-4 text-center">
           <CreditCard className="h-5 w-5 text-blue-500 mx-auto mb-1" />
           <p className="text-lg font-bold">{fmt(totalCost)}</p>
-          <p className="text-[10px] text-muted-foreground uppercase">বুকিং খরচ</p>
+          <p className="text-[10px] text-muted-foreground uppercase">Booking Cost</p>
         </CardContent></Card>
         <Card><CardContent className="pt-4 pb-4 text-center">
           <Wallet className="h-5 w-5 text-emerald-500 mx-auto mb-1" />
           <p className="text-lg font-bold text-emerald-500">{fmt(totalAgentPaid)}</p>
-          <p className="text-[10px] text-muted-foreground uppercase">মোট পরিশোধিত</p>
+          <p className="text-[10px] text-muted-foreground uppercase">Total Paid</p>
         </CardContent></Card>
         <Card><CardContent className="pt-4 pb-4 text-center">
           <TrendingDown className="h-5 w-5 text-destructive mx-auto mb-1" />
           <p className="text-lg font-bold text-destructive">{fmt(totalDue)}</p>
-          <p className="text-[10px] text-muted-foreground uppercase">মোট বকেয়া</p>
+          <p className="text-[10px] text-muted-foreground uppercase">Total Due</p>
         </CardContent></Card>
       </div>
 
@@ -285,29 +285,29 @@ export default function AdminSupplierAgentProfilePage() {
       <Card>
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between flex-wrap gap-2">
-            <CardTitle className="text-base flex items-center gap-2"><Wallet className="h-4 w-4 text-primary" /> পেমেন্ট হিস্ট্রি ({filteredPayments.length})</CardTitle>
+            <CardTitle className="text-base flex items-center gap-2"><Wallet className="h-4 w-4 text-primary" /> Payment History ({filteredPayments.length})</CardTitle>
             <div className="flex items-center gap-2 flex-wrap">
               <div className="flex items-center gap-1.5">
-                <span className="text-xs text-muted-foreground">থেকে:</span>
+                <span className="text-xs text-muted-foreground">From:</span>
                 <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="w-36 h-8 text-xs" />
               </div>
               <div className="flex items-center gap-1.5">
-                <span className="text-xs text-muted-foreground">পর্যন্ত:</span>
+                <span className="text-xs text-muted-foreground">To:</span>
                 <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="w-36 h-8 text-xs" />
               </div>
-              {(dateFrom || dateTo) && <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => { setDateFrom(""); setDateTo(""); }}>রিসেট</Button>}
+              {(dateFrom || dateTo) && <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => { setDateFrom(""); setDateTo(""); }}>Reset</Button>}
             </div>
           </div>
         </CardHeader>
         <CardContent>
           {filteredPayments.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-6">কোনো পেমেন্ট নেই</p>
+            <p className="text-sm text-muted-foreground text-center py-6">No payments yet</p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead><tr className="border-b border-border text-left text-muted-foreground text-xs">
-                  <th className="pb-2 pr-3">তারিখ</th><th className="pb-2 pr-3">সার্ভিস</th><th className="pb-2 pr-3">পরিমাণ</th><th className="pb-2 pr-3">পদ্ধতি</th><th className="pb-2 pr-3">বুকিং</th><th className="pb-2 pr-3">নোট</th>
-                  {!isViewer && <th className="pb-2 w-16">অ্যাকশন</th>}
+                  <th className="pb-2 pr-3">Date</th><th className="pb-2 pr-3">Service</th><th className="pb-2 pr-3">Amount</th><th className="pb-2 pr-3">Method</th><th className="pb-2 pr-3">Booking</th><th className="pb-2 pr-3">Notes</th>
+                  {!isViewer && <th className="pb-2 w-16">Action</th>}
                 </tr></thead>
                 <tbody>
                   {filteredPayments.map((p: any) => {
@@ -340,7 +340,6 @@ export default function AdminSupplierAgentProfilePage() {
         </CardContent>
       </Card>
 
-      {/* Bookings */}
       {/* Supplier Contracts */}
       <SupplierContractManager
         supplierId={id!}
@@ -352,20 +351,20 @@ export default function AdminSupplierAgentProfilePage() {
         onRefresh={loadData}
       />
 
-      {/* Bookings (existing) */}
+      {/* Bookings */}
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2"><FileText className="h-4 w-4 text-primary" /> বুকিং তালিকা ({bookings.length})</CardTitle>
+          <CardTitle className="text-base flex items-center gap-2"><FileText className="h-4 w-4 text-primary" /> Booking List ({bookings.length})</CardTitle>
         </CardHeader>
         <CardContent>
           {bookings.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-6">কোনো বুকিং নেই</p>
+            <p className="text-sm text-muted-foreground text-center py-6">No bookings</p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead><tr className="border-b border-border text-left text-muted-foreground text-xs">
-                  <th className="pb-2 pr-3">ট্র্যাকিং</th><th className="pb-2 pr-3">কাস্টমার</th><th className="pb-2 pr-3">মোট খরচ</th>
-                  <th className="pb-2 pr-3">পরিশোধিত</th><th className="pb-2 pr-3">বকেয়া</th><th className="pb-2">স্ট্যাটাস</th>
+                  <th className="pb-2 pr-3">Tracking</th><th className="pb-2 pr-3">Customer</th><th className="pb-2 pr-3">Total Cost</th>
+                  <th className="pb-2 pr-3">Paid</th><th className="pb-2 pr-3">Due</th><th className="pb-2">Status</th>
                 </tr></thead>
                 <tbody>
                   {bookings.map(b => (
@@ -388,40 +387,40 @@ export default function AdminSupplierAgentProfilePage() {
       {/* Payment Dialog */}
       <Dialog open={showPaymentForm} onOpenChange={setShowPaymentForm}>
         <DialogContent>
-          <DialogHeader><DialogTitle>সাপ্লায়ার পেমেন্ট রেকর্ড</DialogTitle><DialogDescription>পেমেন্ট তথ্য দিন</DialogDescription></DialogHeader>
+          <DialogHeader><DialogTitle>Record Supplier Payment</DialogTitle><DialogDescription>Enter payment details</DialogDescription></DialogHeader>
           <div className="space-y-3">
-            <div><label className="text-xs text-muted-foreground block mb-1">সার্ভিস ধরন</label>
+            <div><label className="text-xs text-muted-foreground block mb-1">Service Type</label>
               <Select value={paymentForm.service_type || ""} onValueChange={(v) => setPaymentForm({ ...paymentForm, service_type: v })}>
-                <SelectTrigger><SelectValue placeholder="-- সার্ভিস নির্বাচন করুন --" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder="-- Select Service --" /></SelectTrigger>
                 <SelectContent>{SERVICE_TYPES.filter(s => s.value).map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}</SelectContent>
               </Select></div>
-            <div><label className="text-xs text-muted-foreground block mb-1">পরিমাণ (৳) *</label>
+            <div><label className="text-xs text-muted-foreground block mb-1">Amount (BDT) *</label>
               <Input type="number" min={0} value={paymentForm.amount} onChange={(e) => setPaymentForm({ ...paymentForm, amount: e.target.value })} /></div>
-            <div><label className="text-xs text-muted-foreground block mb-1">পদ্ধতি</label>
+            <div><label className="text-xs text-muted-foreground block mb-1">Method</label>
               <Select value={paymentForm.payment_method} onValueChange={(v) => setPaymentForm({ ...paymentForm, payment_method: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>{PAYMENT_METHODS.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}</SelectContent>
               </Select></div>
-            <div><label className="text-xs text-muted-foreground block mb-1">তারিখ</label>
+            <div><label className="text-xs text-muted-foreground block mb-1">Date</label>
               <Input type="date" value={paymentForm.date} onChange={(e) => setPaymentForm({ ...paymentForm, date: e.target.value })} /></div>
-            <div><label className="text-xs text-muted-foreground block mb-1">বুকিং (ঐচ্ছিক)</label>
+            <div><label className="text-xs text-muted-foreground block mb-1">Booking (Optional)</label>
               <select className="w-full bg-secondary border border-border rounded-md px-3 py-2 text-sm" value={paymentForm.booking_id} onChange={(e) => setPaymentForm({ ...paymentForm, booking_id: e.target.value })}>
-                <option value="">-- সব বুকিং --</option>
+                <option value="">-- All Bookings --</option>
                 {bookings.map(b => <option key={b.id} value={b.id}>{b.tracking_id} — Due: {fmt(b.supplier_due)}</option>)}
               </select></div>
             {walletAccounts.length > 0 && (
-              <div><label className="text-xs text-muted-foreground block mb-1">ওয়ালেট</label>
+              <div><label className="text-xs text-muted-foreground block mb-1">Wallet</label>
                 <Select value={paymentForm.wallet_account_id} onValueChange={(v) => setPaymentForm({ ...paymentForm, wallet_account_id: v })}>
-                  <SelectTrigger><SelectValue placeholder="-- ওয়ালেট --" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder="-- Wallet --" /></SelectTrigger>
                   <SelectContent>{walletAccounts.map(a => <SelectItem key={a.id} value={a.id}>{a.name} ({fmt(a.balance)})</SelectItem>)}</SelectContent>
                 </Select></div>
             )}
-            <div><label className="text-xs text-muted-foreground block mb-1">নোট</label>
-              <Input value={paymentForm.notes} onChange={(e) => setPaymentForm({ ...paymentForm, notes: e.target.value })} placeholder="নোট..." /></div>
+            <div><label className="text-xs text-muted-foreground block mb-1">Notes</label>
+              <Input value={paymentForm.notes} onChange={(e) => setPaymentForm({ ...paymentForm, notes: e.target.value })} placeholder="Notes..." /></div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowPaymentForm(false)}>বাতিল</Button>
-            <Button onClick={handleRecordPayment} disabled={paymentLoading}>{paymentLoading ? "সেভ হচ্ছে..." : "সেভ করুন"}</Button>
+            <Button variant="outline" onClick={() => setShowPaymentForm(false)}>Cancel</Button>
+            <Button onClick={handleRecordPayment} disabled={paymentLoading}>{paymentLoading ? "Saving..." : "Save"}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -429,23 +428,23 @@ export default function AdminSupplierAgentProfilePage() {
       {/* Edit Payment Modal */}
       <Dialog open={showEditPaymentModal} onOpenChange={(o) => { if (!o) { setShowEditPaymentModal(false); setEditPaymentId(null); } }}>
         <DialogContent>
-          <DialogHeader><DialogTitle>সাপ্লায়ার পেমেন্ট সম্পাদনা</DialogTitle><DialogDescription>পেমেন্ট তথ্য পরিবর্তন করুন</DialogDescription></DialogHeader>
+          <DialogHeader><DialogTitle>Edit Supplier Payment</DialogTitle><DialogDescription>Modify payment details</DialogDescription></DialogHeader>
           <div className="space-y-3">
-            <div><label className="text-xs text-muted-foreground block mb-1">পরিমাণ (৳) *</label>
+            <div><label className="text-xs text-muted-foreground block mb-1">Amount (BDT) *</label>
               <Input type="number" min={0} value={editPaymentForm.amount} onChange={(e) => setEditPaymentForm({ ...editPaymentForm, amount: e.target.value })} /></div>
-            <div><label className="text-xs text-muted-foreground block mb-1">পদ্ধতি</label>
+            <div><label className="text-xs text-muted-foreground block mb-1">Method</label>
               <Select value={editPaymentForm.payment_method} onValueChange={(v) => setEditPaymentForm({ ...editPaymentForm, payment_method: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>{PAYMENT_METHODS.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}</SelectContent>
               </Select></div>
-            <div><label className="text-xs text-muted-foreground block mb-1">তারিখ</label>
+            <div><label className="text-xs text-muted-foreground block mb-1">Date</label>
               <Input type="date" value={editPaymentForm.date} onChange={(e) => setEditPaymentForm({ ...editPaymentForm, date: e.target.value })} /></div>
-            <div><label className="text-xs text-muted-foreground block mb-1">নোট</label>
+            <div><label className="text-xs text-muted-foreground block mb-1">Notes</label>
               <Input value={editPaymentForm.notes} onChange={(e) => setEditPaymentForm({ ...editPaymentForm, notes: e.target.value })} /></div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => { setShowEditPaymentModal(false); setEditPaymentId(null); }}>বাতিল</Button>
-            <Button onClick={handleSavePaymentEdit}>আপডেট করুন</Button>
+            <Button variant="outline" onClick={() => { setShowEditPaymentModal(false); setEditPaymentId(null); }}>Cancel</Button>
+            <Button onClick={handleSavePaymentEdit}>Update</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -454,11 +453,11 @@ export default function AdminSupplierAgentProfilePage() {
       {deletePaymentId && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50" onClick={() => setDeletePaymentId(null)}>
           <div className="bg-card border border-border rounded-xl p-6 max-w-sm mx-4" onClick={(e) => e.stopPropagation()}>
-            <h3 className="font-heading font-bold text-lg mb-2">পেমেন্ট মুছবেন?</h3>
-            <p className="text-sm text-muted-foreground mb-4">এই কাজটি পূর্বাবস্থায় ফেরানো যাবে না।</p>
+            <h3 className="font-heading font-bold text-lg mb-2">Delete Payment?</h3>
+            <p className="text-sm text-muted-foreground mb-4">This action cannot be undone.</p>
             <div className="flex gap-3 justify-end">
-              <Button variant="outline" onClick={() => setDeletePaymentId(null)}>বাতিল</Button>
-              <Button variant="destructive" onClick={confirmDeletePayment}>মুছুন</Button>
+              <Button variant="outline" onClick={() => setDeletePaymentId(null)}>Cancel</Button>
+              <Button variant="destructive" onClick={confirmDeletePayment}>Delete</Button>
             </div>
           </div>
         </div>

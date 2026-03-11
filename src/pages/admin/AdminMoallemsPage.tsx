@@ -87,12 +87,12 @@ export default function AdminMoallemsPage() {
     };
     if (editId) {
       const { error } = await supabase.from("moallems").update(payload).eq("id", editId);
-      if (error) { toast({ title: "আপডেট ব্যর্থ", description: error.message, variant: "destructive" }); return; }
-      toast({ title: "মোয়াল্লেম আপডেট হয়েছে" });
+      if (error) { toast({ title: "Update failed", description: error.message, variant: "destructive" }); return; }
+      toast({ title: "Moallem updated successfully" });
     } else {
       const { error } = await supabase.from("moallems").insert(payload);
-      if (error) { toast({ title: "তৈরি ব্যর্থ", description: error.message, variant: "destructive" }); return; }
-      toast({ title: "মোয়াল্লেম তৈরি হয়েছে" });
+      if (error) { toast({ title: "Creation failed", description: error.message, variant: "destructive" }); return; }
+      toast({ title: "Moallem created successfully" });
     }
     setShowForm(false); setEditId(null); setForm(emptyForm); fetchData();
   };
@@ -105,8 +105,8 @@ export default function AdminMoallemsPage() {
   const handleDelete = async () => {
     if (!deleteId) return;
     const { error } = await supabase.from("moallems").delete().eq("id", deleteId);
-    if (error) { toast({ title: "মুছতে ব্যর্থ", description: error.message, variant: "destructive" }); return; }
-    toast({ title: "মোয়াল্লেম মুছে ফেলা হয়েছে" }); setDeleteId(null); fetchData();
+    if (error) { toast({ title: "Failed to delete", description: error.message, variant: "destructive" }); return; }
+    toast({ title: "Moallem deleted successfully" }); setDeleteId(null); fetchData();
   };
 
   const filtered = moallems.filter(m => {
@@ -122,10 +122,10 @@ export default function AdminMoallemsPage() {
   const getActions = (m: Moallem): ActionItem[] => {
     const stats = moallemStats[m.id] || { hajji: 0, received: 0, due: 0 };
     return [
-      { label: "দেখুন", icon: <Eye className="h-3.5 w-3.5" />, onClick: () => navigate(`/admin/moallems/${m.id}`) },
+      { label: "View", icon: <Eye className="h-3.5 w-3.5" />, onClick: () => navigate(`/admin/moallems/${m.id}`) },
       { label: "PDF", icon: <FileDown className="h-3.5 w-3.5" />, onClick: () => exportPDF({ title: `Moallem - ${m.name}`, columns: ["Name", "Phone", "Pilgrim Count", "Contract Amount", "Total Paid", "Total Due"], rows: [[m.name, m.phone || "—", m.contracted_hajji || 0, m.contracted_amount || 0, stats.received, stats.due]], summary: [`Total Paid: BDT ${stats.received.toLocaleString("en-IN")}`, `Total Due: BDT ${stats.due.toLocaleString("en-IN")}`] }) },
-      { label: "সম্পাদনা", icon: <Pencil className="h-3.5 w-3.5" />, onClick: () => startEdit(m), variant: "warning", hidden: isViewer },
-      { label: "মুছুন", icon: <Trash2 className="h-3.5 w-3.5" />, onClick: () => setDeleteId(m.id), variant: "destructive", hidden: isViewer, separator: true },
+      { label: "Edit", icon: <Pencil className="h-3.5 w-3.5" />, onClick: () => startEdit(m), variant: "warning", hidden: isViewer },
+      { label: "Delete", icon: <Trash2 className="h-3.5 w-3.5" />, onClick: () => setDeleteId(m.id), variant: "destructive", hidden: isViewer, separator: true },
     ];
   };
 
@@ -143,16 +143,16 @@ export default function AdminMoallemsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-            <Users className="h-6 w-6 text-primary" /> মোয়াল্লেম ম্যানেজমেন্ট
+            <Users className="h-6 w-6 text-primary" /> Moallem Management
           </h1>
-          <p className="text-muted-foreground text-sm">মোট {moallems.length} জন মোয়াল্লেম</p>
+          <p className="text-muted-foreground text-sm">Total {moallems.length} Moallems</p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={() => { const rows = filtered.map(m => { const s = moallemStats[m.id] || { hajji: 0, received: 0, due: 0 }; return [m.name, m.phone || "—", m.contracted_hajji || 0, m.contracted_amount || 0, s.received, s.due]; }); exportPDF({ title: "Moallems Report", columns: ["Name", "Phone", "Pilgrim Count", "Contract Amount", "Total Paid", "Total Due"], rows, summary: [`Total Paid: BDT ${totals.received.toLocaleString("en-IN")}`, `Total Due: BDT ${totals.due.toLocaleString("en-IN")}`] }); }}><FileDown className="h-4 w-4 mr-1" />PDF</Button>
-          <Button variant="outline" size="sm" onClick={() => { const rows = filtered.map(m => { const s = moallemStats[m.id] || { hajji: 0, received: 0, due: 0 }; return [m.name, m.phone || "—", m.contracted_hajji || 0, m.contracted_amount || 0, s.received, s.due]; }); exportExcel({ title: "Moallems Report", columns: ["Name", "Phone", "Pilgrim Count", "Contract Amount", "Total Paid", "Total Due"], rows, summary: [`Total Paid: ৳${totals.received.toLocaleString()}`, `Total Due: ৳${totals.due.toLocaleString()}`] }); }}><FileSpreadsheet className="h-4 w-4 mr-1" />Excel</Button>
+          <Button variant="outline" size="sm" onClick={() => { const rows = filtered.map(m => { const s = moallemStats[m.id] || { hajji: 0, received: 0, due: 0 }; return [m.name, m.phone || "—", m.contracted_hajji || 0, m.contracted_amount || 0, s.received, s.due]; }); exportExcel({ title: "Moallems Report", columns: ["Name", "Phone", "Pilgrim Count", "Contract Amount", "Total Paid", "Total Due"], rows, summary: [`Total Paid: BDT ${totals.received.toLocaleString()}`, `Total Due: BDT ${totals.due.toLocaleString()}`] }); }}><FileSpreadsheet className="h-4 w-4 mr-1" />Excel</Button>
           {!isViewer && (
             <Button onClick={() => { setForm(emptyForm); setEditId(null); setShowForm(true); }}>
-              <Plus className="h-4 w-4 mr-1" /> নতুন মোয়াল্লেম
+              <Plus className="h-4 w-4 mr-1" /> New Moallem
             </Button>
           )}
         </div>
@@ -161,23 +161,23 @@ export default function AdminMoallemsPage() {
       {/* KPI Summary */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
         <div className="bg-card border border-border rounded-xl p-4">
-          <p className="text-[11px] text-muted-foreground uppercase tracking-wider">মোট মোয়াল্লেম</p>
+          <p className="text-[11px] text-muted-foreground uppercase tracking-wider">Total Moallems</p>
           <p className="text-lg font-bold text-foreground">{moallems.length}</p>
         </div>
         <div className="bg-card border border-border rounded-xl p-4">
-          <p className="text-[11px] text-muted-foreground uppercase tracking-wider">চুক্তিকৃত হাজী</p>
+          <p className="text-[11px] text-muted-foreground uppercase tracking-wider">Contracted Pilgrims</p>
           <p className="text-lg font-bold text-foreground">{totals.contractedHajji}</p>
         </div>
         <div className="bg-card border border-border rounded-xl p-4">
-          <p className="text-[11px] text-muted-foreground uppercase tracking-wider">চুক্তিকৃত টাকা</p>
+          <p className="text-[11px] text-muted-foreground uppercase tracking-wider">Contracted Amount</p>
           <p className="text-lg font-bold text-foreground">{fmt(totals.contractedAmount)}</p>
         </div>
         <div className="bg-card border border-border rounded-xl p-4">
-          <p className="text-[11px] text-muted-foreground uppercase tracking-wider">মোট প্রাপ্ত</p>
+          <p className="text-[11px] text-muted-foreground uppercase tracking-wider">Total Received</p>
           <p className="text-lg font-bold text-emerald-600">{fmt(totals.received)}</p>
         </div>
         <div className="bg-card border border-border rounded-xl p-4">
-          <p className="text-[11px] text-muted-foreground uppercase tracking-wider">মোট বকেয়া</p>
+          <p className="text-[11px] text-muted-foreground uppercase tracking-wider">Total Due</p>
           <p className="text-lg font-bold text-destructive">{fmt(totals.due)}</p>
         </div>
       </div>
@@ -185,14 +185,14 @@ export default function AdminMoallemsPage() {
       {/* Search */}
       <div className="relative max-w-sm">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input placeholder="নাম, ফোন বা NID দিয়ে খুঁজুন..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
+        <Input placeholder="Search by name, phone or NID..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
       </div>
 
       {/* Table */}
       {loading ? (
         <div className="flex justify-center py-12"><div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>
       ) : filtered.length === 0 ? (
-        <p className="text-center text-muted-foreground py-12">কোনো মোয়াল্লেম পাওয়া যায়নি</p>
+        <p className="text-center text-muted-foreground py-12">No moallems found</p>
       ) : (
         <div className="bg-card border border-border rounded-xl overflow-hidden">
           <div className="overflow-x-auto">
@@ -200,14 +200,14 @@ export default function AdminMoallemsPage() {
               <TableHeader>
                 <TableRow className="bg-muted/40">
                   <TableHead className="w-12 text-center">SL</TableHead>
-                  <TableHead>নাম</TableHead>
-                  <TableHead>ফোন</TableHead>
-                  <TableHead className="text-right">চুক্তিকৃত হাজী</TableHead>
-                  <TableHead className="text-right">চুক্তিকৃত টাকা</TableHead>
-                  <TableHead className="text-right">মোট প্রাপ্ত</TableHead>
-                  <TableHead className="text-right">মোট বকেয়া</TableHead>
-                  <TableHead className="text-center">স্ট্যাটাস</TableHead>
-                  <TableHead className="text-center w-24">অ্যাকশন</TableHead>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Phone</TableHead>
+                  <TableHead className="text-right">Contracted Pilgrims</TableHead>
+                  <TableHead className="text-right">Contracted Amount</TableHead>
+                  <TableHead className="text-right">Total Received</TableHead>
+                  <TableHead className="text-right">Total Due</TableHead>
+                  <TableHead className="text-center">Status</TableHead>
+                  <TableHead className="text-center w-24">Action</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -224,7 +224,7 @@ export default function AdminMoallemsPage() {
                       <TableCell className="text-right font-medium text-destructive">{fmt(stats.due)}</TableCell>
                       <TableCell className="text-center">
                         <Badge variant={m.status === "active" ? "default" : "secondary"} className="text-[10px]">
-                          {m.status === "active" ? "সক্রিয়" : "নিষ্ক্রিয়"}
+                          {m.status === "active" ? "Active" : "Inactive"}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-center" onClick={e => e.stopPropagation()}>
@@ -241,7 +241,7 @@ export default function AdminMoallemsPage() {
           {totalPages > 1 && (
             <div className="flex items-center justify-between px-4 py-3 border-t border-border">
               <p className="text-xs text-muted-foreground">
-                দেখাচ্ছে {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filtered.length)} / {filtered.length}
+                Showing {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filtered.length)} of {filtered.length}
               </p>
               <div className="flex items-center gap-1">
                 <Button variant="ghost" size="sm" disabled={page <= 1} onClick={() => setPage(p => p - 1)}>
@@ -261,35 +261,35 @@ export default function AdminMoallemsPage() {
       <Dialog open={showForm} onOpenChange={o => { if (!o) { setShowForm(false); setEditId(null); } }}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>{editId ? "মোয়াল্লেম সম্পাদনা" : "নতুন মোয়াল্লেম"}</DialogTitle>
-            <DialogDescription>মোয়াল্লেমের তথ্য পূরণ করুন</DialogDescription>
+            <DialogTitle>{editId ? "Edit Moallem" : "New Moallem"}</DialogTitle>
+            <DialogDescription>Fill in the moallem details</DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
-            <div><label className="text-sm font-medium">নাম *</label><Input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} /></div>
+            <div><label className="text-sm font-medium">Name *</label><Input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} /></div>
             <div>
               <label className="text-sm font-medium">Phone</label>
               <Input value={form.phone} onChange={e => handlePhoneChange(e.target.value, (v) => setForm({ ...form, phone: v }))} placeholder="01XXXXXXXXX" maxLength={15} />
               {form.phone.trim() && getPhoneError(form.phone) && <p className="text-xs text-destructive mt-1">{getPhoneError(form.phone)}</p>}
             </div>
-            <div><label className="text-sm font-medium">ঠিকানা</label><Input value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} /></div>
-            <div><label className="text-sm font-medium">NID নম্বর</label><Input value={form.nid_number} onChange={e => setForm({ ...form, nid_number: e.target.value })} /></div>
-            <div><label className="text-sm font-medium">চুক্তির তারিখ</label><Input type="date" value={form.contract_date} onChange={e => setForm({ ...form, contract_date: e.target.value })} /></div>
+            <div><label className="text-sm font-medium">Address</label><Input value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} /></div>
+            <div><label className="text-sm font-medium">NID Number</label><Input value={form.nid_number} onChange={e => setForm({ ...form, nid_number: e.target.value })} /></div>
+            <div><label className="text-sm font-medium">Contract Date</label><Input type="date" value={form.contract_date} onChange={e => setForm({ ...form, contract_date: e.target.value })} /></div>
             <div className="grid grid-cols-2 gap-3">
-              <div><label className="text-sm font-medium">চুক্তিকৃত হাজী সংখ্যা</label><Input type="number" min={0} value={form.contracted_hajji} onChange={e => setForm({ ...form, contracted_hajji: e.target.value })} placeholder="0" /></div>
-              <div><label className="text-sm font-medium">চুক্তিকৃত মোট টাকা (৳)</label><Input type="number" min={0} value={form.contracted_amount} onChange={e => setForm({ ...form, contracted_amount: e.target.value })} placeholder="0" /></div>
+              <div><label className="text-sm font-medium">Contracted Pilgrims</label><Input type="number" min={0} value={form.contracted_hajji} onChange={e => setForm({ ...form, contracted_hajji: e.target.value })} placeholder="0" /></div>
+              <div><label className="text-sm font-medium">Contracted Amount (BDT)</label><Input type="number" min={0} value={form.contracted_amount} onChange={e => setForm({ ...form, contracted_amount: e.target.value })} placeholder="0" /></div>
             </div>
             <div>
-              <label className="text-sm font-medium">স্ট্যাটাস</label>
+              <label className="text-sm font-medium">Status</label>
               <Select value={form.status} onValueChange={v => setForm({ ...form, status: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent><SelectItem value="active">সক্রিয়</SelectItem><SelectItem value="inactive">নিষ্ক্রিয়</SelectItem></SelectContent>
+                <SelectContent><SelectItem value="active">Active</SelectItem><SelectItem value="inactive">Inactive</SelectItem></SelectContent>
               </Select>
             </div>
-            <div><label className="text-sm font-medium">নোট</label><Textarea value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} rows={3} /></div>
+            <div><label className="text-sm font-medium">Notes</label><Textarea value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} rows={3} /></div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => { setShowForm(false); setEditId(null); }}>বাতিল</Button>
-            <Button onClick={handleSave}>{editId ? "আপডেট" : "তৈরি করুন"}</Button>
+            <Button variant="outline" onClick={() => { setShowForm(false); setEditId(null); }}>Cancel</Button>
+            <Button onClick={handleSave}>{editId ? "Update" : "Create"}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -298,12 +298,12 @@ export default function AdminMoallemsPage() {
       <Dialog open={!!deleteId} onOpenChange={o => { if (!o) setDeleteId(null); }}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>মুছে ফেলতে চান?</DialogTitle>
-            <DialogDescription>এই মোয়াল্লেম স্থায়ীভাবে মুছে ফেলা হবে।</DialogDescription>
+            <DialogTitle>Confirm Delete?</DialogTitle>
+            <DialogDescription>This moallem will be permanently deleted.</DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteId(null)}>বাতিল</Button>
-            <Button variant="destructive" onClick={handleDelete}>মুছুন</Button>
+            <Button variant="outline" onClick={() => setDeleteId(null)}>Cancel</Button>
+            <Button variant="destructive" onClick={handleDelete}>Delete</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

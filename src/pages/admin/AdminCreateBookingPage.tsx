@@ -324,7 +324,7 @@ export default function AdminCreateBookingPage() {
           {members.length > 0 && (
             <div className="bg-primary/5 border border-primary/20 rounded-lg p-3 text-sm">
               <span className="text-muted-foreground">Total Selling:</span>{" "}
-              <span className="font-bold text-foreground">৳{familyTotal.toLocaleString()}</span>
+              <span className="font-bold text-foreground">BDT {familyTotal.toLocaleString()}</span>
               <span className="text-muted-foreground ml-3">({members.length} members)</span>
             </div>
           )}

@@ -301,7 +301,7 @@ export default function AdminDueAlertsPage() {
           <Card className="mb-4">
             <CardContent className="py-4 flex gap-6">
               <div><span className="text-sm text-muted-foreground">Overdue Payments</span><p className="text-2xl font-bold text-destructive">{overdue.length}</p></div>
-              <div><span className="text-sm text-muted-foreground">Total Amount</span><p className="text-2xl font-bold">৳{overdueTotal.toLocaleString()}</p></div>
+              <div><span className="text-sm text-muted-foreground">Total Amount</span><p className="text-2xl font-bold">BDT {overdueTotal.toLocaleString()}</p></div>
             </CardContent>
           </Card>
           {overdue.length === 0 ? (

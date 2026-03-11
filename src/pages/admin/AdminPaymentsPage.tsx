@@ -979,10 +979,10 @@ export default function AdminPaymentsPage() {
                 </span>
               </div>
               <div className="grid grid-cols-2 gap-3">
-                <div><span className="text-muted-foreground text-xs block">বুকিং</span><span className="font-mono font-medium">{viewPayment._trackingId}</span></div>
-                <div><span className="text-muted-foreground text-xs block">নাম</span><span className="font-medium">{viewPayment._displayName}</span></div>
-                <div><span className="text-muted-foreground text-xs block">পরিমাণ</span><span className="font-bold text-primary">{fmt(viewPayment._amount)}</span></div>
-                <div><span className="text-muted-foreground text-xs block">পদ্ধতি</span><span className="font-medium capitalize">{viewPayment.payment_method || "—"}</span></div>
+                <div><span className="text-muted-foreground text-xs block">Booking</span><span className="font-mono font-medium">{viewPayment._trackingId}</span></div>
+                <div><span className="text-muted-foreground text-xs block">Name</span><span className="font-medium">{viewPayment._displayName}</span></div>
+                <div><span className="text-muted-foreground text-xs block">Amount</span><span className="font-bold text-primary">{fmt(viewPayment._amount)}</span></div>
+                <div><span className="text-muted-foreground text-xs block">Method</span><span className="font-medium capitalize">{viewPayment.payment_method || "—"}</span></div>
                 {viewPayment._type === "customer" && (
                   <>
                     <div><span className="text-muted-foreground text-xs block">কিস্তি নং</span><span className="font-medium">{viewPayment.installment_number || "—"}</span></div>

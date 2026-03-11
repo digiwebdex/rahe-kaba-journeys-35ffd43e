@@ -531,20 +531,24 @@ export default function AdminPaymentsPage() {
                         <th className="py-2 px-4">Booking</th>
                         <th className="py-2 px-4">Amount</th>
                         <th className="py-2 px-4">Method</th>
+                        <th className="py-2 px-4">Service Type</th>
                         <th className="py-2 px-4">Date</th>
                         <th className="py-2 px-4">Notes</th>
                         <th className="py-2 px-4">Actions</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {group.payments.map((p: any, i: number) => (
+                      {group.payments.map((p: any, i: number) => {
+                        const { serviceLabel, cleanNotes } = extractServiceType(p.notes);
+                        return (
                         <tr key={p.id} className="border-b border-border/30 hover:bg-secondary/20">
                           <td className="py-2.5 px-4 text-xs text-muted-foreground">{i + 1}</td>
                           <td className="py-2.5 px-4 font-mono text-xs">{p.bookings?.tracking_id || "—"}</td>
                           <td className="py-2.5 px-4 font-medium">{fmt(p.amount)}</td>
                           <td className="py-2.5 px-4 capitalize text-xs">{p.payment_method || "—"}</td>
+                          <td className="py-2.5 px-4 text-xs">{serviceLabel || "—"}</td>
                           <td className="py-2.5 px-4 text-xs">{p.date ? new Date(p.date).toLocaleDateString() : "—"}</td>
-                          <td className="py-2.5 px-4 text-xs text-muted-foreground truncate max-w-[150px]">{p.notes || "—"}</td>
+                          <td className="py-2.5 px-4 text-xs text-muted-foreground truncate max-w-[150px]">{cleanNotes || "—"}</td>
                           <td className="py-2.5 px-4" onClick={(e) => e.stopPropagation()}>
                              <AdminActionMenu inlineCount={0} actions={[
                               { label: "Edit", icon: <Edit2 className="h-3.5 w-3.5" />, onClick: () => startEdit({ ...p, _type: "moallem" }), variant: "warning", hidden: !canModify },
@@ -552,7 +556,8 @@ export default function AdminPaymentsPage() {
                              ]} />
                           </td>
                         </tr>
-                      ))}
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>

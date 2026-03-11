@@ -435,7 +435,7 @@ const AdminHotelManager = ({ hotels, onRefresh }: Props) => {
               )}
               {Array.isArray(viewHotel.gallery) && viewHotel.gallery.length > 0 && (
                 <div>
-                  <span className="text-muted-foreground text-xs block mb-1">গ্যালারি ({viewHotel.gallery.length})</span>
+                  <span className="text-muted-foreground text-xs block mb-1">Gallery ({viewHotel.gallery.length})</span>
                   <div className="grid grid-cols-3 gap-2">
                     {viewHotel.gallery.slice(0, 6).map((url: string, i: number) => (
                       <img key={i} src={url} alt="" className="w-full h-20 rounded object-cover border border-border" />

@@ -199,7 +199,7 @@ export async function generateMoallemPdf(data: MoallemPdfData, company: CompanyI
       startY: y,
       head: [["Tracking ID", "Guest", "Package", "Total", "Paid", "Due", "Status"]],
       body: data.bookings.map(b => [b.tracking_id, b.guest_name, b.package_name, fmt(b.total), fmt(b.paid), fmt(b.due), b.status]),
-      styles: { fontSize: 7, font: "helvetica" },
+      styles: { fontSize: 7, font: "NotoSansBengali" },
       headStyles: { fillColor: [40, 46, 56] },
       margin: { left: 14, right: 14 },
     });

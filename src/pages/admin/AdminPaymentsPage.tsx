@@ -948,8 +948,8 @@ export default function AdminPaymentsPage() {
               )}
             </div>
             <div>
-              <label className="text-xs text-muted-foreground block mb-1">নোট</label>
-              <textarea className={inputClass + " resize-none"} rows={2} value={addForm.notes} onChange={(e) => setAddForm({ ...addForm, notes: e.target.value })} placeholder="অতিরিক্ত তথ্য..." maxLength={500} />
+              <label className="text-xs text-muted-foreground block mb-1">Notes</label>
+              <textarea className={inputClass + " resize-none"} rows={2} value={addForm.notes} onChange={(e) => setAddForm({ ...addForm, notes: e.target.value })} placeholder="Additional info..." maxLength={500} />
             </div>
             <div className="flex justify-end gap-3 pt-2">
               <button onClick={() => setShowAddModal(false)} className="text-sm px-4 py-2 rounded-md bg-secondary">বাতিল</button>

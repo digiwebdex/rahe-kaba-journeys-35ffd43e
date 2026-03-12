@@ -312,41 +312,68 @@ export default function AdminBookingsPage() {
   const saveEdit = async () => {
     if (!editingId) return;
     const isFamily = isFamilyBooking(editForm.booking_type, editMembers.length);
-    const sellingPP = Math.max(0, parseFloat(editForm.selling_price_per_person) || 0);
-    const costPP = Math.max(0, parseFloat(editForm.cost_price_per_person) || 0);
-    const commPP = Math.max(0, parseFloat(editForm.commission_per_person) || 0);
-    const extraExp = Math.max(0, parseFloat(editForm.extra_expense) || 0);
-    const travelers = isFamily
-      ? Math.max(editMembers.length, parseInt(editForm.num_travelers) || 1, 1)
-      : (parseInt(editForm.num_travelers) || 1);
+    const sellingPP = toMoney(editForm.selling_price_per_person);
+    const costPP = toMoney(editForm.cost_price_per_person);
+    const commPP = toMoney(editForm.commission_per_person);
+    const extraExp = toMoney(editForm.extra_expense);
 
-    // For family bookings, total comes from member sum
-    let totalSelling: number;
-    if (isFamily && editMembers.length > 0) {
-      totalSelling = editMembers.reduce((s, m) => s + Number(m.final_price || 0), 0);
-    } else {
-      totalSelling = sellingPP * travelers;
-    }
+    const preparedMembers = editMembers.map((m: any, idx: number) => {
+      const selling = toMoney(m.selling_price);
+      const discount = Math.min(toMoney(m.discount), selling);
+      const finalPrice = Math.max(0, toMoney(m.final_price || selling - discount));
+
+      return {
+        ...m,
+        full_name: (m.full_name || `Traveler ${idx + 1}`).trim(),
+        passport_number: m.passport_number?.trim() || null,
+        package_id: m.package_id || null,
+        selling_price: selling,
+        discount,
+        final_price: finalPrice,
+      };
+    });
+
+    const travelers = isFamily
+      ? Math.max(preparedMembers.length, parseInt(editForm.num_travelers) || 1, 1)
+      : Math.max(parseInt(editForm.num_travelers) || 1, 1);
+
+    const totalSelling = (isFamily && preparedMembers.length > 0)
+      ? preparedMembers.reduce((s: number, m: any) => s + Number(m.final_price || 0), 0)
+      : sellingPP * travelers;
 
     const totalCostVal = costPP * travelers;
     const totalCommVal = commPP * travelers;
-    const paid = Math.min(Math.max(0, parseFloat(editForm.paid_amount) || 0), totalSelling);
+    const paid = Math.min(toMoney(editForm.paid_amount), totalSelling);
     const due = Math.max(0, totalSelling - paid);
     const profit = totalSelling - totalCostVal - totalCommVal - extraExp;
 
-    // Save family members first
-    if (isFamily && editMembers.length > 0) {
-      for (const m of editMembers) {
-        if (m.id) {
-          await supabase.from("booking_members").update({
+    if (isFamily && preparedMembers.length > 0) {
+      const memberResults = await Promise.all(
+        preparedMembers.map((m: any) => {
+          const memberPayload = {
             full_name: m.full_name,
-            passport_number: m.passport_number || null,
-            selling_price: Number(m.selling_price || 0),
-            discount: Number(m.discount || 0),
-            final_price: Number(m.final_price || 0),
-            package_id: m.package_id || null,
-          }).eq("id", m.id);
-        }
+            passport_number: m.passport_number,
+            selling_price: m.selling_price,
+            discount: m.discount,
+            final_price: m.final_price,
+            package_id: m.package_id,
+          };
+
+          if (m.id) {
+            return supabase.from("booking_members").update(memberPayload).eq("id", m.id);
+          }
+
+          return supabase.from("booking_members").insert({
+            ...memberPayload,
+            booking_id: editingId,
+          });
+        })
+      );
+
+      const memberError = memberResults.find((result: any) => result.error)?.error;
+      if (memberError) {
+        toast.error(memberError.message || "Failed to save traveler details");
+        return;
       }
     }
 

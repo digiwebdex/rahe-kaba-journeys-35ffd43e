@@ -831,7 +831,7 @@ export async function generateInvoice(
     moallemName = await fetchMoallemName(booking.moallem_id);
   }
 
-  const fallbackPackageName = booking.packages?.name || "N/A";
+  const fallbackPackageName = cleanText(booking.packages?.name, "N/A");
   const providedMembers = normalizeMembers(options.members || [], fallbackPackageName);
   const dbMembers = providedMembers.length === 0 && booking.id
     ? await fetchBookingMembers(booking.id, fallbackPackageName)
@@ -856,11 +856,46 @@ export async function generateInvoice(
     || providedMembers.length > 0
     || dbMembers.length > 0;
 
-  const invoiceMembers = providedMembers.length > 0
+  const rawInvoiceMembers = providedMembers.length > 0
     ? providedMembers
     : dbMembers.length > 0
       ? dbMembers
       : (hasFamilySignal ? buildFallbackMembers(normalizedBooking, customer) : []);
+
+  const missingPackageIds = rawInvoiceMembers
+    .filter((m) => !cleanText(m.packages?.name) && Boolean(m.package_id))
+    .map((m) => m.package_id as string);
+  const packageNameMap = await fetchPackageNameMap(missingPackageIds);
+
+  const customerName = cleanText(customer.full_name, "Primary Traveler");
+  const customerPassport = cleanText(customer.passport_number);
+
+  const invoiceMembers = rawInvoiceMembers.map((member, index) => {
+    const resolvedPackageName = cleanText(
+      member.packages?.name,
+      member.package_id ? packageNameMap[member.package_id] : "",
+      fallbackPackageName,
+      "N/A"
+    );
+
+    const resolvedName = cleanText(
+      member.full_name,
+      index === 0 ? customerName : "",
+      `Traveler ${index + 1}`
+    );
+
+    const resolvedPassport = cleanText(
+      member.passport_number,
+      index === 0 ? customerPassport : ""
+    );
+
+    return {
+      ...member,
+      full_name: resolvedName,
+      passport_number: resolvedPassport || null,
+      packages: { name: resolvedPackageName },
+    };
+  });
 
   if (hasFamilySignal && invoiceMembers.length > 0) {
     await generateFamilyInvoice(doc, normalizedBooking, customer, payments, invoiceMembers, logoBase64, sig, qrDataUrl, moallemName);

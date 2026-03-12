@@ -196,8 +196,24 @@ function normalizeMembers(members: Partial<BookingMember>[], fallbackPackageName
     const finalPrice = Math.max(0, Number(memberAny?.final_price ?? memberAny?.finalPrice ?? fallbackFinal));
 
     return {
-      full_name: cleanText(memberAny?.full_name, memberAny?.fullName, memberAny?.name, `Traveler ${index + 1}`),
-      passport_number: cleanText(memberAny?.passport_number, memberAny?.passportNumber, memberAny?.passport) || null,
+      full_name: cleanText(
+        memberAny?.full_name,
+        memberAny?.fullName,
+        memberAny?.name,
+        memberAny?.traveler_name,
+        memberAny?.travelerName,
+        memberAny?.member_name,
+        memberAny?.memberName
+      ),
+      passport_number: cleanText(
+        memberAny?.passport_number,
+        memberAny?.passportNumber,
+        memberAny?.passport,
+        memberAny?.traveler_passport,
+        memberAny?.travelerPassport,
+        memberAny?.member_passport,
+        memberAny?.memberPassport
+      ) || null,
       package_id: cleanText(memberAny?.package_id, memberAny?.packageId) || null,
       packages: { name: packageName },
       selling_price: selling,

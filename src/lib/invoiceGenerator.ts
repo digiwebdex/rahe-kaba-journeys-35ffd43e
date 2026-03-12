@@ -156,6 +156,12 @@ const extractDelimitedValues = (value?: string | null): string[] => {
     .filter(Boolean);
 };
 
+const isGenericTravelerLabel = (value?: string | null): boolean => {
+  const normalized = cleanText(value);
+  if (!normalized) return false;
+  return /^travell?er\s*#?\d+$/i.test(normalized);
+};
+
 async function fetchPackageNameMap(packageIds: string[]): Promise<Record<string, string>> {
   const uniqueIds = Array.from(new Set(packageIds.filter(Boolean)));
   if (uniqueIds.length === 0) return {};
@@ -250,8 +256,8 @@ function buildFallbackMembers(booking: InvoiceBooking, customer: InvoiceCustomer
     const final = Math.max(0, gross - discount);
 
     return {
-      full_name: index === 0 ? cleanText(customer.full_name, "Primary Traveler") : `Traveler ${index + 1}`,
-      passport_number: index === 0 ? (cleanText(customer.passport_number) || null) : null,
+      full_name: "",
+      passport_number: null,
       selling_price: gross,
       discount,
       final_price: final,
@@ -945,12 +951,16 @@ export async function generateInvoice(
       "N/A"
     );
 
-    const resolvedName = cleanText(
+    const rawMemberName = cleanText(
       member.full_name,
       (member as any)?.traveler_name,
       (member as any)?.travelerName,
       (member as any)?.member_name,
-      (member as any)?.memberName,
+      (member as any)?.memberName
+    );
+
+    const resolvedName = cleanText(
+      isGenericTravelerLabel(rawMemberName) ? "" : rawMemberName,
       fallbackGuestNames[index],
       index === 0 ? customerName : "",
       `Traveler ${index + 1}`

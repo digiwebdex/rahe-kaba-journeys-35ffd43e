@@ -632,10 +632,10 @@ export default function AdminMoallemProfilePage() {
                             <button onClick={() => startEditPayment(p, "commission")} className="text-primary hover:text-primary/80 p-1"><Pencil className="h-3.5 w-3.5" /></button>
                             <button onClick={() => { setDeletePaymentId(p.id); setDeletePaymentType("commission"); }} className="text-destructive hover:text-destructive/80 p-1"><Trash2 className="h-3.5 w-3.5" /></button>
                           </div>
-                        </td>
+                      </td>
                       )}
                     </tr>
-                  ))}
+                  );})}
                 </tbody>
               </table>
             </div>

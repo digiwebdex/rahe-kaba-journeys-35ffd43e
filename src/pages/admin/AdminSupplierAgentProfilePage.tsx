@@ -461,11 +461,8 @@ export default function AdminSupplierAgentProfilePage() {
           <div className="space-y-3">
             <div><label className="text-xs text-muted-foreground block mb-1">Date</label>
               <Input type="date" value={editPaymentForm.date} onChange={(e) => setEditPaymentForm({ ...editPaymentForm, date: e.target.value })} /></div>
-            <div><label className="text-xs text-muted-foreground block mb-1">Service Type</label>
-              <Select value={editPaymentForm.service_type || ""} onValueChange={(v) => setEditPaymentForm({ ...editPaymentForm, service_type: v })}>
-                <SelectTrigger><SelectValue placeholder="-- Select Service --" /></SelectTrigger>
-                <SelectContent>{SERVICE_TYPES.filter(s => s.value).map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}</SelectContent>
-              </Select></div>
+            <div><label className="text-xs text-muted-foreground block mb-1">Service</label>
+              <Input value={editPaymentForm.service} onChange={(e) => setEditPaymentForm({ ...editPaymentForm, service: e.target.value })} placeholder="Service name" /></div>
             <div><label className="text-xs text-muted-foreground block mb-1">Amount (BDT) *</label>
               <Input type="number" min={0} value={editPaymentForm.amount} onChange={(e) => setEditPaymentForm({ ...editPaymentForm, amount: e.target.value })} /></div>
             <div><label className="text-xs text-muted-foreground block mb-1">Method</label>

@@ -1,14 +1,13 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer,
-} from "recharts";
-import {
   TrendingUp, DollarSign, Package,
-  Users, Wallet, FileText, CreditCard, ArrowUpRight, ArrowDownRight, UserCheck,
+  Users, Wallet, ArrowUpRight, ArrowDownRight, UserCheck,
 } from "lucide-react";
-import { format, startOfMonth, subMonths } from "date-fns";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
+import { useCanSeeProfit } from "@/components/admin/AdminLayout";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";

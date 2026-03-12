@@ -74,9 +74,30 @@ export default function InvoicePage() {
     window.print();
   };
 
-  const handleDownloadInvoice = () => {
+  const handleDownloadInvoice = async () => {
     if (!booking || !customer) return;
-    generateInvoice(booking, customer, payments as InvoicePayment[], company);
+
+    const { data: detailedBooking } = await supabase
+      .from("bookings")
+      .select("*, packages(name, type, duration_days, start_date, price), booking_members(full_name, passport_number, selling_price, discount, final_price, package_id, packages(name))")
+      .eq("id", booking.id)
+      .maybeSingle();
+
+    const invoiceBooking = detailedBooking
+      ? { ...booking, ...detailedBooking, packages: detailedBooking.packages || booking.packages }
+      : booking;
+    const memberRows = ((detailedBooking as any)?.booking_members || []) as any[];
+    const isFamily = String(invoiceBooking.booking_type || "").toLowerCase().includes("family")
+      || Number(invoiceBooking.num_travelers || 0) > 1
+      || memberRows.length > 0;
+
+    await generateInvoice(
+      invoiceBooking,
+      customer,
+      payments as InvoicePayment[],
+      company,
+      { members: memberRows, forceFamily: isFamily }
+    );
   };
 
   const handleDownloadReceipt = (payment: any) => {

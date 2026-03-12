@@ -41,6 +41,7 @@ class TokenManager {
 // Fetch wrapper with auto-refresh
 async function apiFetch(path: string, options: RequestInit = {}): Promise<any> {
   const token = TokenManager.getAccessToken();
+  const refreshToken = TokenManager.getRefreshToken();
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     ...(options.headers as Record<string, string> || {}),
@@ -49,21 +50,29 @@ async function apiFetch(path: string, options: RequestInit = {}): Promise<any> {
 
   let res = await fetch(`${API_URL}${path}`, { ...options, headers });
 
-  // Auto-refresh on 401
-  if (res.status === 401 && TokenManager.getRefreshToken()) {
-    const refreshRes = await fetch(`${API_URL}/auth/refresh`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ refresh_token: TokenManager.getRefreshToken() }),
-    });
-    if (refreshRes.ok) {
-      const data = await refreshRes.json();
-      TokenManager.setTokens(data.access_token, data.refresh_token);
-      headers['Authorization'] = `Bearer ${data.access_token}`;
-      res = await fetch(`${API_URL}${path}`, { ...options, headers });
-    } else {
+  // Auto-refresh on 401 when we had an authenticated session
+  if (res.status === 401 && token) {
+    if (refreshToken) {
+      const refreshRes = await fetch(`${API_URL}/auth/refresh`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refresh_token: refreshToken }),
+      });
+
+      if (refreshRes.ok) {
+        const data = await refreshRes.json();
+        TokenManager.setTokens(data.access_token, data.refresh_token);
+        headers['Authorization'] = `Bearer ${data.access_token}`;
+        res = await fetch(`${API_URL}${path}`, { ...options, headers });
+      }
+    }
+
+    // If still unauthorized (invalid/expired/stale token), force clean re-login
+    if (res.status === 401) {
       TokenManager.clear();
-      window.location.href = '/auth';
+      if (!path.startsWith('/auth/')) {
+        window.location.href = '/auth';
+      }
       throw new Error('Session expired');
     }
   }

@@ -80,7 +80,7 @@ export default function AdminSupplierAgentProfilePage() {
   const [showPaymentForm, setShowPaymentForm] = useState(false);
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [editPaymentId, setEditPaymentId] = useState<string | null>(null);
-  const [editPaymentForm, setEditPaymentForm] = useState({ amount: "", payment_method: "cash", date: "", notes: "", service_type: "", wallet_account_id: "" });
+  const [editPaymentForm, setEditPaymentForm] = useState({ date: "", service: "", amount: "", payment_method: "cash", notes: "" });
   const [showEditPaymentModal, setShowEditPaymentModal] = useState(false);
   const [deletePaymentId, setDeletePaymentId] = useState<string | null>(null);
 

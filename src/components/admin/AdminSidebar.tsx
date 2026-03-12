@@ -29,7 +29,7 @@ const financeMenuItems = [
   { title: "Payments",        url: "/admin/payments",       icon: CreditCard,      roles: ["admin", "accountant", "viewer"] },
   { title: "Accounting",      url: "/admin/accounting",     icon: Calculator,      roles: ["admin", "accountant", "viewer"] },
   { title: "Receivables",     url: "/admin/receivables",    icon: DollarSign,      roles: ["admin", "accountant", "viewer"] },
-  { title: "Chart of Accounts", url: "/admin/chart-of-accounts", icon: BookOpen,   roles: ["admin", "accountant"] },
+  
   { title: "Reports",         url: "/admin/reports",        icon: BarChart3,       roles: ["admin", "accountant", "viewer"] },
   { title: "Calculator",      url: "/admin/calculator",     icon: Calculator,      roles: ["admin", "accountant", "booking", "viewer"] },
 ];

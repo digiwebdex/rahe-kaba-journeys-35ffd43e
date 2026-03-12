@@ -102,7 +102,7 @@ export default function AdminCalculatorPage() {
       const infoData = [
         ["Group Name", groupName || "-"],
         ["Date", groupDate || "-"],
-        ["Total Pilgrims", String(totalHajji)],
+        ["Total Pilgrims", pilgrimCount > 0 ? String(pilgrimCount) : "-"],
       ];
       (autoTable as any)(doc, {
         startY: y,
@@ -127,13 +127,13 @@ export default function AdminCalculatorPage() {
         String(idx + 1),
         item.description || "-",
         fmt(Number(item.unitPrice || 0)),
-        fmt(Number(item.unitPrice || 0) * totalHajji),
+        fmt(Number(item.unitPrice || 0) * pilgrimCount),
       ]);
       costRows.push(["", "Total Cost Per Person", fmt(costPerPerson), fmt(totalCost)]);
 
       (autoTable as any)(doc, {
         startY: y,
-        head: [["#", "Description", "Unit Price (BDT)", `Total (${totalHajji} pax)`]],
+        head: [["#", "Description", "Unit Price (BDT)", `Total (${pilgrimCount} pax)`]],
         body: costRows,
         theme: "grid",
         margin: { left: margin, right: margin },
@@ -163,18 +163,18 @@ export default function AdminCalculatorPage() {
       // Summary
       doc.setFontSize(11);
       doc.setFont("helvetica", "bold");
-      doc.text(`Final Summary — ${groupName}`, margin, y);
+      doc.text(`Final Summary — ${groupName || "-"}`, margin, y);
       y += 4;
 
       const summaryRows = [
-        ["Total Pilgrims", String(totalHajji)],
+        ["Total Pilgrims", pilgrimCount > 0 ? String(pilgrimCount) : "-"],
         ["Cost Per Person", fmt(costPerPerson)],
         ["Selling Price Per Person", fmt(sellingPricePerPerson)],
         ["Profit Per Person", fmt(profitPerPerson)],
         ["", ""],
-        [`Total Cost (${totalHajji} × ${fmt(costPerPerson)})`, fmt(totalCost)],
-        [`Total Revenue (${totalHajji} × ${fmt(sellingPricePerPerson)})`, fmt(totalRevenue)],
-        [`Total Profit (${totalHajji} × ${fmt(profitPerPerson)})`, fmt(totalProfit)],
+        [`Total Cost (${pilgrimCount} × ${fmt(costPerPerson)})`, fmt(totalCost)],
+        [`Total Revenue (${pilgrimCount} × ${fmt(sellingPricePerPerson)})`, fmt(totalRevenue)],
+        [`Total Profit (${pilgrimCount} × ${fmt(profitPerPerson)})`, fmt(totalProfit)],
       ];
 
       (autoTable as any)(doc, {

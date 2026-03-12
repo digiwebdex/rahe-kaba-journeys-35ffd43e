@@ -254,14 +254,48 @@ export default function AdminBookingsPage() {
       console.error("startEdit booking_members load error:", membersError);
     }
 
-    const members = membersData || [];
-    setEditMembers(members);
+    const existingMembers = (membersData || []).map((m: any, index: number) => {
+      const selling = toMoney(m.selling_price);
+      const discount = Math.min(toMoney(m.discount), selling);
+      const final = Math.max(0, toMoney(m.final_price || selling - discount));
 
-    if (isFamilyBooking(normalizedType, members.length)) {
+      return {
+        ...m,
+        temp_id: m.id || `tmp-${index}-${crypto.randomUUID()}`,
+        full_name: m.full_name || "",
+        passport_number: m.passport_number || "",
+        package_id: m.package_id || b.package_id || null,
+        selling_price: selling,
+        discount,
+        final_price: final,
+      };
+    });
+
+    const travelerCount = Math.max(Number(b.num_travelers || 1), existingMembers.length, 1);
+    const shouldUseFamily = isFamilyBooking(normalizedType, existingMembers.length) || travelerCount > 1;
+    const fallbackUnit = toMoney(b.selling_price_per_person) || Math.round(toMoney(b.total_amount) / travelerCount);
+
+    const fallbackMembers = Array.from({ length: travelerCount }, (_, index) => {
+      const discount = Math.min(index === 0 ? toMoney(b.discount) : 0, fallbackUnit);
+      return {
+        temp_id: `tmp-${index}-${crypto.randomUUID()}`,
+        full_name: index === 0 ? (b.guest_name || "") : "",
+        passport_number: index === 0 ? (b.guest_passport || "") : "",
+        package_id: b.package_id || null,
+        selling_price: fallbackUnit,
+        discount,
+        final_price: Math.max(0, fallbackUnit - discount),
+      };
+    });
+
+    const hydratedMembers = existingMembers.length > 0 ? existingMembers : (shouldUseFamily ? fallbackMembers : []);
+    setEditMembers(hydratedMembers);
+
+    if (shouldUseFamily) {
       setEditForm((prev: any) => ({
         ...prev,
         booking_type: "family",
-        num_travelers: Math.max(members.length, Number(prev.num_travelers || 1), 1),
+        num_travelers: Math.max(hydratedMembers.length, Number(prev.num_travelers || 1), 1),
       }));
     }
   };

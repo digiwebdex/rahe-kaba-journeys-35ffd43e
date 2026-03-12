@@ -565,17 +565,22 @@ export default function AdminMoallemProfilePage() {
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead><tr className="border-b border-border text-left text-muted-foreground text-xs">
-                  <th className="pb-2 pr-3">Date</th><th className="pb-2 pr-3">Amount</th><th className="pb-2 pr-3">Method</th><th className="pb-2 pr-3">Booking</th><th className="pb-2 pr-3">Notes</th>
+                  <th className="pb-2 pr-3">Date</th><th className="pb-2 pr-3">Amount</th><th className="pb-2 pr-3">Method</th><th className="pb-2 pr-3">Service</th><th className="pb-2 pr-3">Booking</th><th className="pb-2 pr-3">Notes</th>
                   {!isViewer && <th className="pb-2 w-16">Action</th>}
                 </tr></thead>
                 <tbody>
-                  {filteredPayments.map((p: any) => (
+                  {filteredPayments.map((p: any) => {
+                    const noteParts = (p.notes || "").split(" — ");
+                    const serviceLabel = SERVICE_TYPES.find(s => s.label === noteParts[0])?.label || "";
+                    const restNotes = serviceLabel ? noteParts.slice(1).join(" — ") : (p.notes || "");
+                    return (
                     <tr key={p.id} className="border-b border-border/30">
                       <td className="py-2 pr-3 text-xs">{format(new Date(p.date), "dd MMM yyyy")}</td>
                       <td className="py-2 pr-3 font-bold text-emerald-500">{fmt(p.amount)}</td>
                       <td className="py-2 pr-3 capitalize">{p.payment_method}</td>
-                      <td className="py-2 pr-3 text-xs font-mono text-primary">{p.booking_id ? bookings.find(b => b.id === p.booking_id)?.tracking_id || "—" : "General"}</td>
-                      <td className="py-2 pr-3 text-xs text-muted-foreground">{p.notes || "—"}</td>
+                      <td className="py-2 pr-3 text-xs"><Badge variant="outline" className="text-[10px]">{serviceLabel || "—"}</Badge></td>
+                      <td className="py-2 pr-3 text-xs font-mono text-primary">{p.booking_id ? bookings.find(b => b.id === p.booking_id)?.tracking_id || "—" : "—"}</td>
+                      <td className="py-2 pr-3 text-xs text-muted-foreground">{restNotes || "—"}</td>
                       {!isViewer && (
                         <td className="py-2">
                           <div className="flex gap-1">

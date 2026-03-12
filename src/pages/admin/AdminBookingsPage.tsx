@@ -26,6 +26,8 @@ import { cn } from "@/lib/utils";
 const inputClass = "w-full bg-secondary border border-border rounded-md px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40";
 const STATUSES = ["pending", "confirmed", "visa_processing", "ticket_issued", "completed", "cancelled"];
 const fmt = (n: number) => `BDT ${Number(n || 0).toLocaleString()}`;
+const normalizeBookingType = (value?: string | null) => (value || "").toLowerCase();
+const isFamilyBooking = (value?: string | null, memberCount = 0) => normalizeBookingType(value) === "family" || memberCount > 0;
 
 function BookingDetail({ bookingId }: { bookingId: string }) {
   const [payments, setPayments] = useState<any[]>([]);
@@ -219,32 +221,51 @@ export default function AdminBookingsPage() {
   }, [searchParams]);
 
   const startEdit = async (b: any) => {
+    const normalizedType = normalizeBookingType(b.booking_type) || "individual";
+
     setEditingId(b.id);
     setEditForm({
-      status: b.status, selling_price_per_person: Number(b.selling_price_per_person || 0),
-      cost_price_per_person: Number(b.cost_price_per_person || 0), extra_expense: Number(b.extra_expense || 0),
+      status: b.status,
+      selling_price_per_person: Number(b.selling_price_per_person || 0),
+      cost_price_per_person: Number(b.cost_price_per_person || 0),
+      extra_expense: Number(b.extra_expense || 0),
       commission_per_person: Number(b.commission_per_person || 0),
       notes: b.notes || "",
-      num_travelers: b.num_travelers, paid_amount: Number(b.paid_amount || 0),
-      guest_name: b.guest_name || "", guest_phone: b.guest_phone || "",
-      guest_email: b.guest_email || "", guest_address: b.guest_address || "",
-      guest_passport: b.guest_passport || "", user_id: b.user_id || null,
+      num_travelers: Number(b.num_travelers || 1),
+      paid_amount: Number(b.paid_amount || 0),
+      guest_name: b.guest_name || "",
+      guest_phone: b.guest_phone || "",
+      guest_email: b.guest_email || "",
+      guest_address: b.guest_address || "",
+      guest_passport: b.guest_passport || "",
+      user_id: b.user_id || null,
       moallem_id: b.moallem_id || "",
-      booking_type: b.booking_type || "individual",
+      booking_type: normalizedType,
     });
-    // Load family members if family booking
-    if (b.booking_type === "family") {
-      const { data } = await supabase.from("booking_members")
-        .select("*, packages(name)")
-        .eq("booking_id", b.id)
-        .order("created_at", { ascending: true });
-      setEditMembers(data || []);
-    } else {
-      setEditMembers([]);
+
+    const { data: membersData, error: membersError } = await supabase
+      .from("booking_members")
+      .select("id, booking_id, package_id, full_name, passport_number, selling_price, discount, final_price, created_at")
+      .eq("booking_id", b.id)
+      .order("created_at", { ascending: true });
+
+    if (membersError) {
+      console.error("startEdit booking_members load error:", membersError);
+    }
+
+    const members = membersData || [];
+    setEditMembers(members);
+
+    if (isFamilyBooking(normalizedType, members.length)) {
+      setEditForm((prev: any) => ({
+        ...prev,
+        booking_type: "family",
+        num_travelers: Math.max(members.length, Number(prev.num_travelers || 1), 1),
+      }));
     }
   };
 
-  const isEditingFamily = editForm.booking_type === "family" && editMembers.length > 0;
+  const isEditingFamily = isFamilyBooking(editForm.booking_type, editMembers.length);
   const editTotalSelling = editingId
     ? (isEditingFamily ? editMembers.reduce((s: number, m: any) => s + Number(m.final_price || 0), 0) : Number(editForm.selling_price_per_person || 0) * Number(editForm.num_travelers || 1))
     : 0;
@@ -255,12 +276,14 @@ export default function AdminBookingsPage() {
 
   const saveEdit = async () => {
     if (!editingId) return;
-    const isFamily = editForm.booking_type === "family";
+    const isFamily = isFamilyBooking(editForm.booking_type, editMembers.length);
     const sellingPP = Math.max(0, parseFloat(editForm.selling_price_per_person) || 0);
     const costPP = Math.max(0, parseFloat(editForm.cost_price_per_person) || 0);
     const commPP = Math.max(0, parseFloat(editForm.commission_per_person) || 0);
     const extraExp = Math.max(0, parseFloat(editForm.extra_expense) || 0);
-    const travelers = parseInt(editForm.num_travelers) || 1;
+    const travelers = isFamily
+      ? Math.max(editMembers.length, parseInt(editForm.num_travelers) || 1, 1)
+      : (parseInt(editForm.num_travelers) || 1);
 
     // For family bookings, total comes from member sum
     let totalSelling: number;
@@ -293,11 +316,18 @@ export default function AdminBookingsPage() {
     }
 
     const { error } = await supabase.from("bookings").update({
-      status: editForm.status, selling_price_per_person: sellingPP,
-      total_amount: totalSelling, paid_amount: paid,
-      due_amount: due, cost_price_per_person: costPP, total_cost: totalCostVal,
-      extra_expense: extraExp, profit_amount: profit,
-      commission_per_person: commPP, total_commission: totalCommVal,
+      status: editForm.status,
+      booking_type: isFamily ? "family" : "individual",
+      selling_price_per_person: sellingPP,
+      total_amount: totalSelling,
+      paid_amount: paid,
+      due_amount: due,
+      cost_price_per_person: costPP,
+      total_cost: totalCostVal,
+      extra_expense: extraExp,
+      profit_amount: profit,
+      commission_per_person: commPP,
+      total_commission: totalCommVal,
       notes: editForm.notes || null, num_travelers: travelers,
       guest_name: editForm.guest_name?.trim() || null, guest_phone: editForm.guest_phone?.trim() || null,
       guest_email: editForm.guest_email?.trim() || null, guest_address: editForm.guest_address?.trim() || null,
@@ -366,7 +396,12 @@ export default function AdminBookingsPage() {
     try {
       const { data: payments } = await supabase.from("payments").select("*").eq("booking_id", b.id).order("installment_number", { ascending: true });
       const company = await getCompanyInfoForPdf();
-      await generateInvoice({ ...b, packages: b.packages }, { full_name: b.guest_name, phone: b.guest_phone, passport_number: b.guest_passport, address: b.guest_address, email: b.guest_email }, (payments || []) as InvoicePayment[], company);
+      await generateInvoice(
+        { ...b, booking_type: normalizeBookingType(b.booking_type), packages: b.packages },
+        { full_name: b.guest_name, phone: b.guest_phone, passport_number: b.guest_passport, address: b.guest_address, email: b.guest_email },
+        (payments || []) as InvoicePayment[],
+        company
+      );
       toast.success("Invoice downloaded");
     } catch { toast.error("Failed to generate invoice"); }
     setGeneratingId(null);
@@ -554,55 +589,61 @@ export default function AdminBookingsPage() {
                     </h4>
                     <Badge variant="outline" className="text-[10px]">Family Booking</Badge>
                   </div>
-                  {editMembers.map((m: any, idx: number) => (
-                    <div key={m.id} className="grid grid-cols-2 sm:grid-cols-5 gap-2 bg-secondary/30 rounded-md p-2">
-                      <div>
-                        <label className="text-[10px] text-muted-foreground block mb-0.5">Name</label>
-                        <input className={inputClass + " text-xs"} value={m.full_name}
-                          onChange={(e) => {
-                            const updated = [...editMembers];
-                            updated[idx] = { ...updated[idx], full_name: e.target.value };
-                            setEditMembers(updated);
-                          }} />
+                  {editMembers.length === 0 ? (
+                    <p className="text-xs text-muted-foreground">No traveler rows found yet for this family booking.</p>
+                  ) : (
+                    <>
+                      {editMembers.map((m: any, idx: number) => (
+                        <div key={m.id} className="grid grid-cols-2 sm:grid-cols-5 gap-2 bg-secondary/30 rounded-md p-2">
+                          <div>
+                            <label className="text-[10px] text-muted-foreground block mb-0.5">Name</label>
+                            <input className={inputClass + " text-xs"} value={m.full_name}
+                              onChange={(e) => {
+                                const updated = [...editMembers];
+                                updated[idx] = { ...updated[idx], full_name: e.target.value };
+                                setEditMembers(updated);
+                              }} />
+                          </div>
+                          <div>
+                            <label className="text-[10px] text-muted-foreground block mb-0.5">Passport</label>
+                            <input className={inputClass + " text-xs"} value={m.passport_number || ""}
+                              onChange={(e) => {
+                                const updated = [...editMembers];
+                                updated[idx] = { ...updated[idx], passport_number: e.target.value };
+                                setEditMembers(updated);
+                              }} />
+                          </div>
+                          <div>
+                            <label className="text-[10px] text-muted-foreground block mb-0.5">Selling Price</label>
+                            <input className={inputClass + " text-xs"} type="number" min={0} value={m.selling_price}
+                              onChange={(e) => {
+                                const updated = [...editMembers];
+                                const sp = Number(e.target.value) || 0;
+                                updated[idx] = { ...updated[idx], selling_price: sp, final_price: sp - Number(updated[idx].discount || 0) };
+                                setEditMembers(updated);
+                              }} />
+                          </div>
+                          <div>
+                            <label className="text-[10px] text-muted-foreground block mb-0.5">Discount</label>
+                            <input className={inputClass + " text-xs"} type="number" min={0} value={m.discount}
+                              onChange={(e) => {
+                                const updated = [...editMembers];
+                                const d = Number(e.target.value) || 0;
+                                updated[idx] = { ...updated[idx], discount: d, final_price: Number(updated[idx].selling_price || 0) - d };
+                                setEditMembers(updated);
+                              }} />
+                          </div>
+                          <div>
+                            <label className="text-[10px] text-muted-foreground block mb-0.5">Final Price</label>
+                            <div className={`${inputClass} bg-muted/50 font-bold text-xs`}>BDT {Number(m.final_price || 0).toLocaleString()}</div>
+                          </div>
+                        </div>
+                      ))}
+                      <div className="text-right text-xs font-bold text-primary">
+                        Members Total: BDT {editMembers.reduce((s: number, m: any) => s + Number(m.final_price || 0), 0).toLocaleString()}
                       </div>
-                      <div>
-                        <label className="text-[10px] text-muted-foreground block mb-0.5">Passport</label>
-                        <input className={inputClass + " text-xs"} value={m.passport_number || ""}
-                          onChange={(e) => {
-                            const updated = [...editMembers];
-                            updated[idx] = { ...updated[idx], passport_number: e.target.value };
-                            setEditMembers(updated);
-                          }} />
-                      </div>
-                      <div>
-                        <label className="text-[10px] text-muted-foreground block mb-0.5">Selling Price</label>
-                        <input className={inputClass + " text-xs"} type="number" min={0} value={m.selling_price}
-                          onChange={(e) => {
-                            const updated = [...editMembers];
-                            const sp = Number(e.target.value) || 0;
-                            updated[idx] = { ...updated[idx], selling_price: sp, final_price: sp - Number(updated[idx].discount || 0) };
-                            setEditMembers(updated);
-                          }} />
-                      </div>
-                      <div>
-                        <label className="text-[10px] text-muted-foreground block mb-0.5">Discount</label>
-                        <input className={inputClass + " text-xs"} type="number" min={0} value={m.discount}
-                          onChange={(e) => {
-                            const updated = [...editMembers];
-                            const d = Number(e.target.value) || 0;
-                            updated[idx] = { ...updated[idx], discount: d, final_price: Number(updated[idx].selling_price || 0) - d };
-                            setEditMembers(updated);
-                          }} />
-                      </div>
-                      <div>
-                        <label className="text-[10px] text-muted-foreground block mb-0.5">Final Price</label>
-                        <div className={`${inputClass} bg-muted/50 font-bold text-xs`}>BDT {Number(m.final_price || 0).toLocaleString()}</div>
-                      </div>
-                    </div>
-                  ))}
-                  <div className="text-right text-xs font-bold text-primary">
-                    Members Total: BDT {editMembers.reduce((s: number, m: any) => s + Number(m.final_price || 0), 0).toLocaleString()}
-                  </div>
+                    </>
+                  )}
                 </div>
               )}
 
@@ -655,7 +696,7 @@ export default function AdminBookingsPage() {
             <>
               <div className="flex justify-between items-start mb-3">
                 <div>
-                  <p className="font-mono font-bold text-primary text-sm">{b.tracking_id}{b.booking_type === "family" ? <Badge variant="outline" className="ml-2 text-[10px]">Family</Badge> : ""}</p>
+                  <p className="font-mono font-bold text-primary text-sm">{b.tracking_id}{isFamilyBooking(b.booking_type) ? <Badge variant="outline" className="ml-2 text-[10px]">Family</Badge> : ""}</p>
                   <p className="text-sm text-muted-foreground">{b.guest_name || "Unknown"}{b.guest_passport ? ` (${b.guest_passport})` : ""} • {b.packages?.name || "N/A"}{b.moallems?.name ? ` • Moallem: ${b.moallems.name}` : ""}</p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -710,7 +751,7 @@ export default function AdminBookingsPage() {
           </DialogHeader>
           {viewBooking && (
             <div className="space-y-4">
-              {viewBooking.booking_type === "family" && <Badge variant="outline" className="text-xs">Family Booking</Badge>}
+              {isFamilyBooking(viewBooking.booking_type) && <Badge variant="outline" className="text-xs">Family Booking</Badge>}
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <div><span className="text-muted-foreground text-xs block">Customer</span><span className="font-medium">{viewBooking.guest_name || "—"}</span></div>
                 <div><span className="text-muted-foreground text-xs block">Phone</span><span className="font-medium">{viewBooking.guest_phone || "—"}</span></div>

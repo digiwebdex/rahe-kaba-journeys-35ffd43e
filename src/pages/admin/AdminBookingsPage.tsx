@@ -316,11 +316,18 @@ export default function AdminBookingsPage() {
     }
 
     const { error } = await supabase.from("bookings").update({
-      status: editForm.status, selling_price_per_person: sellingPP,
-      total_amount: totalSelling, paid_amount: paid,
-      due_amount: due, cost_price_per_person: costPP, total_cost: totalCostVal,
-      extra_expense: extraExp, profit_amount: profit,
-      commission_per_person: commPP, total_commission: totalCommVal,
+      status: editForm.status,
+      booking_type: isFamily ? "family" : "individual",
+      selling_price_per_person: sellingPP,
+      total_amount: totalSelling,
+      paid_amount: paid,
+      due_amount: due,
+      cost_price_per_person: costPP,
+      total_cost: totalCostVal,
+      extra_expense: extraExp,
+      profit_amount: profit,
+      commission_per_person: commPP,
+      total_commission: totalCommVal,
       notes: editForm.notes || null, num_travelers: travelers,
       guest_name: editForm.guest_name?.trim() || null, guest_phone: editForm.guest_phone?.trim() || null,
       guest_email: editForm.guest_email?.trim() || null, guest_address: editForm.guest_address?.trim() || null,

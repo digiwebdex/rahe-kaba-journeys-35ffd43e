@@ -165,7 +165,12 @@ export default function AdminCreateBookingPage() {
           discount: m.discount,
           final_price: Math.max(0, m.selling_price - m.discount),
         }));
-        await supabase.from("booking_members" as any).insert(memberRows);
+
+        const { error: membersError } = await supabase.from("booking_members" as any).insert(memberRows);
+        if (membersError) {
+          await supabase.from("bookings").delete().eq("id", booking.id);
+          throw new Error(membersError.message || "Failed to save traveler details");
+        }
       }
 
       // Initial payment

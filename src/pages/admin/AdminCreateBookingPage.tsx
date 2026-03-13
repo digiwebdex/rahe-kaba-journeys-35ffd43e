@@ -34,15 +34,21 @@ export default function AdminCreateBookingPage() {
     guest_address: "",
     guest_passport: "",
     package_id: "",
-    selling_price_per_person: "" as string | number,
-    discount: "" as string | number,
-    paid_amount: "" as string | number,
+    selling_price_per_person: "",
+    discount: "",
+    paid_amount: "",
     payment_method: "cash",
     wallet_account_id: "",
     status: "pending",
     notes: "",
     moallem_id: "",
   });
+
+  const num = (v: string | number) => {
+    if (v === "" || v === undefined || v === null) return 0;
+    const n = parseFloat(String(v));
+    return isNaN(n) ? 0 : n;
+  };
 
   // Family members
   const [members, setMembers] = useState<FamilyMember[]>([]);

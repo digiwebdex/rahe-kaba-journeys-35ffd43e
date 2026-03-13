@@ -13,9 +13,16 @@ interface FamilyMember {
   full_name: string;
   passport_number: string;
   package_id: string;
-  selling_price: number;
-  discount: number;
+  selling_price: string;
+  discount: string;
 }
+
+// Parse string to number, defaulting to 0 for empty/invalid
+const num = (v: string | number): number => {
+  if (v === "" || v === undefined || v === null) return 0;
+  const n = parseFloat(String(v));
+  return isNaN(n) ? 0 : Math.max(0, n);
+};
 
 export default function AdminCreateBookingPage() {
   const navigate = useNavigate();
@@ -25,7 +32,6 @@ export default function AdminCreateBookingPage() {
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
   const [bookingType, setBookingType] = useState<"individual" | "family">("individual");
 
-  // Individual form
   const [walletAccounts, setWalletAccounts] = useState<any[]>([]);
   const [form, setForm] = useState({
     guest_name: "",
@@ -34,9 +40,9 @@ export default function AdminCreateBookingPage() {
     guest_address: "",
     guest_passport: "",
     package_id: "",
-    selling_price_per_person: 0,
-    discount: 0,
-    paid_amount: 0,
+    selling_price_per_person: "",
+    discount: "",
+    paid_amount: "",
     payment_method: "cash",
     wallet_account_id: "",
     status: "pending",
@@ -44,7 +50,6 @@ export default function AdminCreateBookingPage() {
     moallem_id: "",
   });
 
-  // Family members
   const [members, setMembers] = useState<FamilyMember[]>([]);
 
   useEffect(() => {
@@ -81,7 +86,7 @@ export default function AdminCreateBookingPage() {
     setForm((prev) => ({
       ...prev,
       package_id: packageId,
-      selling_price_per_person: pkg ? Number(pkg.price) : prev.selling_price_per_person,
+      selling_price_per_person: pkg ? String(pkg.price) : prev.selling_price_per_person,
     }));
   };
 
@@ -92,18 +97,18 @@ export default function AdminCreateBookingPage() {
       full_name: "",
       passport_number: "",
       package_id: form.package_id || "",
-      selling_price: form.selling_price_per_person || 0,
-      discount: 0,
+      selling_price: form.selling_price_per_person || "",
+      discount: "",
     }]);
   };
 
-  const updateMember = (id: string, field: keyof FamilyMember, value: any) => {
+  const updateMember = (id: string, field: keyof FamilyMember, value: string) => {
     setMembers(members.map(m => {
       if (m.id !== id) return m;
       const updated = { ...m, [field]: value };
       if (field === "package_id") {
         const pkg = packages.find(p => p.id === value);
-        if (pkg) updated.selling_price = Number(pkg.price);
+        if (pkg) updated.selling_price = String(pkg.price);
       }
       return updated;
     }));
@@ -112,11 +117,14 @@ export default function AdminCreateBookingPage() {
   const removeMember = (id: string) => setMembers(members.filter(m => m.id !== id));
 
   // Calculations
-  const individualFinalPrice = Math.max(0, form.selling_price_per_person - form.discount);
-  const familyTotal = members.reduce((s, m) => s + Math.max(0, m.selling_price - m.discount), 0);
+  const sellingPrice = num(form.selling_price_per_person);
+  const discountVal = num(form.discount);
+  const paidAmount = num(form.paid_amount);
+  const individualFinalPrice = Math.max(0, sellingPrice - discountVal);
+  const familyTotal = members.reduce((s, m) => s + Math.max(0, num(m.selling_price) - num(m.discount)), 0);
   const totalSellingPrice = bookingType === "family" ? familyTotal : individualFinalPrice;
   const numTravelers = bookingType === "family" ? members.length : 1;
-  const dueAmount = Math.max(0, totalSellingPrice - form.paid_amount);
+  const dueAmount = Math.max(0, totalSellingPrice - paidAmount);
 
   const handleSubmit = async () => {
     if (!selectedCustomerId) { toast.error("Please select a customer"); return; }
@@ -130,14 +138,13 @@ export default function AdminCreateBookingPage() {
       }
     }
     if (totalSellingPrice <= 0) { toast.error("Total selling price must be greater than 0"); return; }
-    if (form.paid_amount > totalSellingPrice) { toast.error("Paid amount cannot exceed total price"); return; }
+    if (paidAmount > totalSellingPrice) { toast.error("Paid amount cannot exceed total price"); return; }
 
     setLoading(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) { toast.error("Not authenticated"); return; }
 
-      // For family bookings, store all member names/passports as comma-separated backup
       const guestName = bookingType === "family" && members.length > 0
         ? members.map(m => m.full_name.trim()).filter(Boolean).join(", ") || form.guest_name.trim()
         : form.guest_name.trim();
@@ -145,26 +152,34 @@ export default function AdminCreateBookingPage() {
         ? members.map(m => m.passport_number.trim()).filter(Boolean).join(", ") || form.guest_passport.trim() || null
         : form.guest_passport.trim() || null;
 
-      const { data: booking, error } = await supabase.from("bookings").insert({
+      // Build insert object - only include fields with meaningful values
+      const bookingData: Record<string, any> = {
         booking_type: bookingType,
         guest_name: guestName,
         guest_phone: form.guest_phone.trim(),
-        guest_email: form.guest_email.trim() || null,
-        guest_address: form.guest_address.trim() || null,
-        guest_passport: guestPassport,
         package_id: bookingType === "individual" ? form.package_id : (members[0]?.package_id || form.package_id || packages[0]?.id),
         num_travelers: numTravelers,
-        selling_price_per_person: bookingType === "individual" ? form.selling_price_per_person : 0,
-        discount: bookingType === "individual" ? form.discount : 0,
         total_amount: totalSellingPrice,
-        paid_amount: form.paid_amount,
-        due_amount: dueAmount,
         status: form.status,
-        notes: form.notes.trim() || null,
         user_id: selectedCustomerId,
-        moallem_id: form.moallem_id || null,
-      } as any).select("id, tracking_id").single();
+      };
 
+      // Only add optional fields if they have values
+      if (form.guest_email.trim()) bookingData.guest_email = form.guest_email.trim();
+      if (form.guest_address?.trim()) bookingData.guest_address = form.guest_address.trim();
+      if (guestPassport) bookingData.guest_passport = guestPassport;
+      if (form.notes.trim()) bookingData.notes = form.notes.trim();
+      if (form.moallem_id) bookingData.moallem_id = form.moallem_id;
+
+      // Numeric fields - only include if non-zero
+      if (bookingType === "individual") {
+        bookingData.selling_price_per_person = sellingPrice;
+        if (discountVal > 0) bookingData.discount = discountVal;
+      }
+      if (paidAmount > 0) bookingData.paid_amount = paidAmount;
+      bookingData.due_amount = dueAmount;
+
+      const { data: booking, error } = await supabase.from("bookings").insert(bookingData as any).select("id, tracking_id").single();
       if (error) throw error;
 
       // Insert family members
@@ -174,9 +189,9 @@ export default function AdminCreateBookingPage() {
           full_name: m.full_name.trim(),
           passport_number: m.passport_number.trim() || null,
           package_id: m.package_id || null,
-          selling_price: m.selling_price,
-          discount: m.discount,
-          final_price: Math.max(0, m.selling_price - m.discount),
+          selling_price: num(m.selling_price),
+          discount: num(m.discount),
+          final_price: Math.max(0, num(m.selling_price) - num(m.discount)),
         }));
 
         const { error: membersError } = await supabase.from("booking_members" as any).insert(memberRows);
@@ -187,12 +202,12 @@ export default function AdminCreateBookingPage() {
       }
 
       // Initial payment
-      if (form.paid_amount > 0 && booking) {
+      if (paidAmount > 0 && booking) {
         await supabase.from("payments").insert({
           booking_id: booking.id,
           user_id: selectedCustomerId || session.user.id,
           customer_id: selectedCustomerId,
-          amount: form.paid_amount,
+          amount: paidAmount,
           status: "completed",
           payment_method: form.payment_method || "cash",
           installment_number: 1,
@@ -235,7 +250,7 @@ export default function AdminCreateBookingPage() {
         </div>
       </div>
 
-      {/* Customer Selection - Mandatory */}
+      {/* Customer Selection */}
       <div className="bg-card border border-border rounded-xl p-5 space-y-4">
         <h3 className="font-heading font-semibold text-sm flex items-center gap-2">
           <User className="h-4 w-4 text-primary" /> Select Customer *
@@ -274,12 +289,14 @@ export default function AdminCreateBookingPage() {
             <div>
               <label className="text-xs text-muted-foreground block mb-1">Selling Price (BDT)</label>
               <input className={inputClass} type="number" min={0} value={form.selling_price_per_person}
-                onChange={(e) => setForm(f => ({ ...f, selling_price_per_person: Math.max(0, parseFloat(e.target.value) || 0) }))} />
+                placeholder="0"
+                onChange={(e) => setForm(f => ({ ...f, selling_price_per_person: e.target.value }))} />
             </div>
             <div>
               <label className="text-xs text-muted-foreground block mb-1">Discount (BDT)</label>
               <input className={inputClass} type="number" min={0} value={form.discount}
-                onChange={(e) => setForm(f => ({ ...f, discount: Math.max(0, parseFloat(e.target.value) || 0) }))} />
+                placeholder="0"
+                onChange={(e) => setForm(f => ({ ...f, discount: e.target.value }))} />
             </div>
             <div>
               <label className="text-xs text-muted-foreground block mb-1">Final Price (BDT)</label>
@@ -332,16 +349,18 @@ export default function AdminCreateBookingPage() {
                 <div>
                   <label className="text-xs text-muted-foreground block mb-1">Selling Price (BDT)</label>
                   <input className={inputClass} type="number" min={0} value={m.selling_price}
-                    onChange={(e) => updateMember(m.id, "selling_price", Math.max(0, parseFloat(e.target.value) || 0))} />
+                    placeholder="0"
+                    onChange={(e) => updateMember(m.id, "selling_price", e.target.value)} />
                 </div>
                 <div>
                   <label className="text-xs text-muted-foreground block mb-1">Discount (BDT)</label>
                   <input className={inputClass} type="number" min={0} value={m.discount}
-                    onChange={(e) => updateMember(m.id, "discount", Math.max(0, parseFloat(e.target.value) || 0))} />
+                    placeholder="0"
+                    onChange={(e) => updateMember(m.id, "discount", e.target.value)} />
                 </div>
                 <div>
                   <label className="text-xs text-muted-foreground block mb-1">Final Price</label>
-                  <div className={`${inputClass} bg-muted/30 font-bold`}>BDT {Math.max(0, m.selling_price - m.discount).toLocaleString()}</div>
+                  <div className={`${inputClass} bg-muted/30 font-bold`}>BDT {Math.max(0, num(m.selling_price) - num(m.discount)).toLocaleString()}</div>
                 </div>
               </div>
             </div>
@@ -373,7 +392,8 @@ export default function AdminCreateBookingPage() {
           <div>
             <label className="text-xs text-muted-foreground block mb-1">Paid Amount (BDT)</label>
             <input className={inputClass} type="number" min={0} max={totalSellingPrice} value={form.paid_amount}
-              onChange={(e) => setForm(f => ({ ...f, paid_amount: Math.max(0, parseFloat(e.target.value) || 0) }))} />
+              placeholder="0"
+              onChange={(e) => setForm(f => ({ ...f, paid_amount: e.target.value }))} />
           </div>
           <div>
             <label className="text-xs text-muted-foreground block mb-1">Payment Method</label>

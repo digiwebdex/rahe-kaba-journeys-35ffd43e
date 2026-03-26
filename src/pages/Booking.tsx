@@ -3,11 +3,12 @@ import { useSearchParams, useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/lib/api";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
-import { ArrowLeft, ArrowRight, Package, Users, CreditCard, Check, User, FileText } from "lucide-react";
+import { ArrowLeft, ArrowRight, Package, Users, CreditCard, Check, User, FileText, Upload } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import BookingStepIndicator from "@/components/booking/BookingStepIndicator";
 import PersonalDetailsStep, { type PersonalInfo } from "@/components/booking/PersonalDetailsStep";
+import DocumentUploadStep, { type UploadedDoc } from "@/components/booking/DocumentUploadStep";
 import BookingSuccess from "@/components/booking/BookingSuccess";
 import { useLanguage } from "@/i18n/LanguageContext";
 
@@ -15,10 +16,11 @@ const Booking = () => {
   const { t } = useLanguage();
 
   const STEPS = [
-    { label: t("booking.package"), icon: <Package className="h-4 w-4" /> },
-    { label: t("booking.details"), icon: <User className="h-4 w-4" /> },
-    { label: t("booking.payment"), icon: <CreditCard className="h-4 w-4" /> },
-    { label: t("booking.confirm"), icon: <Check className="h-4 w-4" /> },
+    { label: t("booking.package") || "প্যাকেজ", icon: <Package className="h-4 w-4" /> },
+    { label: t("booking.details") || "বিবরণ", icon: <User className="h-4 w-4" /> },
+    { label: t("booking.documents") || "ডকুমেন্ট", icon: <Upload className="h-4 w-4" /> },
+    { label: t("booking.payment") || "পেমেন্ট", icon: <CreditCard className="h-4 w-4" /> },
+    { label: t("booking.confirm") || "নিশ্চিত", icon: <Check className="h-4 w-4" /> },
   ];
 
   const [searchParams] = useSearchParams();
@@ -42,17 +44,15 @@ const Booking = () => {
     passportNumber: "",
     address: "",
   });
+  const [uploadedDocs, setUploadedDocs] = useState<UploadedDoc[]>([]);
 
-  // After booking created
   const [createdBooking, setCreatedBooking] = useState<{ id: string; tracking_id: string } | null>(null);
 
   useEffect(() => {
     const init = async () => {
-      // Check session but DON'T redirect — guests can book too
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
         setUser(session.user);
-        // Pre-fill from profile
         const { data: profile } = await supabase
           .from("profiles")
           .select("*")
@@ -69,7 +69,6 @@ const Booking = () => {
         }
       }
 
-      // Load package and plans in parallel
       const [pkgRes, planRes] = await Promise.all([
         packageId
           ? supabase.from("packages").select("*").eq("id", packageId).eq("is_active", true).single()
@@ -100,8 +99,8 @@ const Booking = () => {
         toast.error(t("booking.phoneRequired"));
         return false;
       }
-      // Passport is optional — no validation
     }
+    // Step 2 (documents) is optional - no validation needed
     return true;
   };
 
@@ -115,7 +114,6 @@ const Booking = () => {
     if (!pkg) return;
     setSubmitting(true);
     try {
-      // Use edge function for both guest and logged-in bookings
       const response = await supabase.functions.invoke("create-guest-booking", {
         body: {
           fullName: personalInfo.fullName.trim(),
@@ -133,6 +131,25 @@ const Booking = () => {
       if (response.error) throw new Error(response.error.message);
       const result = response.data;
       if (!result?.success) throw new Error(result?.error || "Booking failed");
+
+      // Upload documents if any
+      if (uploadedDocs.length > 0 && result.booking_id) {
+        const userId = user?.id || result.user_id || "guest";
+        for (const doc of uploadedDocs) {
+          const ext = doc.file.name.split(".").pop();
+          const filePath = `${userId}/${result.booking_id}/${doc.type}_${Date.now()}.${ext}`;
+          
+          await supabase.storage.from("booking-documents").upload(filePath, doc.file);
+          await supabase.from("booking_documents").insert({
+            booking_id: result.booking_id,
+            user_id: userId,
+            document_type: doc.type,
+            file_name: doc.file.name,
+            file_path: filePath,
+            file_size: doc.file.size,
+          });
+        }
+      }
 
       setCreatedBooking({ id: result.booking_id, tracking_id: result.tracking_id });
       toast.success(`Booking created! Tracking ID: ${result.tracking_id}`);
@@ -169,12 +186,12 @@ const Booking = () => {
 
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-6">
             <span className="text-primary text-sm font-medium tracking-[0.3em] uppercase">{t("booking.bookNow")}</span>
-            <h1 className="font-heading text-3xl md:text-4xl font-bold mt-3 mb-3">
+            <h1 className="text-3xl md:text-4xl font-bold mt-3 mb-3">
               {t("booking.completeYour")} <span className="text-gradient-gold">{t("booking.booking")}</span>
             </h1>
             {!user && (
               <p className="text-xs text-muted-foreground">
-                No account needed! Or <Link to="/auth" className="text-primary hover:underline">sign in</Link> to manage your bookings later.
+                {t("booking.noAccountNeeded") || "অ্যাকাউন্ট ছাড়াই বুকিং করুন!"} <Link to="/auth" className="text-primary hover:underline">{t("nav.signIn")}</Link>
               </p>
             )}
           </motion.div>
@@ -199,23 +216,23 @@ const Booking = () => {
               {step === 0 && (
                 <motion.div key="step0" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
                   <div className="bg-card border border-border rounded-xl p-6">
-                    <h2 className="font-heading text-lg font-bold mb-4 flex items-center gap-2">
+                    <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
                       <Package className="h-5 w-5 text-primary" /> {t("booking.packageDetails")}
                     </h2>
                     <div className="flex justify-between items-start">
                       <div>
-                        <p className="font-heading font-bold text-lg">{pkg.name}</p>
+                        <p className="font-bold text-lg">{pkg.name}</p>
                         <p className="text-sm text-muted-foreground capitalize">{pkg.type} • {pkg.duration_days} {t("common.days")}</p>
                       </div>
-                      <p className="text-xl font-heading font-bold text-primary">
+                      <p className="text-xl font-bold text-primary">
                         ৳{Number(pkg.price).toLocaleString()}
-                        <span className="text-xs font-body text-muted-foreground font-normal"> {t("common.perPerson")}</span>
+                        <span className="text-xs text-muted-foreground font-normal"> {t("common.perPerson")}</span>
                       </p>
                     </div>
                   </div>
 
                   <div className="bg-card border border-border rounded-xl p-6">
-                    <h2 className="font-heading text-lg font-bold mb-4 flex items-center gap-2">
+                    <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
                       <Users className="h-5 w-5 text-primary" /> {t("booking.travelers")}
                     </h2>
                     <div className="flex items-center gap-4">
@@ -231,7 +248,7 @@ const Booking = () => {
                     </div>
                     <div className="mt-4 p-4 bg-secondary/50 rounded-lg flex justify-between">
                       <span className="text-sm text-muted-foreground">{t("booking.totalAmount")}</span>
-                      <span className="text-lg font-heading font-bold text-primary">৳{totalAmount.toLocaleString()}</span>
+                      <span className="text-lg font-bold text-primary">৳{totalAmount.toLocaleString()}</span>
                     </div>
                   </div>
                 </motion.div>
@@ -241,11 +258,10 @@ const Booking = () => {
               {step === 1 && (
                 <motion.div key="step1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
                   <PersonalDetailsStep info={personalInfo} onChange={setPersonalInfo} />
-                  {/* Email field for guests */}
                   {!user && (
                     <div className="bg-card border border-border rounded-xl p-6">
                       <label className="text-sm text-muted-foreground mb-1 block">
-                        Email (optional)
+                        {t("booking.email") || "ইমেইল (ঐচ্ছিক)"}
                       </label>
                       <input
                         type="email"
@@ -260,14 +276,23 @@ const Booking = () => {
                 </motion.div>
               )}
 
-              {/* Step 2: Payment Plan */}
+              {/* Step 2: Document Upload */}
               {step === 2 && (
                 <motion.div key="step2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
+                  <DocumentUploadStep documents={uploadedDocs} onChange={setUploadedDocs} />
+                </motion.div>
+              )}
+
+              {/* Step 3: Payment Plan */}
+              {step === 3 && (
+                <motion.div key="step3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
                   <div className="bg-card border border-border rounded-xl p-6">
-                    <h2 className="font-heading text-lg font-bold mb-4 flex items-center gap-2">
+                    <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
                       <CreditCard className="h-5 w-5 text-primary" /> {t("booking.paymentPlan")}
                     </h2>
-                    <p className="text-xs text-muted-foreground mb-4">Payment is not required now. You can pay later.</p>
+                    <p className="text-xs text-muted-foreground mb-4">
+                      {t("booking.payLaterNote") || "এখনই পেমেন্ট করতে হবে না। আপনি পরে পেমেন্ট করতে পারবেন।"}
+                    </p>
                     <div className="space-y-3">
                       <button
                         type="button"
@@ -320,11 +345,11 @@ const Booking = () => {
                 </motion.div>
               )}
 
-              {/* Step 3: Review & Confirm */}
-              {step === 3 && (
-                <motion.div key="step3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
+              {/* Step 4: Review & Confirm */}
+              {step === 4 && (
+                <motion.div key="step4" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
                   <div className="bg-card border border-border rounded-xl p-6 space-y-4">
-                    <h2 className="font-heading text-lg font-bold flex items-center gap-2">
+                    <h2 className="text-lg font-semibold flex items-center gap-2">
                       <FileText className="h-5 w-5 text-primary" /> {t("booking.bookingSummary")}
                     </h2>
                     <div className="space-y-3 text-sm">
@@ -355,18 +380,22 @@ const Booking = () => {
                         </div>
                       )}
                       <div className="flex justify-between py-2 border-b border-border/50">
+                        <span className="text-muted-foreground">{t("booking.documents") || "ডকুমেন্ট"}</span>
+                        <span className="font-medium">{uploadedDocs.length} {t("booking.filesUploaded") || "টি ফাইল"}</span>
+                      </div>
+                      <div className="flex justify-between py-2 border-b border-border/50">
                         <span className="text-muted-foreground">{t("booking.paymentPlan")}</span>
                         <span className="font-medium">
                           {selectedPlan ? plans.find((p) => p.id === selectedPlan)?.name : t("booking.fullPayment")}
                         </span>
                       </div>
                       <div className="flex justify-between py-2 border-b border-border/50">
-                        <span className="text-muted-foreground">Payment Status</span>
-                        <span className="font-medium text-primary">Not Paid (Pay Later)</span>
+                        <span className="text-muted-foreground">{t("booking.paymentStatus") || "পেমেন্ট স্ট্যাটাস"}</span>
+                        <span className="font-medium text-primary">{t("booking.notPaid") || "পরে পেমেন্ট করবেন"}</span>
                       </div>
                       <div className="flex justify-between py-3 bg-secondary/50 rounded-lg px-3 mt-2">
                         <span className="font-medium">{t("booking.totalAmount")}</span>
-                        <span className="text-lg font-heading font-bold text-primary">৳{totalAmount.toLocaleString()}</span>
+                        <span className="text-lg font-bold text-primary">৳{totalAmount.toLocaleString()}</span>
                       </div>
                     </div>
                   </div>

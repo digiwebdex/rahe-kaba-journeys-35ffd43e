@@ -14,8 +14,8 @@ export default {
     },
     extend: {
       fontFamily: {
-        heading: ['Playfair Display', 'serif'],
-        body: ['Poppins', 'sans-serif'],
+        heading: ['Noto Sans Bengali', 'Noto Sans', 'sans-serif'],
+        body: ['Noto Sans Bengali', 'Noto Sans', 'sans-serif'],
       },
       colors: {
         border: "hsl(var(--border))",

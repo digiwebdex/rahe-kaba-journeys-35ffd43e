@@ -63,8 +63,8 @@ const Footer = () => {
           </div>
 
           <div>
-            <h4 className="font-heading font-semibold mb-4 text-primary">{t("footer.contact")}</h4>
-            <ul className="space-y-3 text-sm text-muted-foreground">
+            <h4 className="font-heading font-semibold mb-4 text-gold-light">{t("footer.contact")}</h4>
+            <ul className="space-y-3 text-sm text-white/60">
               <li className="flex items-center gap-2"><Phone className="h-4 w-4 text-primary" /> {phone}</li>
               <li className="flex items-center gap-2"><Mail className="h-4 w-4 text-primary" /> {email}</li>
               <li className="flex items-start gap-2"><MapPin className="h-4 w-4 text-primary mt-0.5" /> <span className="whitespace-pre-line">{address}</span></li>

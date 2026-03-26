@@ -12,6 +12,61 @@ import DocumentUploadStep, { type UploadedDoc } from "@/components/booking/Docum
 import BookingSuccess from "@/components/booking/BookingSuccess";
 import { useLanguage } from "@/i18n/LanguageContext";
 
+const FALLBACK_PAYMENT_METHODS = [
+  {
+    id: "bkash",
+    name: "bKash",
+    name_bn: "বিকাশ",
+    icon: "🟣",
+    category: "mfs",
+    enabled: true,
+    account_name: "",
+    account_number: "",
+    instructions: "Send money to our bKash number",
+    instructions_bn: "আমাদের বিকাশ নম্বরে টাকা পাঠান",
+    charge_percent: 0,
+  },
+  {
+    id: "nagad",
+    name: "Nagad",
+    name_bn: "নগদ",
+    icon: "🟠",
+    category: "mfs",
+    enabled: true,
+    account_name: "",
+    account_number: "",
+    instructions: "Send money to our Nagad number",
+    instructions_bn: "আমাদের নগদ নম্বরে টাকা পাঠান",
+    charge_percent: 0,
+  },
+  {
+    id: "bank_transfer",
+    name: "Bank Transfer",
+    name_bn: "ব্যাংক ট্রান্সফার",
+    icon: "🏦",
+    category: "bank",
+    enabled: true,
+    account_name: "",
+    account_number: "",
+    instructions: "Transfer to our bank account and share receipt",
+    instructions_bn: "আমাদের ব্যাংক একাউন্টে ট্রান্সফার করে রসিদ শেয়ার করুন",
+    charge_percent: 0,
+  },
+  {
+    id: "cod",
+    name: "Cash / Office",
+    name_bn: "ক্যাশ / অফিস",
+    icon: "💵",
+    category: "cod",
+    enabled: true,
+    account_name: "",
+    account_number: "",
+    instructions: "Pay at office or later",
+    instructions_bn: "অফিসে বা পরে পেমেন্ট করুন",
+    charge_percent: 0,
+  },
+];
+
 const Booking = () => {
   const { t } = useLanguage();
 
@@ -51,7 +106,15 @@ const Booking = () => {
   const [createdBooking, setCreatedBooking] = useState<{ id: string; tracking_id: string } | null>(null);
 
   const normalizePaymentMethods = (value: unknown) => {
-    let methods = value;
+    let methods: unknown = value;
+
+    if (methods && typeof methods === "object" && !Array.isArray(methods)) {
+      const maybeWrapped = methods as Record<string, unknown>;
+      if (Array.isArray(maybeWrapped.methods)) methods = maybeWrapped.methods;
+      else if (Array.isArray(maybeWrapped.data)) methods = maybeWrapped.data;
+      else if (Array.isArray(maybeWrapped.setting_value)) methods = maybeWrapped.setting_value;
+    }
+
     if (typeof methods === "string") {
       try {
         methods = JSON.parse(methods);
@@ -63,9 +126,14 @@ const Booking = () => {
     if (!Array.isArray(methods)) return [];
 
     return methods
-      .filter((method: any) => method && method.enabled)
-      .map((method: any) => ({
+      .filter((method: any) => {
+        if (!method) return false;
+        if (method.enabled === undefined) return true;
+        return method.enabled === true || method.enabled === "true" || method.enabled === 1 || method.enabled === "1";
+      })
+      .map((method: any, index: number) => ({
         ...method,
+        id: method.id || `payment-${index}`,
         enabled: Boolean(method.enabled),
         charge_percent: Number(method.charge_percent || 0),
       }));
@@ -102,21 +170,25 @@ const Booking = () => {
       setPkg(pkgRes.data);
       setPlans(planRes.data || []);
 
+      let methods: any[] = [];
       try {
         const pmResponse = await fetch("/api/public/payment-methods");
         if (pmResponse.ok) {
-          const methods = normalizePaymentMethods(await pmResponse.json());
-          setPaymentMethods(methods);
-          if (methods.length > 0) {
-            setSelectedPaymentMethod((current) => current ?? methods[0].id);
-          }
-        } else {
-          setPaymentMethods([]);
+          methods = normalizePaymentMethods(await pmResponse.json());
         }
       } catch (error) {
         console.error("Failed to load public payment methods", error);
-        setPaymentMethods([]);
       }
+
+      if (methods.length === 0) {
+        methods = FALLBACK_PAYMENT_METHODS;
+      }
+
+      setPaymentMethods(methods);
+      setSelectedPaymentMethod((current) => {
+        if (current && methods.some((method) => method.id === current)) return current;
+        return methods[0]?.id ?? null;
+      });
 
       setLoading(false);
     };

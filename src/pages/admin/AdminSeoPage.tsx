@@ -11,6 +11,20 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Search, Globe, FileText, Code, RefreshCw, ExternalLink, CheckCircle, AlertTriangle } from "lucide-react";
 
+interface FBPixelConfig {
+  pixel_id: string;
+  enabled: boolean;
+  track_page_view: boolean;
+  track_view_content: boolean;
+  track_lead: boolean;
+  track_purchase: boolean;
+  track_initiate_checkout: boolean;
+  track_search: boolean;
+  track_contact: boolean;
+  capi_enabled: boolean;
+  test_event_code: string;
+}
+
 interface SeoSettings {
   site_title: string;
   site_description: string;
@@ -20,6 +34,7 @@ interface SeoSettings {
   google_analytics_id: string;
   google_search_console: string;
   facebook_pixel_id: string;
+  facebook_pixel: FBPixelConfig;
   default_lang: string;
   auto_sitemap: boolean;
   robots_index: boolean;
@@ -44,6 +59,20 @@ const DEFAULT_PAGES: Record<string, { label: string; path: string }> = {
   track: { label: "ট্র্যাকিং পেজ", path: "/track" },
 };
 
+const DEFAULT_FB_CONFIG: FBPixelConfig = {
+  pixel_id: "",
+  enabled: false,
+  track_page_view: true,
+  track_view_content: true,
+  track_lead: true,
+  track_purchase: true,
+  track_initiate_checkout: true,
+  track_search: false,
+  track_contact: true,
+  capi_enabled: false,
+  test_event_code: "",
+};
+
 const DEFAULT_SEO: SeoSettings = {
   site_title: "Rahe Kaba Tours and Travels",
   site_description: "রাহে কাবা ট্যুরস অ্যান্ড ট্রাভেলস - হজ্জ, উমরাহ ও ভিসা সেবায় বাংলাদেশের বিশ্বস্ত প্রতিষ্ঠান।",
@@ -53,6 +82,7 @@ const DEFAULT_SEO: SeoSettings = {
   google_analytics_id: "",
   google_search_console: "",
   facebook_pixel_id: "",
+  facebook_pixel: DEFAULT_FB_CONFIG,
   default_lang: "bn",
   auto_sitemap: true,
   robots_index: true,
@@ -132,6 +162,13 @@ export default function AdminSeoPage() {
           [field]: value,
         },
       },
+    }));
+  };
+
+  const updateFBConfig = (field: keyof FBPixelConfig, value: string | boolean) => {
+    setSettings((prev) => ({
+      ...prev,
+      facebook_pixel: { ...prev.facebook_pixel, [field]: value },
     }));
   };
 
@@ -225,7 +262,7 @@ export default function AdminSeoPage() {
             <CardContent>
               <div className="border rounded-lg p-4 bg-card max-w-xl">
                 <p className="text-primary text-lg font-medium truncate">{settings.site_title}</p>
-                <p className="text-emerald-600 dark:text-emerald-400 text-sm">{settings.base_url}</p>
+                <p className="text-accent-foreground text-sm">{settings.base_url}</p>
                 <p className="text-muted-foreground text-sm line-clamp-2">{settings.site_description}</p>
               </div>
             </CardContent>
@@ -272,8 +309,8 @@ export default function AdminSeoPage() {
         <TabsContent value="tracking" className="space-y-4 mt-4">
           <Card>
             <CardHeader>
-              <CardTitle>অ্যানালিটিক্স ও ট্র্যাকিং</CardTitle>
-              <CardDescription>Google Analytics, Search Console ও Facebook Pixel</CardDescription>
+              <CardTitle>Google অ্যানালিটিক্স</CardTitle>
+              <CardDescription>Google Analytics ও Search Console কনফিগারেশন</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
@@ -284,9 +321,87 @@ export default function AdminSeoPage() {
                 <Label>Google Search Console Verification</Label>
                 <Input value={settings.google_search_console} onChange={(e) => updateField("google_search_console", e.target.value)} placeholder="meta tag content value" />
               </div>
-              <div className="space-y-2">
-                <Label>Facebook Pixel ID</Label>
-                <Input value={settings.facebook_pixel_id} onChange={(e) => updateField("facebook_pixel_id", e.target.value)} placeholder="XXXXXXXXXXXXXXX" />
+            </CardContent>
+          </Card>
+
+          {/* Facebook Pixel + CAPI */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Facebook Pixel + Conversions API</CardTitle>
+                  <CardDescription>ক্লায়েন্ট-সাইড পিক্সেল এবং সার্ভার-সাইড ট্র্যাকিং</CardDescription>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Switch checked={settings.facebook_pixel?.enabled || false} onCheckedChange={(v) => updateFBConfig("enabled", v)} />
+                  <Label className="font-semibold">{settings.facebook_pixel?.enabled ? "চালু" : "বন্ধ"}</Label>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-5">
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label>Facebook Pixel ID</Label>
+                  <Input value={settings.facebook_pixel?.pixel_id || ""} onChange={(e) => updateFBConfig("pixel_id", e.target.value)} placeholder="XXXXXXXXXXXXXXX" />
+                  <p className="text-xs text-muted-foreground">Facebook Events Manager থেকে পাবেন</p>
+                </div>
+                <div className="space-y-2">
+                  <Label>Test Event Code (ঐচ্ছিক)</Label>
+                  <Input value={settings.facebook_pixel?.test_event_code || ""} onChange={(e) => updateFBConfig("test_event_code", e.target.value)} placeholder="TEST12345" />
+                  <p className="text-xs text-muted-foreground">Events Manager → Test Events থেকে পাবেন</p>
+                </div>
+              </div>
+
+              {/* Event Toggles */}
+              <div>
+                <Label className="text-sm font-semibold mb-3 block">ইভেন্ট ট্র্যাকিং</Label>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  {[
+                    { key: "track_page_view" as const, label: "PageView", desc: "পেজ ভিজিট" },
+                    { key: "track_view_content" as const, label: "ViewContent", desc: "প্যাকেজ/হোটেল দেখা" },
+                    { key: "track_lead" as const, label: "Lead", desc: "যোগাযোগ ফর্ম" },
+                    { key: "track_initiate_checkout" as const, label: "InitiateCheckout", desc: "বুকিং শুরু" },
+                    { key: "track_purchase" as const, label: "Purchase", desc: "পেমেন্ট সম্পন্ন" },
+                    { key: "track_contact" as const, label: "Contact", desc: "হোয়াটসঅ্যাপ ক্লিক" },
+                    { key: "track_search" as const, label: "Search", desc: "সার্চ ইভেন্ট" },
+                  ].map((evt) => (
+                    <div key={evt.key} className="flex items-center gap-2 p-2 border border-border rounded-lg">
+                      <Switch
+                        checked={settings.facebook_pixel?.[evt.key] ?? false}
+                        onCheckedChange={(v) => updateFBConfig(evt.key, v)}
+                      />
+                      <div>
+                        <p className="text-sm font-medium">{evt.label}</p>
+                        <p className="text-xs text-muted-foreground">{evt.desc}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* CAPI Section */}
+              <div className="border-t border-border pt-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <Label className="text-sm font-semibold">Conversions API (Server-Side)</Label>
+                    <p className="text-xs text-muted-foreground">সার্ভার থেকে Facebook-এ ইভেন্ট পাঠান — ব্রাউজার ব্লকার এড়াতে</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Switch checked={settings.facebook_pixel?.capi_enabled || false} onCheckedChange={(v) => updateFBConfig("capi_enabled", v)} />
+                    <Label>{settings.facebook_pixel?.capi_enabled ? "চালু" : "বন্ধ"}</Label>
+                  </div>
+                </div>
+                {settings.facebook_pixel?.capi_enabled && (
+                  <div className="bg-muted/50 rounded-lg p-4 space-y-2 text-sm">
+                    <p className="font-medium">⚙️ সেটআপ নির্দেশনা:</p>
+                    <ol className="list-decimal list-inside space-y-1 text-muted-foreground">
+                      <li>Facebook Events Manager → Settings → Generate Access Token</li>
+                      <li>Lovable Cloud-এ <code className="bg-muted px-1 rounded">FB_CONVERSIONS_API_TOKEN</code> সিক্রেট যোগ করুন</li>
+                      <li>Lovable Cloud-এ <code className="bg-muted px-1 rounded">FB_PIXEL_ID</code> সিক্রেট যোগ করুন</li>
+                    </ol>
+                    <p className="text-xs mt-2">✅ ডুপ্লিকেশন প্রতিরোধে event_id ম্যাচিং স্বয়ংক্রিয়ভাবে কাজ করবে</p>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -309,13 +424,15 @@ export default function AdminSeoPage() {
                   { label: "সার্চ ইঞ্জিন ইনডেক্সিং চালু", ok: settings.robots_index },
                   { label: "Google Analytics কনফিগার করা আছে", ok: !!settings.google_analytics_id },
                   { label: "Search Console ভেরিফিকেশন", ok: !!settings.google_search_console },
+                  { label: "Facebook Pixel কনফিগার করা আছে", ok: !!(settings.facebook_pixel?.enabled && settings.facebook_pixel?.pixel_id) },
+                  { label: "Conversions API চালু", ok: !!settings.facebook_pixel?.capi_enabled },
                   { label: "সাইটম্যাপ চালু আছে", ok: settings.auto_sitemap },
                 ].map((item, i) => (
                   <div key={i} className="flex items-center gap-3">
                     {item.ok ? (
-                      <CheckCircle className="h-5 w-5 text-green-500" />
+                      <CheckCircle className="h-5 w-5 text-primary" />
                     ) : (
-                      <AlertTriangle className="h-5 w-5 text-yellow-500" />
+                      <AlertTriangle className="h-5 w-5 text-muted-foreground" />
                     )}
                     <span className={item.ok ? "text-foreground" : "text-muted-foreground"}>{item.label}</span>
                   </div>

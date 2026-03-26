@@ -427,6 +427,126 @@ app.use('/api/financial-summary', createCrudRoutes('financial_summary', { adminO
 app.use('/api/daily-cashbook', createCrudRoutes('daily_cashbook', { adminOnly: true }));
 
 // =============================================
+// BACKUP / RESTORE ROUTES
+// =============================================
+const BACKUP_TABLES = [
+  'profiles', 'bookings', 'booking_members', 'booking_documents',
+  'payments', 'packages', 'installment_plans',
+  'hotels', 'hotel_rooms', 'hotel_bookings',
+  'moallems', 'moallem_payments', 'moallem_commission_payments', 'moallem_items',
+  'supplier_agents', 'supplier_agent_payments', 'supplier_agent_items',
+  'supplier_contracts', 'supplier_contract_payments',
+  'expenses', 'transactions', 'accounts', 'financial_summary',
+  'notification_logs', 'notification_settings',
+  'user_roles', 'site_content', 'company_settings',
+  'blog_posts', 'cms_versions', 'daily_cashbook',
+];
+
+const backupsDir = path.join(__dirname, 'backups');
+if (!fs.existsSync(backupsDir)) fs.mkdirSync(backupsDir, { recursive: true });
+
+// List backups
+app.get('/api/backup/list', authenticate, requireRole('admin'), async (req, res) => {
+  try {
+    await fsp.mkdir(backupsDir, { recursive: true });
+    const entries = await fsp.readdir(backupsDir, { withFileTypes: true });
+    const files = await Promise.all(
+      entries.filter(e => e.isFile() && e.name.endsWith('.json')).map(async e => {
+        const stat = await fsp.stat(path.join(backupsDir, e.name));
+        return { name: e.name, created_at: stat.birthtime.toISOString(), size: stat.size };
+      })
+    );
+    res.json(files.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Create backup
+app.post('/api/backup/create', authenticate, requireRole('admin'), async (req, res) => {
+  try {
+    const backupData = {};
+    const stats = [];
+    for (const table of BACKUP_TABLES) {
+      try {
+        const result = await query(`SELECT * FROM ${table}`);
+        backupData[table] = result.rows;
+        stats.push({ name: table, rows: result.rows.length });
+      } catch (e) {
+        stats.push({ name: table, rows: -1, error: e.message });
+      }
+    }
+    const now = new Date();
+    const timestamp = now.toISOString().replace(/[:.]/g, '-');
+    const fileName = `backup_${timestamp}.json`;
+    const jsonStr = JSON.stringify({ created_at: now.toISOString(), tables: backupData, stats }, null, 2);
+    await fsp.writeFile(path.join(backupsDir, fileName), jsonStr);
+    res.json({ success: true, fileName, tables: stats.length, size: jsonStr.length });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Restore backup
+app.post('/api/backup/restore', authenticate, requireRole('admin'), async (req, res) => {
+  try {
+    const { fileName, mode } = req.body;
+    if (!fileName) return res.status(400).json({ error: 'fileName required' });
+    const filePath = path.join(backupsDir, path.basename(fileName));
+    if (!fs.existsSync(filePath)) return res.status(404).json({ error: 'Backup not found' });
+    const raw = await fsp.readFile(filePath, 'utf-8');
+    const backup = JSON.parse(raw);
+    const results = [];
+
+    for (const [table, rows] of Object.entries(backup.tables || {})) {
+      if (!Array.isArray(rows) || rows.length === 0) {
+        results.push({ table, status: 'skipped', reason: 'empty' });
+        continue;
+      }
+      try {
+        if (mode === 'full') {
+          await query(`DELETE FROM ${table}`);
+        }
+        const keys = Object.keys(rows[0]);
+        const quote = (id) => `"${String(id).replace(/"/g, '""')}"`;
+        for (const row of rows) {
+          const values = keys.map(k => row[k]);
+          const placeholders = keys.map((_, i) => `$${i + 1}`);
+          const sql = mode === 'full'
+            ? `INSERT INTO ${table} (${keys.map(quote).join(',')}) VALUES (${placeholders.join(',')}) ON CONFLICT DO NOTHING`
+            : `INSERT INTO ${table} (${keys.map(quote).join(',')}) VALUES (${placeholders.join(',')}) ON CONFLICT (id) DO UPDATE SET ${keys.filter(k => k !== 'id').map((k, i) => `${quote(k)} = EXCLUDED.${quote(k)}`).join(', ')}`;
+          await query(sql, values);
+        }
+        results.push({ table, status: 'restored', rows: rows.length });
+      } catch (e) {
+        results.push({ table, status: 'error', error: e.message });
+      }
+    }
+    const restored = results.filter(r => r.status === 'restored').length;
+    res.json({ success: true, restored, results });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Download backup
+app.get('/api/backup/download', authenticate, requireRole('admin'), (req, res) => {
+  const file = path.basename(req.query.file || '');
+  const filePath = path.join(backupsDir, file);
+  if (!file || !fs.existsSync(filePath)) return res.status(404).json({ error: 'Not found' });
+  res.download(filePath, file);
+});
+
+// Delete backup
+app.post('/api/backup/delete', authenticate, requireRole('admin'), async (req, res) => {
+  const file = path.basename(req.body?.fileName || '');
+  const filePath = path.join(backupsDir, file);
+  if (!file || !fs.existsSync(filePath)) return res.status(404).json({ error: 'Not found' });
+  await fsp.unlink(filePath);
+  res.json({ message: 'Deleted' });
+});
+
+// =============================================
 // SPECIAL ROUTES
 // =============================================
 

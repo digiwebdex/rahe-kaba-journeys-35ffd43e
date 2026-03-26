@@ -51,7 +51,7 @@ const PackagesSection = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: i * 0.1 }}
-              className="relative rounded-xl overflow-hidden border border-border bg-background flex flex-col hover:border-primary/40 hover:shadow-gold transition-all group"
+              className="relative rounded-xl overflow-hidden border border-border bg-card flex flex-col hover:border-primary/40 hover:shadow-luxury transition-all group"
             >
               <div className="h-48 overflow-hidden">
                 <img

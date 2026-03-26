@@ -22,7 +22,7 @@ const ContactSection = forwardRef<HTMLElement>(function ContactSection(_, ref) {
   ];
 
   return (
-    <section ref={ref} id="contact" className="py-24 bg-card">
+    <section ref={ref} id="contact" className="py-24 bg-secondary/50">
       <div className="container mx-auto px-4">
         <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-16">
           <span className="text-primary text-sm font-medium tracking-[0.3em] uppercase">{lc?.section_label || t("contact.label")}</span>

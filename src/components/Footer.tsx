@@ -77,9 +77,9 @@ const Footer = () => {
           </div>
         </div>
 
-        <div className="mt-12 pt-8 border-t border-border text-center text-sm text-muted-foreground">
+        <div className="mt-12 pt-8 border-t border-white/10 text-center text-sm text-white/50">
           <p>© {new Date().getFullYear()} {companyName} {tagline}. {t("footer.allRights")}</p>
-          <p className="mt-2 text-xs text-muted-foreground/70">{t("footer.designBy")} <a href={devUrl} target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">{devName}</a></p>
+          <p className="mt-2 text-xs text-white/30">{t("footer.designBy")} <a href={devUrl} target="_blank" rel="noopener noreferrer" className="hover:text-gold-light transition-colors">{devName}</a></p>
         </div>
       </div>
     </footer>

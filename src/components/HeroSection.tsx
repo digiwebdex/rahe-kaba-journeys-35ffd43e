@@ -36,7 +36,7 @@ const HeroSection = () => {
         <img src={heroImage} alt="The Holy Kaaba at night, illuminated by golden lights" className="w-full h-[130%] object-cover object-center brightness-[0.7] saturate-[1.1]" loading="eager" fetchPriority="high" decoding="async" />
       </motion.div>
 
-      {/* Overlays */}
+      <div className="absolute inset-0 bg-gradient-to-b from-[#1a1a2e]/50 via-transparent to-[#1a1a2e]/70" />
       <div className="absolute inset-0 bg-gradient-to-t from-[#1a1a2e]/85 via-[#1a1a2e]/40 to-transparent" />
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_40%,rgba(26,26,46,0.3)_100%)]" />
 

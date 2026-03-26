@@ -9,11 +9,13 @@ const WhatsAppFloat = () => {
       href={`https://wa.me/${phone}?text=${message}`}
       target="_blank"
       rel="noopener noreferrer"
-      className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-[#25D366] hover:bg-[#1ebe57] text-white px-5 py-3.5 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 group animate-bounce-slow"
+      className="fixed bottom-6 left-6 z-50 flex items-center gap-2.5 bg-[#25D366] hover:bg-[#1ebe57] text-white pl-4 pr-5 py-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 group"
       aria-label="Chat on WhatsApp"
     >
-      <MessageCircle className="h-6 w-6 fill-white stroke-white" />
-      <span className="text-sm font-semibold hidden sm:inline">Chat Now</span>
+      <MessageCircle className="h-6 w-6 fill-white stroke-white flex-shrink-0" />
+      <span className="text-sm font-medium hidden sm:inline whitespace-nowrap">
+        আপনাকে কিভাবে সহযোগিতা করতে পারি
+      </span>
     </a>
   );
 };

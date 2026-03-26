@@ -1,95 +1,10 @@
 import { useState, useEffect } from "react";
 import { useAllSiteContent, useUpdateSiteContent } from "@/hooks/useSiteContent";
-import { Save, Plus, Trash2, ChevronDown, ChevronUp, Type, FileText, Globe, Phone, Mail, MapPin, Languages } from "lucide-react";
+import { Save, Plus, Trash2, ChevronDown, ChevronUp, Type, FileText, Globe, Phone, MapPin, Languages, Image, MessageCircle, Star, BookOpen, Video, Shield, Layout, Navigation } from "lucide-react";
 import { toast } from "sonner";
 import { Language } from "@/i18n/translations";
 
 const inputClass = "w-full bg-secondary border border-border rounded-md px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40";
-
-const SECTION_CONFIG: Record<string, { label: string; icon: any; fields: FieldConfig[] }> = {
-  hero: {
-    label: "Hero Section",
-    icon: Type,
-    fields: [
-      { key: "badge", label: "Badge Text", type: "text", bilingual: true },
-      { key: "heading_line1", label: "Heading Line 1", type: "text", bilingual: true },
-      { key: "heading_line2", label: "Heading Line 2", type: "text", bilingual: true },
-      { key: "heading_highlight", label: "Heading Highlight", type: "text", bilingual: true },
-      { key: "subheading", label: "Subheading", type: "textarea", bilingual: true },
-      { key: "cta_primary", label: "Primary Button Text", type: "text", bilingual: true },
-      { key: "cta_secondary", label: "Secondary Button Text", type: "text", bilingual: true },
-      { key: "stats", label: "Stats", type: "array", bilingual: true, arrayFields: [
-        { key: "value", label: "Value", type: "text" },
-        { key: "label", label: "Label", type: "text" },
-      ]},
-    ],
-  },
-  services: {
-    label: "Services Section",
-    icon: Globe,
-    fields: [
-      { key: "section_label", label: "Section Label", type: "text", bilingual: true },
-      { key: "heading", label: "Heading", type: "text", bilingual: true },
-      { key: "heading_highlight", label: "Heading Highlight", type: "text", bilingual: true },
-      { key: "description", label: "Description", type: "textarea", bilingual: true },
-      { key: "items", label: "Service Items", type: "array", bilingual: true, arrayFields: [
-        { key: "icon", label: "Icon Name", type: "text" },
-        { key: "title", label: "Title", type: "text" },
-        { key: "desc", label: "Description", type: "text" },
-      ]},
-    ],
-  },
-  about: {
-    label: "About Section",
-    icon: FileText,
-    fields: [
-      { key: "section_label", label: "Section Label", type: "text", bilingual: true },
-      { key: "heading", label: "Heading", type: "text", bilingual: true },
-      { key: "heading_highlight", label: "Heading Highlight", type: "text", bilingual: true },
-      { key: "description", label: "Description", type: "textarea", bilingual: true },
-      { key: "reasons", label: "Reasons", type: "array", bilingual: true, arrayFields: [
-        { key: "title", label: "Title", type: "text" },
-        { key: "desc", label: "Description", type: "text" },
-      ]},
-    ],
-  },
-  contact: {
-    label: "Contact Section",
-    icon: Phone,
-    fields: [
-      { key: "section_label", label: "Section Label", type: "text", bilingual: true },
-      { key: "heading", label: "Heading", type: "text", bilingual: true },
-      { key: "heading_highlight", label: "Heading Highlight", type: "text", bilingual: true },
-      { key: "phone", label: "Phone", type: "text", bilingual: false },
-      { key: "email", label: "Email", type: "text", bilingual: false },
-      { key: "location", label: "Location", type: "text", bilingual: true },
-      { key: "hours", label: "Working Hours", type: "text", bilingual: true },
-    ],
-  },
-  footer: {
-    label: "Footer",
-    icon: MapPin,
-    fields: [
-      { key: "company_name", label: "Company Name", type: "text", bilingual: false },
-      { key: "company_tagline", label: "Tagline", type: "text", bilingual: true },
-      { key: "description", label: "Description", type: "textarea", bilingual: true },
-      { key: "phone", label: "Phone", type: "text", bilingual: false },
-      { key: "email", label: "Email", type: "text", bilingual: false },
-      { key: "address", label: "Address", type: "text", bilingual: true },
-      { key: "services_list", label: "Services List", type: "string_array", bilingual: true },
-      { key: "developer_name", label: "Developer Name", type: "text", bilingual: false },
-      { key: "developer_url", label: "Developer URL", type: "text", bilingual: false },
-    ],
-  },
-  navbar: {
-    label: "Navbar",
-    icon: Globe,
-    fields: [
-      { key: "phone", label: "Phone Number", type: "text", bilingual: false },
-      { key: "cta_text", label: "CTA Button Text", type: "text", bilingual: true },
-    ],
-  },
-};
 
 interface FieldConfig {
   key: string;
@@ -99,8 +14,219 @@ interface FieldConfig {
   arrayFields?: { key: string; label: string; type: string }[];
 }
 
+const SECTION_CONFIG: Record<string, { label: string; labelBn: string; icon: any; fields: FieldConfig[] }> = {
+  hero: {
+    label: "Hero Section",
+    labelBn: "হিরো সেকশন",
+    icon: Type,
+    fields: [
+      { key: "badge", label: "Badge Text", type: "text", bilingual: true },
+      { key: "heading_line1", label: "Heading Line 1", type: "text", bilingual: true },
+      { key: "heading_line2", label: "Heading Line 2", type: "text", bilingual: true },
+      { key: "heading_highlight", label: "Heading Highlight", type: "text", bilingual: true },
+      { key: "subheading", label: "Subheading", type: "textarea", bilingual: true },
+      { key: "quran_arabic", label: "Quranic Verse (Arabic)", type: "text", bilingual: false },
+      { key: "quran_translation", label: "Quranic Verse Translation", type: "text", bilingual: true },
+      { key: "quran_reference", label: "Quran Reference", type: "text", bilingual: true },
+      { key: "cta_primary", label: "Primary Button Text", type: "text", bilingual: true },
+      { key: "cta_secondary", label: "Secondary Button Text", type: "text", bilingual: true },
+      { key: "stats", label: "Stats", type: "array", bilingual: true, arrayFields: [
+        { key: "value", label: "Value", type: "text" },
+        { key: "label", label: "Label", type: "text" },
+      ]},
+    ],
+  },
+  navbar: {
+    label: "Navbar",
+    labelBn: "নেভিগেশন বার",
+    icon: Navigation,
+    fields: [
+      { key: "company_name", label: "Company Name", type: "text", bilingual: false },
+      { key: "company_tagline", label: "Company Tagline", type: "text", bilingual: true },
+      { key: "phone", label: "Phone Number", type: "text", bilingual: false },
+      { key: "cta_text", label: "CTA Button Text", type: "text", bilingual: true },
+      { key: "nav_links", label: "Navigation Links", type: "array", bilingual: true, arrayFields: [
+        { key: "label", label: "Link Label", type: "text" },
+        { key: "href", label: "Link URL", type: "text" },
+      ]},
+    ],
+  },
+  services: {
+    label: "Services Section",
+    labelBn: "সেবা সেকশন",
+    icon: Globe,
+    fields: [
+      { key: "section_label", label: "Section Label", type: "text", bilingual: true },
+      { key: "heading", label: "Heading", type: "text", bilingual: true },
+      { key: "heading_highlight", label: "Heading Highlight", type: "text", bilingual: true },
+      { key: "description", label: "Description", type: "textarea", bilingual: true },
+      { key: "items", label: "Service Items", type: "array", bilingual: true, arrayFields: [
+        { key: "icon", label: "Icon Name (BookOpen/Globe/CreditCard/Plane/Building2/Bus/MapPin/Users)", type: "text" },
+        { key: "title", label: "Title", type: "text" },
+        { key: "desc", label: "Description", type: "text" },
+      ]},
+    ],
+  },
+  about: {
+    label: "About Section",
+    labelBn: "আমাদের সম্পর্কে",
+    icon: FileText,
+    fields: [
+      { key: "section_label", label: "Section Label", type: "text", bilingual: true },
+      { key: "heading", label: "Heading", type: "text", bilingual: true },
+      { key: "heading_highlight", label: "Heading Highlight", type: "text", bilingual: true },
+      { key: "description", label: "Description", type: "textarea", bilingual: true },
+      { key: "track_title", label: "Tracking Box Title", type: "text", bilingual: true },
+      { key: "track_description", label: "Tracking Box Description", type: "text", bilingual: true },
+      { key: "reasons", label: "Reasons/Features", type: "array", bilingual: true, arrayFields: [
+        { key: "title", label: "Title", type: "text" },
+        { key: "desc", label: "Description", type: "text" },
+      ]},
+    ],
+  },
+  packages: {
+    label: "Packages Section",
+    labelBn: "প্যাকেজ সেকশন",
+    icon: Layout,
+    fields: [
+      { key: "section_label", label: "Section Label", type: "text", bilingual: true },
+      { key: "heading", label: "Heading", type: "text", bilingual: true },
+      { key: "heading_highlight", label: "Heading Highlight", type: "text", bilingual: true },
+      { key: "description", label: "Description", type: "textarea", bilingual: true },
+      { key: "book_now_text", label: "Book Now Button Text", type: "text", bilingual: true },
+      { key: "view_all_text", label: "View All Button Text", type: "text", bilingual: true },
+    ],
+  },
+  testimonials: {
+    label: "Testimonials Section",
+    labelBn: "প্রশংসাপত্র সেকশন",
+    icon: Star,
+    fields: [
+      { key: "section_label", label: "Section Label", type: "text", bilingual: true },
+      { key: "heading", label: "Heading", type: "text", bilingual: true },
+      { key: "heading_highlight", label: "Heading Highlight", type: "text", bilingual: true },
+      { key: "description", label: "Description", type: "textarea", bilingual: true },
+      { key: "items", label: "Testimonials", type: "array", bilingual: false, arrayFields: [
+        { key: "name", label: "Name", type: "text" },
+        { key: "location", label: "Location", type: "text" },
+        { key: "text", label: "Review Text", type: "text" },
+        { key: "rating", label: "Rating (1-5)", type: "text" },
+        { key: "trip", label: "Trip Type", type: "text" },
+      ]},
+    ],
+  },
+  facilities: {
+    label: "Facilities Section",
+    labelBn: "সুবিধা সেকশন",
+    icon: Shield,
+    fields: [
+      { key: "section_label", label: "Section Label", type: "text", bilingual: true },
+      { key: "heading", label: "Heading", type: "text", bilingual: true },
+      { key: "heading_highlight", label: "Heading Highlight", type: "text", bilingual: true },
+      { key: "description", label: "Description", type: "textarea", bilingual: true },
+      { key: "items", label: "Facility Items", type: "array", bilingual: true, arrayFields: [
+        { key: "icon", label: "Icon (Shield/Plane/Hotel/Car/BookOpen/Users/Headphones/CreditCard/Heart)", type: "text" },
+        { key: "title", label: "Title", type: "text" },
+        { key: "desc", label: "Description", type: "text" },
+      ]},
+    ],
+  },
+  gallery: {
+    label: "Gallery Section",
+    labelBn: "গ্যালারি সেকশন",
+    icon: Image,
+    fields: [
+      { key: "section_label", label: "Section Label", type: "text", bilingual: true },
+      { key: "heading", label: "Heading", type: "text", bilingual: true },
+      { key: "heading_highlight", label: "Heading Highlight", type: "text", bilingual: true },
+      { key: "description", label: "Description", type: "textarea", bilingual: true },
+      { key: "items", label: "Gallery Items (type: image/video)", type: "array", bilingual: false, arrayFields: [
+        { key: "type", label: "Type (image/video)", type: "text" },
+        { key: "src", label: "File Path or URL", type: "text" },
+      ]},
+    ],
+  },
+  guideline: {
+    label: "Umrah Guideline Section",
+    labelBn: "ওমরাহ গাইডলাইন সেকশন",
+    icon: BookOpen,
+    fields: [
+      { key: "section_label", label: "Section Label", type: "text", bilingual: true },
+      { key: "heading", label: "Heading", type: "text", bilingual: true },
+      { key: "heading_highlight", label: "Heading Highlight", type: "text", bilingual: true },
+      { key: "description", label: "Description", type: "textarea", bilingual: true },
+      { key: "steps", label: "Step-by-Step Guide", type: "array", bilingual: true, arrayFields: [
+        { key: "num", label: "Step Number", type: "text" },
+        { key: "title", label: "Step Title", type: "text" },
+        { key: "desc", label: "Step Description", type: "text" },
+      ]},
+      { key: "dos", label: "Do's List", type: "string_array", bilingual: true },
+      { key: "donts", label: "Don'ts List", type: "string_array", bilingual: true },
+    ],
+  },
+  video_guide: {
+    label: "Video Guide Section",
+    labelBn: "ভিডিও গাইড সেকশন",
+    icon: Video,
+    fields: [
+      { key: "section_label", label: "Section Label", type: "text", bilingual: true },
+      { key: "heading", label: "Heading", type: "text", bilingual: true },
+      { key: "heading_highlight", label: "Heading Highlight", type: "text", bilingual: true },
+      { key: "description", label: "Description", type: "textarea", bilingual: true },
+      { key: "tutorials", label: "Video Tutorials", type: "array", bilingual: true, arrayFields: [
+        { key: "title", label: "Video Title", type: "text" },
+        { key: "desc", label: "Video Description", type: "text" },
+        { key: "thumbnail", label: "Thumbnail Path/URL", type: "text" },
+        { key: "src", label: "Video Source Path/URL", type: "text" },
+      ]},
+    ],
+  },
+  contact: {
+    label: "Contact Section",
+    labelBn: "যোগাযোগ সেকশন",
+    icon: Phone,
+    fields: [
+      { key: "section_label", label: "Section Label", type: "text", bilingual: true },
+      { key: "heading", label: "Heading", type: "text", bilingual: true },
+      { key: "heading_highlight", label: "Heading Highlight", type: "text", bilingual: true },
+      { key: "phone", label: "Phone", type: "text", bilingual: false },
+      { key: "email", label: "Email", type: "text", bilingual: false },
+      { key: "location", label: "Location", type: "textarea", bilingual: true },
+      { key: "hours", label: "Working Hours", type: "text", bilingual: true },
+      { key: "form_services", label: "Contact Form Service Options", type: "string_array", bilingual: true },
+    ],
+  },
+  whatsapp: {
+    label: "WhatsApp Button",
+    labelBn: "হোয়াটসঅ্যাপ বাটন",
+    icon: MessageCircle,
+    fields: [
+      { key: "phone", label: "WhatsApp Number (with country code, no +)", type: "text", bilingual: false },
+      { key: "message", label: "Default Message", type: "text", bilingual: true },
+      { key: "button_text", label: "Button Label Text", type: "text", bilingual: true },
+    ],
+  },
+  footer: {
+    label: "Footer",
+    labelBn: "ফুটার",
+    icon: MapPin,
+    fields: [
+      { key: "company_name", label: "Company Name", type: "text", bilingual: false },
+      { key: "company_tagline", label: "Tagline", type: "text", bilingual: true },
+      { key: "description", label: "Description", type: "textarea", bilingual: true },
+      { key: "phone", label: "Phone", type: "text", bilingual: false },
+      { key: "email", label: "Email", type: "text", bilingual: false },
+      { key: "address", label: "Address", type: "textarea", bilingual: true },
+      { key: "facebook_url", label: "Facebook URL", type: "text", bilingual: false },
+      { key: "services_list", label: "Services List (one per line)", type: "string_array", bilingual: true },
+      { key: "developer_name", label: "Developer Name", type: "text", bilingual: false },
+      { key: "developer_url", label: "Developer URL", type: "text", bilingual: false },
+    ],
+  },
+};
+
 const AdminCmsEditor = () => {
-  const { data: allContent, isLoading } = useAllSiteContent();
+  const { data: allContent, isLoading, isError } = useAllSiteContent();
   const updateMutation = useUpdateSiteContent();
   const [editState, setEditState] = useState<Record<string, any>>({});
   const [expandedSection, setExpandedSection] = useState<string | null>("hero");
@@ -112,17 +238,14 @@ const AdminCmsEditor = () => {
     }
   }, [allContent]);
 
-  // Helper to get the value for a field considering bilingual structure
   const getFieldValue = (sectionData: any, field: FieldConfig) => {
     if (!field.bilingual) {
       return sectionData?.[field.key] ?? "";
     }
-    // Bilingual: stored as { en: {...}, bn: {...} } or legacy flat format
     const langData = sectionData?.[editLang];
     if (langData && langData[field.key] !== undefined) {
       return langData[field.key];
     }
-    // Fallback to legacy flat format
     return sectionData?.[field.key] ?? "";
   };
 
@@ -214,17 +337,35 @@ const AdminCmsEditor = () => {
   };
 
   const handleSave = (sectionKey: string) => {
-    updateMutation.mutate({ sectionKey, content: editState[sectionKey] });
+    updateMutation.mutate({ sectionKey, content: editState[sectionKey] || {} });
   };
 
   if (isLoading) {
-    return <p className="text-center text-muted-foreground py-12">Loading content...</p>;
+    return (
+      <div className="text-center py-12 space-y-3">
+        <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto" />
+        <p className="text-muted-foreground text-sm">কন্টেন্ট লোড হচ্ছে...</p>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="text-center py-12 space-y-3">
+        <p className="text-destructive font-medium">কন্টেন্ট লোড করা যায়নি</p>
+        <p className="text-muted-foreground text-sm">সার্ভার সংযোগ চেক করুন এবং পুনরায় চেষ্টা করুন।</p>
+        <button onClick={() => window.location.reload()} className="bg-primary text-primary-foreground px-4 py-2 rounded-md text-sm">পুনরায় চেষ্টা করুন</button>
+      </div>
+    );
   }
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between mb-2">
-        <h3 className="font-heading text-lg font-bold">Website Content Manager</h3>
+        <div>
+          <h3 className="font-heading text-lg font-bold">ওয়েবসাইট কন্টেন্ট ম্যানেজার</h3>
+          <p className="text-xs text-muted-foreground">{Object.keys(SECTION_CONFIG).length} টি সেকশন এডিট করতে পারবেন</p>
+        </div>
         <div className="flex items-center gap-2">
           <Languages className="h-4 w-4 text-muted-foreground" />
           <div className="flex bg-secondary rounded-lg border border-border overflow-hidden">
@@ -245,14 +386,13 @@ const AdminCmsEditor = () => {
       </div>
 
       <p className="text-xs text-muted-foreground -mt-2">
-        {editLang === "bn" ? "বাংলা কন্টেন্ট এডিট করছেন" : "Editing English content"} — 
-        {editLang === "bn" ? " ভাষা-নির্দিষ্ট ফিল্ডগুলো 🇧🇩 চিহ্নিত" : " Language-specific fields marked with 🇧🇩/🇬🇧"}
+        {editLang === "bn" ? "বাংলা কন্টেন্ট এডিট করছেন — ভাষা-নির্দিষ্ট ফিল্ডগুলো 🇧🇩 চিহ্নিত" : "Editing English content — Language-specific fields marked with 🇬🇧"}
       </p>
 
       {Object.entries(SECTION_CONFIG).map(([sectionKey, config]) => {
         const isExpanded = expandedSection === sectionKey;
         const sectionData = editState[sectionKey] || {};
-        const hasChanges = JSON.stringify(sectionData) !== JSON.stringify(allContent?.[sectionKey]);
+        const hasChanges = JSON.stringify(sectionData) !== JSON.stringify(allContent?.[sectionKey] || {});
 
         return (
           <div key={sectionKey} className="bg-card border border-border rounded-xl overflow-hidden">
@@ -265,13 +405,15 @@ const AdminCmsEditor = () => {
                   <config.icon className="h-4 w-4 text-primary" />
                 </div>
                 <div className="text-left">
-                  <p className="font-medium text-sm">{config.label}</p>
-                  <p className="text-xs text-muted-foreground">{config.fields.length} editable fields</p>
+                  <p className="font-medium text-sm">{editLang === "bn" ? config.labelBn : config.label}</p>
+                  <p className="text-xs text-muted-foreground">{config.fields.length} টি ফিল্ড</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
                 {hasChanges && (
-                  <span className="text-xs bg-primary/20 text-primary px-2 py-0.5 rounded-full font-medium">Unsaved</span>
+                  <span className="text-xs bg-primary/20 text-primary px-2 py-0.5 rounded-full font-medium">
+                    {editLang === "bn" ? "অসংরক্ষিত" : "Unsaved"}
+                  </span>
                 )}
                 {isExpanded ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
               </div>
@@ -325,6 +467,9 @@ const AdminCmsEditor = () => {
                         <div className="space-y-3">
                           {getArrayItems(sectionData, field).map((item: any, idx: number) => (
                             <div key={idx} className="bg-secondary/30 rounded-lg p-3 flex gap-3 items-start">
+                              <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary mt-4">
+                                {idx + 1}
+                              </div>
                               <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-2">
                                 {field.arrayFields!.map((af) => (
                                   <div key={af.key}>
@@ -341,6 +486,7 @@ const AdminCmsEditor = () => {
                               <button
                                 onClick={() => handleRemoveArrayItem(sectionKey, field, idx)}
                                 className="text-destructive hover:bg-destructive/10 p-1.5 rounded-md mt-4"
+                                title="Delete"
                               >
                                 <Trash2 className="h-3.5 w-3.5" />
                               </button>
@@ -350,7 +496,7 @@ const AdminCmsEditor = () => {
                             onClick={() => handleAddArrayItem(sectionKey, field)}
                             className="text-xs text-primary hover:underline flex items-center gap-1"
                           >
-                            <Plus className="h-3 w-3" /> {editLang === "bn" ? "আইটেম যোগ করুন" : "Add Item"}
+                            <Plus className="h-3 w-3" /> {editLang === "bn" ? "নতুন আইটেম যোগ করুন" : "Add New Item"}
                           </button>
                         </div>
                       )}
@@ -364,7 +510,9 @@ const AdminCmsEditor = () => {
                   className="bg-gradient-gold text-primary-foreground font-semibold py-2.5 px-6 rounded-md text-sm flex items-center gap-2 disabled:opacity-50"
                 >
                   <Save className="h-4 w-4" />
-                  {updateMutation.isPending ? (editLang === "bn" ? "সংরক্ষণ হচ্ছে..." : "Saving...") : (editLang === "bn" ? "পরিবর্তন সংরক্ষণ করুন" : "Save Changes")}
+                  {updateMutation.isPending
+                    ? (editLang === "bn" ? "সংরক্ষণ হচ্ছে..." : "Saving...")
+                    : (editLang === "bn" ? "পরিবর্তন সংরক্ষণ করুন" : "Save Changes")}
                 </button>
               </div>
             )}

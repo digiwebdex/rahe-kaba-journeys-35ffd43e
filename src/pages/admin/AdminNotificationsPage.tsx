@@ -26,6 +26,7 @@ const CHANNEL_ICON: Record<string, typeof Mail> = {
 };
 
 export default function AdminNotificationsPage() {
+  const navigate = useNavigate();
   const [logs, setLogs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterEvent, setFilterEvent] = useState("");
@@ -103,7 +104,7 @@ export default function AdminNotificationsPage() {
 
     setSending(true);
     try {
-      const { data, error } = await supabase.functions.invoke("send-notification", {
+      const { error } = await supabase.functions.invoke("send-notification", {
         body: {
           type: sendForm.type,
           channels: sendForm.channels,
@@ -130,7 +131,15 @@ export default function AdminNotificationsPage() {
         <h2 className="font-heading text-xl font-bold flex items-center gap-2">
           <Bell className="h-5 w-5 text-primary" /> Notifications
         </h2>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap justify-end">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => navigate("/admin/settings#notification-settings")}
+            className="gap-1.5"
+          >
+            <Settings className="h-3.5 w-3.5" /> SMS/Email Config
+          </Button>
           <Button size="sm" variant="outline" onClick={fetchLogs} className="gap-1.5">
             <RefreshCw className="h-3.5 w-3.5" /> Refresh
           </Button>

@@ -101,7 +101,7 @@ export default function AdminSettingsPage() {
 
       {/* Notification & Automation Settings (Admin only) */}
       {currentRole === "admin" && (
-        <section>
+        <section id="notification-settings">
           <h2 className="font-heading text-xl font-bold flex items-center gap-2 mb-4">
             <Bell className="h-5 w-5 text-primary" /> Notification & Automation
           </h2>
@@ -125,7 +125,7 @@ export default function AdminSettingsPage() {
 
       {/* Backup & Restore (Admin only) */}
       {currentRole === "admin" && (
-        <section>
+        <section id="backup-restore">
           <h2 className="font-heading text-xl font-bold flex items-center gap-2 mb-4">
             <Database className="h-5 w-5 text-primary" /> Backup & Restore
           </h2>

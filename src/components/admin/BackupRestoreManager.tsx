@@ -33,13 +33,33 @@ export default function BackupRestoreManager() {
   const [restoring, setRestoring] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
 
+  const parseResponse = async (res: Response) => {
+    const text = await res.text();
+    let json: any = null;
+    try {
+      json = text ? JSON.parse(text) : null;
+    } catch {
+      json = null;
+    }
+    return { text, json };
+  };
+
+  const getApiError = (fallback: string, parsed: { text: string; json: any }) => {
+    if (parsed?.json?.error) return parsed.json.error;
+    if (parsed?.json?.message) return parsed.json.message;
+    if (parsed?.text?.includes("<!doctype html") || parsed?.text?.includes("<html")) {
+      return "API response is HTML instead of JSON. Please verify your /api proxy and backend server status.";
+    }
+    return fallback;
+  };
+
   const fetchBackups = async () => {
     setLoading(true);
     try {
       const res = await fetch(`${API_URL}/backup/list`, { headers: authHeaders() });
-      if (!res.ok) throw new Error("Failed to load backups");
-      const data = await res.json();
-      setBackups(data || []);
+      const parsed = await parseResponse(res);
+      if (!res.ok) throw new Error(getApiError("Failed to load backups", parsed));
+      setBackups(Array.isArray(parsed.json) ? parsed.json : []);
     } catch (e: any) {
       toast.error(e.message);
     }
@@ -58,13 +78,12 @@ export default function BackupRestoreManager() {
         headers: authHeaders(),
       });
       clearInterval(interval);
+      const parsed = await parseResponse(res);
       if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "Backup failed");
+        throw new Error(getApiError("Backup failed", parsed));
       }
-      const data = await res.json();
       setProgress(100);
-      toast.success(`Backup successful! ${data.tables || 0} tables saved`);
+      toast.success(`Backup successful! ${parsed.json?.tables || 0} tables saved`);
       fetchBackups();
     } catch (e: any) {
       toast.error(`Backup failed: ${e.message}`);
@@ -85,13 +104,12 @@ export default function BackupRestoreManager() {
         body: JSON.stringify({ fileName, mode }),
       });
       clearInterval(interval);
+      const parsed = await parseResponse(res);
       if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "Restore failed");
+        throw new Error(getApiError("Restore failed", parsed));
       }
-      const data = await res.json();
       setProgress(100);
-      toast.success(`Restore successful! ${data.restored || 0} tables restored`);
+      toast.success(`Restore successful! ${parsed.json?.restored || 0} tables restored`);
     } catch (e: any) {
       toast.error(`Restore failed: ${e.message}`);
     } finally {
@@ -107,7 +125,8 @@ export default function BackupRestoreManager() {
         headers: authHeaders(),
         body: JSON.stringify({ fileName }),
       });
-      if (!res.ok) throw new Error("Delete failed");
+      const parsed = await parseResponse(res);
+      if (!res.ok) throw new Error(getApiError("Delete failed", parsed));
       toast.success("Backup deleted");
       fetchBackups();
     } catch (e: any) {

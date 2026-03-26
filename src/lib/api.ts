@@ -120,9 +120,24 @@ export const auth = {
   },
 
   async getUser() {
-    const user = TokenManager.getUser();
-    if (!user) return { data: { user: null } };
-    return { data: { user: { id: user.id, email: user.email, ...user } } };
+    const localUser = TokenManager.getUser();
+    const token = TokenManager.getAccessToken();
+    if (!token && !localUser) return { data: { user: null } };
+
+    try {
+      const res = await apiFetch('/auth/me');
+      if (res.ok) {
+        const data = await res.json();
+        const freshUser = { ...(data?.user || {}), roles: data?.roles || [] };
+        TokenManager.setUser(freshUser);
+        return { data: { user: freshUser } };
+      }
+    } catch {
+      // Fallback to local session cache
+    }
+
+    if (!localUser) return { data: { user: null } };
+    return { data: { user: { id: localUser.id, email: localUser.email, ...localUser } } };
   },
 
   async resetPasswordForEmail(email: string, _options?: any) {

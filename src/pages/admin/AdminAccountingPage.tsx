@@ -88,7 +88,7 @@ export default function AdminAccountingPage() {
   const [customerProfit, setCustomerProfit] = useState<any[]>([]);
 
   const fetchData = async () => {
-    const [expRes, payRes, bkRes, custRes, pkgRes, walletRes, cashbookRes] = await Promise.all([
+    const [expRes, payRes, bkRes, custRes, pkgRes, walletRes, cashbookRes, moallemPayRes, supplierPayRes, supplierContractPayRes, commissionPayRes] = await Promise.all([
       supabase.from("expenses").select("*").order("date", { ascending: false }),
       supabase.from("payments").select("amount").eq("status", "completed"),
       supabase.from("bookings").select("id, tracking_id, guest_name, user_id").order("created_at", { ascending: false }),
@@ -96,9 +96,17 @@ export default function AdminAccountingPage() {
       supabase.from("packages").select("id, name, type").eq("is_active", true).order("name"),
       supabase.from("accounts" as any).select("*").eq("type", "asset"),
       supabase.from("daily_cashbook" as any).select("date, type, amount, category, payment_method").order("date", { ascending: false }),
+      supabase.from("moallem_payments").select("amount"),
+      supabase.from("supplier_agent_payments").select("amount"),
+      supabase.from("supplier_contract_payments").select("amount"),
+      supabase.from("moallem_commission_payments").select("amount"),
     ]);
     setExpenses(expRes.data || []);
-    setRevenue((payRes.data || []).reduce((s: number, p: any) => s + Number(p.amount), 0));
+    setCustomerRevenue((payRes.data || []).reduce((s: number, p: any) => s + Number(p.amount), 0));
+    setMoallemRevenue((moallemPayRes.data || []).reduce((s: number, p: any) => s + Number(p.amount), 0));
+    setSupplierExpenseTotal((supplierPayRes.data || []).reduce((s: number, p: any) => s + Number(p.amount), 0));
+    setSupplierContractExpenseTotal((supplierContractPayRes.data || []).reduce((s: number, p: any) => s + Number(p.amount), 0));
+    setCommissionExpenseTotal((commissionPayRes.data || []).reduce((s: number, p: any) => s + Number(p.amount), 0));
     setBookings(bkRes.data || []);
     setCustomers(custRes.data || []);
     setPackages(pkgRes.data || []);

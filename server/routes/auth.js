@@ -59,38 +59,9 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// Register
-router.post('/register', async (req, res) => {
-  try {
-    const { email, password, full_name, phone } = req.body;
-    if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
-    if (password.length < 8) return res.status(400).json({ error: 'Password must be at least 8 characters' });
-
-    const existing = await query('SELECT id FROM users WHERE email = $1', [email.trim().toLowerCase()]);
-    if (existing.rows.length > 0) return res.status(409).json({ error: 'Email already registered' });
-
-    const passwordHash = await bcrypt.hash(password, 10);
-    const userId = uuidv4();
-
-    await query(
-      'INSERT INTO users (id, email, password_hash, full_name, phone) VALUES ($1, $2, $3, $4, $5)',
-      [userId, email.trim().toLowerCase(), passwordHash, full_name || null, phone || null]
-    );
-
-    // Create profile
-    await query(
-      'INSERT INTO profiles (user_id, full_name, email, phone) VALUES ($1, $2, $3, $4)',
-      [userId, full_name || null, email.trim().toLowerCase(), phone || null]
-    );
-
-    // Assign default role
-    await query('INSERT INTO user_roles (user_id, role) VALUES ($1, $2)', [userId, 'user']);
-
-    res.status(201).json({ message: 'Account created successfully' });
-  } catch (err) {
-    console.error('Register error:', err);
-    res.status(500).json({ error: 'Internal server error' });
-  }
+// Register - DISABLED for security. Only admins can create accounts via /admin/create-user
+router.post('/register', (_req, res) => {
+  return res.status(403).json({ error: 'Public registration is disabled. Contact your administrator.' });
 });
 
 // Refresh token
@@ -170,6 +141,32 @@ router.post('/reset-password', async (req, res) => {
     res.json({ message: 'Password updated' });
   } catch (err) {
     res.status(400).json({ error: 'Invalid or expired token' });
+  }
+});
+
+// Change password (authenticated user)
+router.post('/change-password', authenticate, async (req, res) => {
+  try {
+    const { current_password, new_password } = req.body;
+    if (!current_password || !new_password) return res.status(400).json({ error: 'Current and new password required' });
+    if (new_password.length < 8) return res.status(400).json({ error: 'New password must be at least 8 characters' });
+
+    const userResult = await query('SELECT password_hash FROM users WHERE id = $1', [req.user.id]);
+    if (!userResult.rows[0]) return res.status(404).json({ error: 'User not found' });
+
+    const valid = await bcrypt.compare(current_password, userResult.rows[0].password_hash);
+    if (!valid) return res.status(401).json({ error: 'Current password is incorrect' });
+
+    const newHash = await bcrypt.hash(new_password, 10);
+    await query('UPDATE users SET password_hash = $1, updated_at = now() WHERE id = $2', [newHash, req.user.id]);
+
+    // Invalidate all other sessions
+    await query('DELETE FROM sessions WHERE user_id = $1', [req.user.id]);
+
+    res.json({ message: 'Password changed successfully' });
+  } catch (err) {
+    console.error('Change password error:', err);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 

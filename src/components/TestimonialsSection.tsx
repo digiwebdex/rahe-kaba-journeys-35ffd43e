@@ -1,11 +1,12 @@
 import { forwardRef } from "react";
 import { motion } from "framer-motion";
 import { Star, Quote } from "lucide-react";
+import { useSiteContent } from "@/hooks/useSiteContent";
+import { useLanguage } from "@/i18n/LanguageContext";
 
-const testimonials = [
+const defaultTestimonials = [
   {
     name: "আব্দুল করিম",
-    nameEn: "Abdul Karim",
     location: "চট্টগ্রাম",
     text: "রাহে কাবা'র সাথে আমার উমরাহ যাত্রা ছিল অসাধারণ। হোটেল, পরিবহন সবকিছু চমৎকার ছিল। ইনশাআল্লাহ আবার যাবো।",
     rating: 5,
@@ -13,7 +14,6 @@ const testimonials = [
   },
   {
     name: "ফাতেমা বেগম",
-    nameEn: "Fatema Begum",
     location: "ঢাকা",
     text: "হজ্জের পুরো প্রক্রিয়ায় তারা আমাদের পাশে ছিলেন। ভিসা থেকে শুরু করে মক্কায় থাকা পর্যন্ত সবকিছু সুন্দরভাবে পরিচালিত হয়েছে।",
     rating: 5,
@@ -21,7 +21,6 @@ const testimonials = [
   },
   {
     name: "মোহাম্মদ হাসান",
-    nameEn: "Mohammad Hasan",
     location: "সিলেট",
     text: "খুবই পেশাদার সেবা। কিস্তিতে পেমেন্টের সুবিধা থাকায় আমার পরিবারের জন্য উমরাহ করা সহজ হয়েছে। জাযাকাল্লাহু খাইরান।",
     rating: 5,
@@ -30,6 +29,18 @@ const testimonials = [
 ];
 
 const TestimonialsSection = forwardRef<HTMLElement>(function TestimonialsSection(_, ref) {
+  const { data: content } = useSiteContent("testimonials");
+  const { language } = useLanguage();
+  const bn = language === "bn";
+  const lc = content?.[language];
+
+  const sectionLabel = lc?.section_label || (bn ? "প্রশংসাপত্র" : "Testimonials");
+  const heading = lc?.heading || (bn ? "আমাদের হাজীদের " : "What Our ");
+  const headingHighlight = lc?.heading_highlight || (bn ? "মতামত" : "Pilgrims Say");
+  const description = lc?.description || (bn ? "আমাদের সন্তুষ্ট গ্রাহকদের মতামত যারা তাদের পবিত্র যাত্রায় আমাদের বিশ্বাস করেছেন" : "Hear from our satisfied customers who trusted us with their sacred journey");
+
+  const testimonials = content?.items || defaultTestimonials;
+
   return (
     <section ref={ref} className="py-20 bg-secondary/30 islamic-border-top">
       <div className="container mx-auto px-4">
@@ -40,18 +51,18 @@ const TestimonialsSection = forwardRef<HTMLElement>(function TestimonialsSection
           className="text-center mb-12"
         >
           <span className="text-primary text-sm font-medium tracking-[0.3em] uppercase">
-            Testimonials
+            {sectionLabel}
           </span>
           <h2 className="font-heading text-3xl md:text-4xl font-bold mt-3 mb-3">
-            What Our <span className="text-gradient-gold">Pilgrims</span> Say
+            {heading}<span className="text-gradient-gold">{headingHighlight}</span>
           </h2>
           <p className="text-muted-foreground text-sm max-w-xl mx-auto">
-            Hear from our satisfied customers who trusted us with their sacred journey
+            {description}
           </p>
         </motion.div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-          {testimonials.map((t, i) => (
+          {testimonials.map((t: any, i: number) => (
             <motion.div
               key={i}
               initial={{ opacity: 0, y: 30 }}
@@ -62,7 +73,7 @@ const TestimonialsSection = forwardRef<HTMLElement>(function TestimonialsSection
             >
               <Quote className="h-8 w-8 text-primary/20 absolute top-4 right-4" />
               <div className="flex gap-1 mb-3">
-                {Array.from({ length: t.rating }).map((_, j) => (
+                {Array.from({ length: Number(t.rating) || 5 }).map((_, j) => (
                   <Star key={j} className="h-4 w-4 fill-primary text-primary" />
                 ))}
               </div>

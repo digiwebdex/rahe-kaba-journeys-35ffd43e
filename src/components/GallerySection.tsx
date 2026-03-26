@@ -2,6 +2,7 @@ import { useState, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Play, X, ChevronLeft, ChevronRight, Image as ImageIcon, Video } from "lucide-react";
 import { useLanguage } from "@/i18n/LanguageContext";
+import { useSiteContent } from "@/hooks/useSiteContent";
 
 type GalleryItem = {
   type: "image" | "video";
@@ -10,7 +11,7 @@ type GalleryItem = {
 
 type TabType = "all" | "images" | "videos";
 
-const items: GalleryItem[] = [
+const defaultItems: GalleryItem[] = [
   { type: "image", src: "/gallery/image-1.jpeg" },
   { type: "image", src: "/gallery/image-2.jpeg" },
   { type: "video", src: "/gallery/video-1.mp4" },
@@ -29,15 +30,24 @@ const tabs: { key: TabType; labelBn: string; labelEn: string; icon: typeof Image
 
 export default function GallerySection() {
   const { language } = useLanguage();
+  const { data: content } = useSiteContent("gallery");
   const bn = language === "bn";
+  const lc = content?.[language];
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState<TabType>("all");
+
+  const sectionLabel = lc?.section_label || (bn ? "স্মৃতি" : "Memories");
+  const heading = lc?.heading || (bn ? "আমাদের " : "Our ");
+  const headingHighlight = lc?.heading_highlight || (bn ? "গ্যালারি" : "Gallery");
+  const description = lc?.description || (bn ? "হজ্জ ও ওমরাহ যাত্রার বিশেষ মুহূর্তগুলো আমাদের গ্যালারিতে দেখুন।" : "Explore special moments from our Hajj & Umrah journeys.");
+
+  const items: GalleryItem[] = content?.items || defaultItems;
 
   const filtered = useMemo(() => {
     if (activeTab === "all") return items;
     if (activeTab === "images") return items.filter((i) => i.type === "image");
     return items.filter((i) => i.type === "video");
-  }, [activeTab]);
+  }, [activeTab, items]);
 
   const open = useCallback((i: number) => setActiveIndex(i), []);
   const close = useCallback(() => setActiveIndex(null), []);
@@ -53,7 +63,6 @@ export default function GallerySection() {
   return (
     <section id="gallery" className="py-20 bg-background">
       <div className="container mx-auto px-4">
-        {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -61,20 +70,15 @@ export default function GallerySection() {
           className="text-center mb-14"
         >
           <span className="text-primary text-sm font-medium tracking-[0.3em] uppercase">
-            {bn ? "স্মৃতি" : "Memories"}
+            {sectionLabel}
           </span>
           <h2 className="font-heading text-3xl md:text-4xl font-bold mt-3 mb-4">
-            {bn ? "আমাদের " : "Our "}
-            <span className="text-gradient-gold">{bn ? "গ্যালারি" : "Gallery"}</span>
+            {heading}
+            <span className="text-gradient-gold">{headingHighlight}</span>
           </h2>
-          <p className="text-muted-foreground max-w-xl mx-auto">
-            {bn
-              ? "হজ্জ ও ওমরাহ যাত্রার বিশেষ মুহূর্তগুলো আমাদের গ্যালারিতে দেখুন।"
-              : "Explore special moments from our Hajj & Umrah journeys."}
-          </p>
+          <p className="text-muted-foreground max-w-xl mx-auto">{description}</p>
         </motion.div>
 
-        {/* Tabs */}
         <div className="flex justify-center gap-2 mb-10">
           {tabs.map((tab) => (
             <button
@@ -92,7 +96,6 @@ export default function GallerySection() {
           ))}
         </div>
 
-        {/* Grid */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4 max-w-6xl mx-auto">
           <AnimatePresence mode="popLayout">
             {filtered.map((item, i) => (
@@ -122,7 +125,6 @@ export default function GallerySection() {
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                   />
                 )}
-                {/* Overlay */}
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
                   {item.type === "video" ? (
                     <div className="w-12 h-12 rounded-full bg-primary/90 flex items-center justify-center shadow-gold opacity-80 group-hover:opacity-100 group-hover:scale-110 transition-all">
@@ -140,7 +142,6 @@ export default function GallerySection() {
         </div>
       </div>
 
-      {/* Lightbox Modal */}
       <AnimatePresence>
         {activeIndex !== null && (
           <motion.div
@@ -150,31 +151,15 @@ export default function GallerySection() {
             className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4"
             onClick={close}
           >
-            {/* Close */}
-            <button
-              onClick={close}
-              className="absolute top-4 right-4 z-10 w-10 h-10 rounded-full bg-black/60 flex items-center justify-center text-white hover:bg-black/80 transition-colors"
-            >
+            <button onClick={close} className="absolute top-4 right-4 z-10 w-10 h-10 rounded-full bg-black/60 flex items-center justify-center text-white hover:bg-black/80 transition-colors">
               <X className="h-5 w-5" />
             </button>
-
-            {/* Prev */}
-            <button
-              onClick={(e) => { e.stopPropagation(); prev(); }}
-              className="absolute left-2 md:left-6 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-black/50 flex items-center justify-center text-white hover:bg-black/70 transition-colors"
-            >
+            <button onClick={(e) => { e.stopPropagation(); prev(); }} className="absolute left-2 md:left-6 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-black/50 flex items-center justify-center text-white hover:bg-black/70 transition-colors">
               <ChevronLeft className="h-6 w-6" />
             </button>
-
-            {/* Next */}
-            <button
-              onClick={(e) => { e.stopPropagation(); next(); }}
-              className="absolute right-2 md:right-6 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-black/50 flex items-center justify-center text-white hover:bg-black/70 transition-colors"
-            >
+            <button onClick={(e) => { e.stopPropagation(); next(); }} className="absolute right-2 md:right-6 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-black/50 flex items-center justify-center text-white hover:bg-black/70 transition-colors">
               <ChevronRight className="h-6 w-6" />
             </button>
-
-            {/* Content */}
             <motion.div
               key={activeIndex}
               initial={{ scale: 0.9, opacity: 0 }}
@@ -185,23 +170,11 @@ export default function GallerySection() {
               onClick={(e) => e.stopPropagation()}
             >
               {filtered[activeIndex].type === "image" ? (
-                <img
-                  src={filtered[activeIndex].src}
-                  alt={`Gallery ${activeIndex + 1}`}
-                  className="w-full h-full object-contain max-h-[85vh]"
-                />
+                <img src={filtered[activeIndex].src} alt={`Gallery ${activeIndex + 1}`} className="w-full h-full object-contain max-h-[85vh]" />
               ) : (
-                <video
-                  src={filtered[activeIndex].src}
-                  controls
-                  autoPlay
-                  playsInline
-                  className="w-full max-h-[85vh]"
-                />
+                <video src={filtered[activeIndex].src} controls autoPlay playsInline className="w-full max-h-[85vh]" />
               )}
             </motion.div>
-
-            {/* Counter */}
             <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white/70 text-sm font-medium">
               {activeIndex + 1} / {filtered.length}
             </div>

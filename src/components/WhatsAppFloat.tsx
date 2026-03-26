@@ -1,8 +1,18 @@
 import { MessageCircle } from "lucide-react";
+import { useSiteContent } from "@/hooks/useSiteContent";
+import { useLanguage } from "@/i18n/LanguageContext";
 
 const WhatsAppFloat = () => {
-  const phone = "8801601505050";
-  const message = encodeURIComponent("আসসালামু আলাইকুম! RAHE KABA তে স্বাগতম। কিভাবে সাহায্য করতে পারি?");
+  const { data: content } = useSiteContent("whatsapp");
+  const { language } = useLanguage();
+  const lc = content?.[language];
+
+  const phone = content?.phone || "8801601505050";
+  const defaultMsg = language === "bn"
+    ? "আসসালামু আলাইকুম! RAHE KABA তে স্বাগতম। কিভাবে সাহায্য করতে পারি?"
+    : "Assalamu Alaikum! Welcome to RAHE KABA. How can we help?";
+  const message = encodeURIComponent(lc?.message || defaultMsg);
+  const buttonText = lc?.button_text || "আপনাকে কিভাবে সহযোগিতা করতে পারি";
 
   return (
     <a
@@ -14,7 +24,7 @@ const WhatsAppFloat = () => {
     >
       <MessageCircle className="h-6 w-6 fill-white stroke-white flex-shrink-0" />
       <span className="text-sm font-medium hidden sm:inline whitespace-nowrap">
-        আপনাকে কিভাবে সহযোগিতা করতে পারি
+        {buttonText}
       </span>
     </a>
   );

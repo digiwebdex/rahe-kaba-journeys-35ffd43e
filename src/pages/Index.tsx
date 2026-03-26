@@ -5,6 +5,7 @@ import ServicesSection from "@/components/ServicesSection";
 import PackagesSection from "@/components/PackagesSection";
 import Footer from "@/components/Footer";
 import WhatsAppFloat from "@/components/WhatsAppFloat";
+import BackToTop from "@/components/BackToTop";
 
 // Lazy load below-fold sections
 const GuidelineSection = lazy(() => import("@/components/GuidelineSection"));
@@ -43,6 +44,7 @@ const Index = () => {
       </Suspense>
       <Footer />
       <WhatsAppFloat />
+      <BackToTop />
     </div>
   );
 };

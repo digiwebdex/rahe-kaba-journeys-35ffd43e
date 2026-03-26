@@ -107,7 +107,69 @@
   }
 
   .islamic-pattern {
-    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0L60 30L30 60L0 30Z' fill='none' stroke='%23C6A55C' stroke-opacity='0.06' stroke-width='1'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='%23C6A55C' stroke-opacity='0.05' stroke-width='0.8'%3E%3Cpath d='M40 0L80 40L40 80L0 40Z'/%3E%3Ccircle cx='40' cy='40' r='20'/%3E%3Cpath d='M40 20L60 40L40 60L20 40Z'/%3E%3C/g%3E%3C/svg%3E");
+  }
+
+  .islamic-border-top {
+    position: relative;
+  }
+  .islamic-border-top::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 200px;
+    height: 3px;
+    background: var(--gradient-gold);
+    border-radius: 2px;
+  }
+
+  .calligraphic-divider {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    padding: 1rem 0;
+  }
+  .calligraphic-divider::before,
+  .calligraphic-divider::after {
+    content: '';
+    height: 1px;
+    width: 60px;
+    background: linear-gradient(90deg, transparent, hsl(36 60% 48% / 0.4), transparent);
+  }
+
+  .section-ornament {
+    position: relative;
+  }
+  .section-ornament::after {
+    content: '✦';
+    display: block;
+    text-align: center;
+    color: hsl(36 60% 48% / 0.3);
+    font-size: 1.25rem;
+    margin-top: 2rem;
+    letter-spacing: 1rem;
+  }
+
+  .card-ornament {
+    position: relative;
+    overflow: hidden;
+  }
+  .card-ornament::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--gradient-gold);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  .card-ornament:hover::before {
+    opacity: 1;
   }
 }
 

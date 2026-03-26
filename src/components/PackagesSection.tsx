@@ -33,7 +33,7 @@ const PackagesSection = () => {
   if (loading || packages.length === 0) return null;
 
   return (
-    <section id="packages" className="py-24 bg-secondary/50">
+    <section id="packages" className="py-24 bg-secondary/50 islamic-border-top">
       <div className="container mx-auto px-4">
         <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-16">
           <span className="text-primary text-sm font-medium tracking-[0.3em] uppercase">{t("packages.label")}</span>

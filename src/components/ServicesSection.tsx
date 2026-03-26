@@ -29,7 +29,7 @@ const ServicesSection = () => {
   const items = lc?.items || defaultServices;
 
   return (
-    <section id="services" className="py-24 islamic-pattern">
+    <section id="services" className="py-24 islamic-pattern islamic-border-top">
       <div className="container mx-auto px-4">
         <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-16">
           <span className="text-primary text-sm font-medium tracking-[0.3em] uppercase">{sectionLabel}</span>
@@ -43,7 +43,7 @@ const ServicesSection = () => {
           {items.map((service: any, i: number) => {
             const IconComp = iconMap[service.icon] || Globe;
             return (
-              <motion.div key={service.title} initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }} className="group bg-card border border-border rounded-lg p-6 hover:border-primary/40 transition-all duration-300 hover:shadow-luxury">
+              <motion.div key={service.title} initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }} className="group bg-card border border-border rounded-lg p-6 hover:border-primary/40 transition-all duration-300 hover:shadow-luxury card-ornament">
                 <div className="w-12 h-12 rounded-md bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
                   <IconComp className="h-6 w-6 text-primary" />
                 </div>

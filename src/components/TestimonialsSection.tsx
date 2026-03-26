@@ -31,7 +31,7 @@ const testimonials = [
 
 const TestimonialsSection = forwardRef<HTMLElement>(function TestimonialsSection(_, ref) {
   return (
-    <section ref={ref} className="py-20 bg-secondary/30">
+    <section ref={ref} className="py-20 bg-secondary/30 islamic-border-top">
       <div className="container mx-auto px-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}

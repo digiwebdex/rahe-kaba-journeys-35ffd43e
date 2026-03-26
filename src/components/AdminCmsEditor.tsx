@@ -223,6 +223,45 @@ const SECTION_CONFIG: Record<string, { label: string; labelBn: string; icon: any
       { key: "developer_url", label: "Developer URL", type: "text", bilingual: false },
     ],
   },
+  privacy_policy: {
+    label: "Privacy Policy",
+    labelBn: "গোপনীয়তা নীতি",
+    icon: Shield,
+    fields: [
+      { key: "title", label: "Page Title", type: "text", bilingual: true },
+      { key: "last_updated", label: "Last Updated Date", type: "text", bilingual: false },
+      { key: "sections", label: "Content Sections", type: "array", bilingual: true, arrayFields: [
+        { key: "heading", label: "Section Heading", type: "text" },
+        { key: "body", label: "Section Body", type: "text" },
+      ]},
+    ],
+  },
+  terms_conditions: {
+    label: "Terms & Conditions",
+    labelBn: "শর্তাবলী",
+    icon: FileText,
+    fields: [
+      { key: "title", label: "Page Title", type: "text", bilingual: true },
+      { key: "last_updated", label: "Last Updated Date", type: "text", bilingual: false },
+      { key: "sections", label: "Content Sections", type: "array", bilingual: true, arrayFields: [
+        { key: "heading", label: "Section Heading", type: "text" },
+        { key: "body", label: "Section Body", type: "text" },
+      ]},
+    ],
+  },
+  refund_policy: {
+    label: "Refund Policy",
+    labelBn: "রিফান্ড নীতি",
+    icon: Shield,
+    fields: [
+      { key: "title", label: "Page Title", type: "text", bilingual: true },
+      { key: "last_updated", label: "Last Updated Date", type: "text", bilingual: false },
+      { key: "sections", label: "Content Sections", type: "array", bilingual: true, arrayFields: [
+        { key: "heading", label: "Section Heading", type: "text" },
+        { key: "body", label: "Section Body", type: "text" },
+      ]},
+    ],
+  },
 };
 
 const AdminCmsEditor = () => {

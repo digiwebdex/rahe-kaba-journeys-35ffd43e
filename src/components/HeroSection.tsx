@@ -54,7 +54,7 @@ const HeroSection = () => {
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5 }}
-          className="inline-flex items-center gap-2 bg-primary/10 backdrop-blur-xl border border-primary/20 rounded-full px-5 py-2 mb-10"
+          className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-xl border border-white/20 rounded-full px-5 py-2 mb-10"
         >
           <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
           <span className="text-primary text-xs font-semibold tracking-[0.2em] uppercase">{badge}</span>

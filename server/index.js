@@ -442,6 +442,7 @@ const BACKUP_TABLES = [
   'notification_logs', 'notification_settings',
   'user_roles', 'site_content', 'company_settings',
   'blog_posts', 'cms_versions', 'daily_cashbook',
+  'cancellation_policies', 'refunds',
 ];
 
 const RESTORE_ORDER = [

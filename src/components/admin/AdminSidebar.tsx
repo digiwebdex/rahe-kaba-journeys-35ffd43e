@@ -1,7 +1,7 @@
 import {
   LayoutDashboard, FileText, Users, Package, CreditCard,
   Calculator, BarChart3, Pencil, Settings, LogOut, UserCheck, Truck,
-  Hotel, Bell, AlertTriangle, BookOpen, DollarSign,
+  Hotel, Bell, AlertTriangle, BookOpen, DollarSign, RotateCcw, PieChart,
 } from "lucide-react";
 import logo from "@/assets/logo.jpg";
 import { NavLink } from "@/components/NavLink";

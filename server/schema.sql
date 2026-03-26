@@ -1190,6 +1190,17 @@ ON CONFLICT (user_id, role) DO NOTHING;
 INSERT INTO financial_summary (total_income, total_expense, net_profit)
 SELECT 0, 0, 0 WHERE NOT EXISTS (SELECT 1 FROM financial_summary);
 
+-- Default notification settings
+INSERT INTO notification_settings (event_key, event_label) VALUES
+  ('booking_created', 'Booking Created'),
+  ('booking_confirmed', 'Booking Confirmed'),
+  ('booking_completed', 'Booking Completed'),
+  ('payment_received', 'Payment Received'),
+  ('payment_reminder', 'Payment Reminder'),
+  ('commission_paid', 'Commission Paid'),
+  ('supplier_payment_recorded', 'Supplier Payment Recorded')
+ON CONFLICT DO NOTHING;
+
 -- =============================================
 -- INDEXES
 -- =============================================

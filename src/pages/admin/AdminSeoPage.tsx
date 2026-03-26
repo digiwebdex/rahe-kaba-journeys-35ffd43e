@@ -11,6 +11,20 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Search, Globe, FileText, Code, RefreshCw, ExternalLink, CheckCircle, AlertTriangle } from "lucide-react";
 
+interface FBPixelConfig {
+  pixel_id: string;
+  enabled: boolean;
+  track_page_view: boolean;
+  track_view_content: boolean;
+  track_lead: boolean;
+  track_purchase: boolean;
+  track_initiate_checkout: boolean;
+  track_search: boolean;
+  track_contact: boolean;
+  capi_enabled: boolean;
+  test_event_code: string;
+}
+
 interface SeoSettings {
   site_title: string;
   site_description: string;
@@ -20,6 +34,7 @@ interface SeoSettings {
   google_analytics_id: string;
   google_search_console: string;
   facebook_pixel_id: string;
+  facebook_pixel: FBPixelConfig;
   default_lang: string;
   auto_sitemap: boolean;
   robots_index: boolean;

@@ -83,11 +83,6 @@ const Footer = () => {
               <li className="flex items-center gap-2"><Phone className="h-4 w-4 text-gold-light" /> {phone}</li>
               <li className="flex items-center gap-2"><Mail className="h-4 w-4 text-gold-light" /> {email}</li>
               <li className="flex items-start gap-2"><MapPin className="h-4 w-4 text-gold-light mt-0.5" /> <span className="whitespace-pre-line">{address}</span></li>
-              <li>
-                <a href="https://www.facebook.com/people/Rahe-Kaba-Tours-And-Travels/61559942585503/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-gold-light transition-colors">
-                  <Facebook className="h-4 w-4 text-gold-light" /> Facebook
-                </a>
-              </li>
             </ul>
           </div>
         </div>

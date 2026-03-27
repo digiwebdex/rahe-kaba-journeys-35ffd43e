@@ -1,4 +1,4 @@
-import { Phone, Mail, MapPin, Facebook } from "lucide-react";
+import { Phone, Mail, MapPin, Facebook, Youtube, Instagram } from "lucide-react";
 import sslcommerzPayWith from "@/assets/payment/sslcommerz-pay-with.png";
 import logo from "@/assets/logo.jpg";
 import { useSiteContent } from "@/hooks/useSiteContent";

@@ -198,23 +198,73 @@ router.post('/admin/create-user', authenticate, requireRole('admin'), async (req
   }
 });
 
-// Admin: Ban/unban user
+// Admin: Manage user (update, activate, deactivate, delete)
 router.post('/admin/manage-user', authenticate, requireRole('admin'), async (req, res) => {
   try {
-    const { user_id, action } = req.body;
+    const { user_id, target_user_id, action, updates } = req.body;
+    const targetId = target_user_id || user_id;
 
-    // SECURITY: Protect primary admin from being banned
-    if (user_id === '9c56194a-b0f9-4878-ac57-e97371acd199') {
+    // SECURITY: Protect primary admin
+    if (targetId === '9c56194a-b0f9-4878-ac57-e97371acd199') {
       return res.status(403).json({ error: 'Cannot modify the primary admin account' });
     }
 
-    if (action === 'ban') {
-      await query('UPDATE users SET is_banned = true WHERE id = $1', [user_id]);
-      await query('DELETE FROM sessions WHERE user_id = $1', [user_id]);
-    } else if (action === 'unban') {
-      await query('UPDATE users SET is_banned = false WHERE id = $1', [user_id]);
+    if (action === 'update' && updates) {
+      // Update profile
+      if (updates.full_name || updates.status) {
+        const fields = [];
+        const vals = [];
+        let idx = 1;
+        if (updates.full_name) { fields.push(`full_name = $${idx++}`); vals.push(updates.full_name); }
+        if (updates.status) { fields.push(`status = $${idx++}`); vals.push(updates.status); }
+        fields.push(`updated_at = now()`);
+        vals.push(targetId);
+        await query(`UPDATE profiles SET ${fields.join(', ')} WHERE user_id = $${idx}`, vals);
+        // Also update users table full_name
+        if (updates.full_name) {
+          await query('UPDATE users SET full_name = $1, updated_at = now() WHERE id = $2', [updates.full_name, targetId]);
+        }
+      }
+      // Update role
+      if (updates.role) {
+        if (updates.role === 'admin') {
+          return res.status(403).json({ error: 'Cannot assign admin role' });
+        }
+        const existing = await query('SELECT id FROM user_roles WHERE user_id = $1', [targetId]);
+        if (existing.rows.length > 0) {
+          await query('UPDATE user_roles SET role = $1 WHERE user_id = $2', [updates.role, targetId]);
+        } else {
+          await query('INSERT INTO user_roles (user_id, role) VALUES ($1, $2)', [targetId, updates.role]);
+        }
+      }
+      // Update password
+      if (updates.password && updates.password.length >= 6) {
+        const hash = await bcrypt.hash(updates.password, 10);
+        await query('UPDATE users SET password_hash = $1, updated_at = now() WHERE id = $2', [hash, targetId]);
+        await query('DELETE FROM sessions WHERE user_id = $1', [targetId]);
+      }
+      return res.json({ message: 'User updated successfully' });
+
+    } else if (action === 'deactivate' || action === 'ban') {
+      await query("UPDATE profiles SET status = 'inactive', updated_at = now() WHERE user_id = $1", [targetId]);
+      await query('UPDATE users SET is_banned = true WHERE id = $1', [targetId]);
+      await query('DELETE FROM sessions WHERE user_id = $1', [targetId]);
+      return res.json({ message: 'User deactivated successfully' });
+
+    } else if (action === 'activate' || action === 'unban') {
+      await query("UPDATE profiles SET status = 'active', updated_at = now() WHERE user_id = $1", [targetId]);
+      await query('UPDATE users SET is_banned = false WHERE id = $1', [targetId]);
+      return res.json({ message: 'User activated successfully' });
+
+    } else if (action === 'delete') {
+      await query('DELETE FROM user_roles WHERE user_id = $1', [targetId]);
+      await query('DELETE FROM sessions WHERE user_id = $1', [targetId]);
+      await query('DELETE FROM profiles WHERE user_id = $1', [targetId]);
+      await query('DELETE FROM users WHERE id = $1', [targetId]);
+      return res.json({ message: 'User deleted successfully' });
     }
-    res.json({ message: `User ${action}ned successfully` });
+
+    res.status(400).json({ error: 'Invalid action' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

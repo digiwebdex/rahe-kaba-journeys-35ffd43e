@@ -518,7 +518,9 @@ const storage = {
 const functions = {
   async invoke(name: string, options?: { body?: any }) {
     try {
-      const res = await apiFetch(`/functions/${name}`, {
+      // Route auth/* paths directly to /api/auth/* instead of /api/functions/*
+      const path = name.startsWith('auth/') ? `/${name}` : `/functions/${name}`;
+      const res = await apiFetch(path, {
         method: 'POST',
         body: options?.body ? JSON.stringify(options.body) : undefined,
       });

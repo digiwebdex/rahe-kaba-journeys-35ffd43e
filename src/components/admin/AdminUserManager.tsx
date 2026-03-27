@@ -95,7 +95,7 @@ export default function AdminUserManager() {
     }
 
     setCreating(true);
-    const { data, error } = await supabase.functions.invoke("admin-create-user", {
+    const { data, error } = await supabase.functions.invoke("auth/admin/create-user", {
       body: {
         full_name: form.full_name,
         email: form.email,
@@ -120,7 +120,7 @@ export default function AdminUserManager() {
 
   const handleAction = async (userId: string, action: string, updates?: any) => {
     setActionLoading(userId);
-    const { data, error } = await supabase.functions.invoke("admin-manage-user", {
+    const { data, error } = await supabase.functions.invoke("auth/admin/manage-user", {
       body: { action, target_user_id: userId, updates },
     });
 

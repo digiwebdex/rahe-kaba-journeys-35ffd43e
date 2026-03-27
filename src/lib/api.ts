@@ -518,8 +518,8 @@ const storage = {
 const functions = {
   async invoke(name: string, options?: { body?: any }) {
     try {
-      // Route auth/* paths directly to /api/auth/* instead of /api/functions/*
-      const path = name.startsWith('auth/') ? `/${name}` : `/functions/${name}`;
+      // Route auth/* paths to /api/auth/*, known direct routes to /api/*, else /api/functions/*
+      const path = name.startsWith('auth/') ? `/${name}` : ['track-booking', 'verify-invoice'].includes(name) ? `/${name}` : `/functions/${name}`;
       const res = await apiFetch(path, {
         method: 'POST',
         body: options?.body ? JSON.stringify(options.body) : undefined,

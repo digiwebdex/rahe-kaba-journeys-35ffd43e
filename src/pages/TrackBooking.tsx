@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { supabase } from "@/lib/api";
+import { supabase, auth as apiAuth } from "@/lib/api";
 import { motion } from "framer-motion";
 import { Search, Package, CheckCircle2, Clock, Plane, FileCheck, Loader2, History, X, User, ShieldCheck, LogIn } from "lucide-react";
 import Navbar from "@/components/Navbar";
